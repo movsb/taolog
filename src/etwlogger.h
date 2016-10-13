@@ -48,6 +48,7 @@ public:
     {
         unsigned int pid;       // 进程标识
         unsigned int tid;       // 线程标识
+        unsigned char level;    // 日志等级
 
         string strTime;
         string strLine;
@@ -204,6 +205,9 @@ public:
 
 	void WriteEvent(unsigned char level, const TCHAR* file, const TCHAR* function, unsigned int line, const TCHAR* format, ...)
 	{
+        if (!IsLog(level))
+            return;
+
 		lock();	
 
         int cch;

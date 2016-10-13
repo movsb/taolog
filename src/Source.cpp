@@ -97,18 +97,20 @@ void __stdcall ProcessEvents(EVENT_TRACE* pEvent)
     auto log_ui = new ETWLogger::LogDataUI;
 
     ::memcpy(log_ui, &log_data, sizeof(log_data));
-    log_ui->pid = pEvent->Header.ProcessId;
-    log_ui->tid = pEvent->Header.ThreadId;
+    log_ui->pid     = pEvent->Header.ProcessId;
+    log_ui->tid     = pEvent->Header.ThreadId;
+    log_ui->level   = pEvent->Header.Class.Level;
 
-    log_ui->strPid = std::to_wstring(log_ui->pid);
-    log_ui->strTid = std::to_wstring(log_ui->tid);
+    log_ui->strPid  = std::to_wstring(log_ui->pid);
+    log_ui->strTid  = std::to_wstring(log_ui->tid);
     log_ui->strLine = std::to_wstring(log_ui->line);
 
     {
         TCHAR buf[1024];
         auto& t = log_ui->time;
 
-        _sntprintf(&buf[0], _countof(buf), _T("%d-%02d-%02d %02d:%02d:%02d:%03d"),
+        _sntprintf(&buf[0], _countof(buf),
+            _T("%d-%02d-%02d %02d:%02d:%02d:%03d"),
             t.wYear, t.wMonth, t.wDay,
             t.wHour, t.wMinute, t.wSecond, t.wMilliseconds
         );
@@ -125,6 +127,8 @@ class TW : public taowin::window_creator
 private:
     taowin::listview* _listview;
     std::vector<ETWLogger::LogDataUI*> _events;
+    struct ItemColor { COLORREF fg; COLORREF bg; };
+    std::map<int, ItemColor> _colors;
 
 public:
 	TW()
@@ -160,13 +164,19 @@ protected:
             int i = 0;
 
             _listview->insert_column(L"时间", 160, i++);
-            _listview->insert_column(L"进程", 50, i++);
-            _listview->insert_column(L"线程", 50, i++);
+            _listview->insert_column(L"进程", 50,  i++);
+            _listview->insert_column(L"线程", 50,  i++);
             _listview->insert_column(L"项目", 100, i++);
             _listview->insert_column(L"文件", 200, i++);
             _listview->insert_column(L"函数", 100, i++);
-            _listview->insert_column(L"行号", 50, i++);
+            _listview->insert_column(L"行号", 50,  i++);
             _listview->insert_column(L"日志", 300, i++);
+
+            _colors[TRACE_LEVEL_INFORMATION]    = {RGB(  0,   0,   0),  RGB(255, 255, 255)};
+            _colors[TRACE_LEVEL_WARNING]        = {RGB(255, 128,   0),  RGB(255, 255, 255)};
+            _colors[TRACE_LEVEL_ERROR]          = {RGB(255,   0,   0),  RGB(255, 255, 255)};
+            _colors[TRACE_LEVEL_CRITICAL]       = {RGB(255, 255, 255),  RGB(255,   0,   0)};
+            _colors[TRACE_LEVEL_VERBOSE]        = {RGB(  0,   0,   0),  RGB(255, 255, 255)};
 
 			return 0;
 		}
@@ -210,6 +220,28 @@ protected:
                 lit->pszText = const_cast<TCHAR*>(value);
 
                 return 0;
+            }
+            else if (code == NM_CUSTOMDRAW) {
+                LRESULT lr = CDRF_DODEFAULT;
+                ETWLogger::LogDataUI* log;
+
+                auto lvcd = (LPNMLVCUSTOMDRAW)hdr;
+
+                switch(lvcd->nmcd.dwDrawStage)
+                {
+                case CDDS_PREPAINT:
+                    lr = CDRF_NOTIFYITEMDRAW;
+                    break;
+
+                case CDDS_ITEMPREPAINT:
+                    log = _events[lvcd->nmcd.dwItemSpec];
+                    lvcd->clrText = _colors[log->level].fg;
+                    lvcd->clrTextBk = _colors[log->level].bg;
+                    lr = CDRF_NEWFONT;
+                    break;
+                }
+
+                return lr;
             }
         }
         return 0;

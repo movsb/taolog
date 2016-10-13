@@ -91,8 +91,9 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_CRT_SECURE_NO_WARNINGS;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>../3rd</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -121,8 +122,9 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_CRT_SECURE_NO_WARNINGS;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>../3rd</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -151,9 +153,23 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="../src/Source.cpp" />
+    <ClCompile Include="..\3rd\taowin\src\tw_control.cpp" />
+    <ClCompile Include="..\3rd\taowin\src\tw_parser.cpp" />
+    <ClCompile Include="..\3rd\taowin\src\tw_resmgr.cpp" />
+    <ClCompile Include="..\3rd\taowin\src\tw_syscontrols.cpp" />
+    <ClCompile Include="..\3rd\taowin\src\tw_taowin.cpp" />
+    <ClCompile Include="..\3rd\taowin\src\tw_util.cpp" />
+    <ClCompile Include="..\3rd\taowin\src\tw_window.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="../src/etwlogger.h" />
+    <ClInclude Include="..\3rd\taowin\src\tw_control.h" />
+    <ClInclude Include="..\3rd\taowin\src\tw_parser.h" />
+    <ClInclude Include="..\3rd\taowin\src\tw_resmgr.h" />
+    <ClInclude Include="..\3rd\taowin\src\tw_syscontrols.h" />
+    <ClInclude Include="..\3rd\taowin\src\tw_taowin.h" />
+    <ClInclude Include="..\3rd\taowin\src\tw_util.h" />
+    <ClInclude Include="..\3rd\taowin\src\tw_window.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -19,10 +19,6 @@
 #include <wmistr.h>
 #include <Evntrace.h>
 
-
-#define MAX_LOGGER_BUF (1024)
-#define MAX_LOGGER_HEAP_BUF (60 * 1024)
-
 #define WIDEN2(x) L ## x
 #define WIDEN(x) WIDEN2(x)
 #define __WFILE__ WIDEN(__FILE__)
@@ -36,42 +32,7 @@
 #define __TFUNCTION__ __FUNCTION__
 #endif
 
-enum LOGTYPE
-{
-	LOGSTACK = 20,
-	LOGHEAP
-};
-
-// 对于 buffer 长度小于 MAX_LOGGER_BUF 采用栈内存空间
-struct LogStack
-{	
-	TCHAR data[MAX_LOGGER_BUF];
-};
-
-// 对于 buffer 长度超过 MAX_LOGGER_BUF 采用动态开辟的内存空间
-// 受限于 EVENT_TRACE_HEADER 里的buffer size 不能超过 64k
-struct LogHeap
-{	
-	USHORT len;
-	TCHAR data;
-};
-
-struct Log
-{
-	GUID provider;
-	SYSTEMTIME st;
-	union
-	{
-		LogStack logS;
-		LogHeap logH;
-	} u;	
-};
-
-typedef struct _logevent
-{
-	EVENT_TRACE_HEADER Header;
-	Log log;	
-} LOGEVENT_DATA, *PLOGEVENT_DATA;
+#define ETW_LOGGER_MAX_LOG_SIZE (60*1024)
 
 class ETWLogger
 {
@@ -216,13 +177,26 @@ public:
 		return ret;
 	}
 
-	void WriteEvent(unsigned char level, const TCHAR * data)
+	void WriteEvent(unsigned char level, const TCHAR* file, const TCHAR* function, unsigned int line, const TCHAR* format, ...)
 	{
 		lock();	
 
-		if(data != NULL)
-		{
-			LOGEVENT_DATA logEvent;
+        EVENT_TRACE_HEADER* hdr = &data.hdr;
+        memset(hdr, 0, sizeof(*hdr));
+
+        _tcsncpy()
+
+        va_list va;
+        int cch;
+
+        va_start(va, format);
+        cch = _vsntprintf(data.data, _countof(data.data), format, va);
+
+        if(cch == -1) {
+            data.
+
+
+        va_end(va);
 
 			ZeroMemory(&logEvent, sizeof(logEvent) );
 			logEvent.Header.Size = USHORT( (char *)logEvent.log.u.logS.data - (char *)&logEvent) + (USHORT)(_tcslen(data) + 1) * sizeof(TCHAR);
@@ -241,65 +215,11 @@ public:
 			ULONG status = ::TraceEvent(m_sessionHandle, &(logEvent.Header) );
 			if (ERROR_SUCCESS != status)
 			{
-				//Decide how to handle failures. Typically, you do not
-				//want to terminate the application because you failed to
-				//log an event. If the error is a memory failure, you may
-				//may want to log a message to the system event log or turn
-				//off logging.
-				wprintf(L"TraceEvent() event failed, %d\n", status);
 				if (ERROR_INVALID_HANDLE == status)
 				{
 					m_traceOn = FALSE;
 				}
 			}
-		}	
-
-		unlock();
-	}
-
-	void WriteHugeEvent(unsigned char level, const TCHAR * data)
-	{
-		lock();	
-
-		if(data != NULL)
-		{
-			USHORT len = (USHORT)(_tcslen(data) + 1) * sizeof(TCHAR);
-
-			LOGEVENT_DATA * logEvent = (LOGEVENT_DATA * )malloc(sizeof(LOGEVENT_DATA) + len);
-			if(logEvent != NULL)
-			{
-				ZeroMemory(logEvent, sizeof(LOGEVENT_DATA) + len);			
-
-				logEvent->Header.Size = USHORT( (char *)&logEvent->log.u.logH.data - (char *)logEvent) + len;
-				logEvent->Header.Flags = WNODE_FLAG_TRACED_GUID /*| WNODE_FLAG_USE_MOF_PTR*/;
-				logEvent->Header.Guid = m_clsGuid;
-				logEvent->Header.Class.Type = LOGHEAP;
-				logEvent->Header.Class.Level = level;
-
-
-				logEvent->log.u.logH.len = len;
-				memcpy(&logEvent->log.u.logH.data, data, len);
-				logEvent->log.provider = m_providerGuid;
-
-				SYSTEMTIME st = {0};													
-				GetSystemTime(&st);														
-				SystemTimeToTzSpecificLocalTime(NULL, &st, &logEvent->log.st);				
-
-				ULONG status = ::TraceEvent(m_sessionHandle, &(logEvent->Header) );
-				if (ERROR_SUCCESS != status)
-				{					
-					wprintf(L"TraceEvent() event failed, %d\n", status);
-					if (ERROR_INVALID_HANDLE == status)
-					{
-						m_traceOn = FALSE;
-					}
-				}
-
-				free(logEvent);
-				logEvent = NULL;
-			}			
-		}	
-
 		unlock();
 	}
 
@@ -313,6 +233,18 @@ private:
 	TRACEHANDLE m_registrationHandle;
 	TRACEHANDLE m_sessionHandle;
 
+    struct LogData
+    {
+        EVENT_TRACE_HEADER hdr;
+        wchar_t file[1024];
+        wchar_t func[1024];
+        unsigned int line;
+        unsigned int size;
+        wchar_t data[ETW_LOGGER_MAX_LOG_SIZE];
+    };
+
+    LogData data;
+
 	CRITICAL_SECTION m_cs;
 };
 
@@ -323,63 +255,6 @@ extern ETWLogger g_etwLogger;
 inline void LogMessage(unsigned char level, const TCHAR * file, const TCHAR * function, unsigned int line, const TCHAR * format, ...)
 {
 	assert(file != NULL && function != NULL && format != NULL);
-
-	if(file != NULL && function != NULL && format != NULL && g_etwLogger.IsLog(level) )
-	{		
-		va_list args;
-		va_start(args, format);			
-
-		ULONG textLen = _vsctprintf(format, args) + 1;
-		textLen += _tcslen(file);
-		textLen += _tcslen(function);
-		textLen += _tcslen(_T("[%s - %s - %u] %s") );
-		textLen += sizeof(line);
-
-		if(textLen < MAX_LOGGER_BUF) // 小于该长度使用栈内存，性能会比较好，另外产生的内存碎片比较少
-		{
-			TCHAR content[MAX_LOGGER_BUF] = {0};
-			TCHAR text[MAX_LOGGER_BUF] = {0};
-
-			_vstprintf_s(content, sizeof(content)/sizeof(TCHAR), format, args);
-
-			_stprintf_s(text, sizeof(text)/sizeof(TCHAR), _T("[%s - %s - %u] %s"), file, function, line, content);
-
-			g_etwLogger.WriteEvent(level, text);
-		}
-		else if(textLen * sizeof(TCHAR) < MAX_LOGGER_HEAP_BUF) // 最大不能超过60k
-		{
-			TCHAR * content = new TCHAR[textLen];
-			TCHAR * text = new TCHAR[textLen];
-
-			if(content != NULL && text != NULL)
-			{
-				ZeroMemory(content, textLen * sizeof(TCHAR) );
-				ZeroMemory(text, textLen * sizeof(TCHAR) );
-
-				_vstprintf_s(content, textLen, format, args);
-
-				_stprintf_s(text, textLen, _T("[%s - %s - %u] %s"), file, function, line, content);
-
-				g_etwLogger.WriteHugeEvent(level, text);
-
-				delete []content;
-				content = NULL;
-				delete []text;
-				text = NULL;
-			}
-			
-		}
-		else if(textLen * sizeof(TCHAR) >= MAX_LOGGER_HEAP_BUF)
-		{			
-			TCHAR text[MAX_LOGGER_BUF] = {0};			
-
-			_stprintf_s(text, sizeof(text)/sizeof(TCHAR), _T("[%s - %s - %u] etw logger buffer is bigger than 60k so it is over flow"), file, function, line);
-
-			g_etwLogger.WriteEvent(level, text);
-		}
-
-		va_end(args);
-	}	
 }
 
 // Abnormal exit or termination events

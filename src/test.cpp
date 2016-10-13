@@ -1,5 +1,6 @@
 #include <iostream>
 
+#include <windows.h>
 #include <guiddef.h>
 
 #define ETW_LOGGER
@@ -15,11 +16,17 @@ ETWLogger g_etwLogger(providerGuid);
 
 int main()
 {
+start:
+
     ETW_LEVEL_INFORMATION(L"Information");
     ETW_LEVEL_WARNING(L"Warning");
     ETW_LEVEL_ERROR(L"Error");
     ETW_LEVEL_CRITICAL(L"Critical");
     ETW_LEVEL_VERBOSE(L"Verbose");
+
+    Sleep(3000);
+
+    goto start;
 
     return 0;
 }

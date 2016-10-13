@@ -26,6 +26,11 @@ public:
         , _props(nullptr)
     { }
 
+    ~Controller()
+    {
+        stop();
+    }
+
 public:
     void start(const wchar_t* session);
     void enable(const GUID& provider, bool enable_, const char* level);
@@ -44,10 +49,11 @@ void Controller::start(const wchar_t* session)
     size_t size = sizeof(EVENT_TRACE_PROPERTIES) + (_name.size() + 1)*sizeof(TCHAR);
     _props = (EVENT_TRACE_PROPERTIES*)new char[size]();
 
+restart:
     _props->Wnode.BufferSize = size;
     _props->Wnode.Flags = WNODE_FLAG_TRACED_GUID;
     _props->LoggerNameOffset = sizeof(EVENT_TRACE_PROPERTIES);
-    _props->LogFileNameOffset = size;
+    _props->LogFileNameOffset = 0;
 
     _props->LogFileMode = EVENT_TRACE_REAL_TIME_MODE;
     _props->LogFileNameOffset = 0;
@@ -55,7 +61,10 @@ void Controller::start(const wchar_t* session)
 
     wcscpy((wchar_t*)_props + _props->LoggerNameOffset, session);
 
-    auto r = ::StartTrace(&_handle, _name.c_str(), _props);
+    if(::StartTrace(&_handle, _name.c_str(), _props) == ERROR_ALREADY_EXISTS) {
+        ::ControlTrace(0, _name.c_str(), _props, EVENT_TRACE_CONTROL_STOP);
+        goto restart;
+    }
 }
 
 void Controller::enable(const GUID& provider, bool enable_, const char* level)
@@ -95,8 +104,8 @@ int main()
     std::wcout.imbue(std::locale("chs"));
     Controller controller;
     controller.start(L"xxxxxx");
-    GUID guid;
-    IIDFromString(L"{44540F03-890B-499D-84EF-56BDCD01A35B}", &guid);
+
+    GUID guid = { 0x630514b5, 0x7b96, 0x4b74, { 0x9d, 0xb6, 0x66, 0xbd, 0x62, 0x1f, 0x93, 0x86 } };
     controller.enable(guid, true, 0);
 
     EVENT_TRACE_LOGFILE logfile {0};

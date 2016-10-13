@@ -4,8 +4,7 @@
 
 .vs/
 
-/Debug/
-/Release/
-
+/tmp/
+/bin/
 
 

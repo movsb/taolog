@@ -15,12 +15,12 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Source.cpp">
+      <ClCompile Include="../src/Source.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="etwlogger.h">
+      <ClInclude Include="../src/etwlogger.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

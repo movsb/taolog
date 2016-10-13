@@ -1,16 +1,10 @@
 #pragma once 
 
-/*
- *    etw高性能日志：系统开销小，动态开启是否输出日志，所以目标模块可以不再有productrelease版本
-
-   1. 支持TCHAR字符，线程安全
-   2. 每个模块(dll或静态exe)需要定义ETWLogger对象，并在构造函数该模块的独立providerguid
-   3. 对于底层的静态链接库，不需要定义ETWLogger对象(在调用模块步骤2里面定义)，直接调用接口
-
- * 
-*/
-
 #ifdef ETW_LOGGER
+
+#pragma warning(push)
+#pragma warning(disable: 4996)
+
 #include <stdio.h>
 #include <tchar.h>
 #include <stdlib.h>
@@ -36,6 +30,29 @@
 
 class ETWLogger
 {
+public:
+    struct LogData
+    {
+        SYSTEMTIME time;                            // 时间戳
+        unsigned int line;                          // 行号
+        unsigned int size;                          // 字符数（包含null）
+        wchar_t file[1024];                         // 文件
+        wchar_t func[1024];                         // 函数
+        wchar_t text[ETW_LOGGER_MAX_LOG_SIZE];      // 日志
+    };
+
+    struct LogDataUI : LogData
+    {
+        unsigned int pid;                           // 进程标识
+        unsigned int tid;                           // 线程标识
+    };
+
+    struct LogDataTrace
+    {
+        EVENT_TRACE_HEADER hdr;
+        LogData data;
+    };
+
 public:
 	ETWLogger(const GUID & providerGuid)
 		:m_providerGuid(providerGuid)
@@ -181,45 +198,58 @@ public:
 	{
 		lock();	
 
-        EVENT_TRACE_HEADER* hdr = &data.hdr;
-        memset(hdr, 0, sizeof(*hdr));
-
-        _tcsncpy()
-
-        va_list va;
         int cch;
 
+        LogData& data = m_log.data;
+        
+        // the file
+        cch = min(_countof(data.file) - 1, _tcslen(file));
+        _tcsncpy(&data.file[0], file, cch);
+        data.file[cch] = 0;
+
+        // the function
+        cch = min(_countof(data.func) - 1, _tcslen(function));
+        _tcsncpy(&data.func[0], function, cch);
+        data.func[cch] = 0;
+
+        // the line number
+        data.line = line;
+
+        // the text
+        va_list va;
         va_start(va, format);
-        cch = _vsntprintf(data.data, _countof(data.data), format, va);
-
-        if(cch == -1) {
-            data.
-
-
+        cch = _vsntprintf(&data.text[0], _countof(data.text), format, va);
         va_end(va);
 
-			ZeroMemory(&logEvent, sizeof(logEvent) );
-			logEvent.Header.Size = USHORT( (char *)logEvent.log.u.logS.data - (char *)&logEvent) + (USHORT)(_tcslen(data) + 1) * sizeof(TCHAR);
-			logEvent.Header.Flags = WNODE_FLAG_TRACED_GUID /*| WNODE_FLAG_USE_MOF_PTR*/;
-			logEvent.Header.Guid = m_clsGuid;
-			logEvent.Header.Class.Type = LOGSTACK;
-			logEvent.Header.Class.Level = level;			
+        // the text length, in characters, including the null
+        if (0 <= cch && cch < _countof(data.text)) {
+            data.size = cch + 1;
+        } else {
+            data.size = 1;
+            data.text[0] = 0;
+        }
 
-			_tcscpy_s(logEvent.log.u.logS.data, data);			
-			logEvent.log.provider = m_providerGuid;
+        // time timestamp
+        ::GetLocalTime(&data.time);
 
-			SYSTEMTIME st = {0};													
-			GetSystemTime(&st);														
-			SystemTimeToTzSpecificLocalTime(NULL, &st, &logEvent.log.st);				
+        // the header
+        EVENT_TRACE_HEADER& hdr = m_log.hdr;
+        memset(&hdr, 0, sizeof(hdr));
+        hdr.Size            = sizeof(hdr) + offsetof(LogData, text) + data.size * sizeof(data.text[0]);
+        hdr.Flags           = WNODE_FLAG_TRACED_GUID;
+        hdr.Guid            = m_clsGuid;
+        hdr.Class.Level     = level;
 
-			ULONG status = ::TraceEvent(m_sessionHandle, &(logEvent.Header) );
-			if (ERROR_SUCCESS != status)
-			{
-				if (ERROR_INVALID_HANDLE == status)
-				{
-					m_traceOn = FALSE;
-				}
-			}
+        // Trace it!
+        ULONG status = ::TraceEvent(m_sessionHandle, &hdr);
+        if (ERROR_SUCCESS != status)
+        {
+            if (ERROR_INVALID_HANDLE == status)
+            {
+                m_traceOn = FALSE;
+            }
+        }
+
 		unlock();
 	}
 
@@ -233,17 +263,7 @@ private:
 	TRACEHANDLE m_registrationHandle;
 	TRACEHANDLE m_sessionHandle;
 
-    struct LogData
-    {
-        EVENT_TRACE_HEADER hdr;
-        wchar_t file[1024];
-        wchar_t func[1024];
-        unsigned int line;
-        unsigned int size;
-        wchar_t data[ETW_LOGGER_MAX_LOG_SIZE];
-    };
-
-    LogData data;
+    LogDataTrace m_log;
 
 	CRITICAL_SECTION m_cs;
 };
@@ -252,10 +272,7 @@ extern ETWLogger g_etwLogger;
 
 
 // 大部分应用场景采用栈空间打印日志，当遇到比较大的日志信息时会使用堆空间打印日志
-inline void LogMessage(unsigned char level, const TCHAR * file, const TCHAR * function, unsigned int line, const TCHAR * format, ...)
-{
-	assert(file != NULL && function != NULL && format != NULL);
-}
+#define LogMessage (g_etwLogger.WriteEvent)
 
 // Abnormal exit or termination events
 #define ETW_LEVEL_CRITICAL(x, ...) \
@@ -306,5 +323,7 @@ LogMessage(TRACE_LEVEL_WARNING, __TFILE__, __TFUNCTION__, __LINE__, x, __VA_ARGS
 #define ETW_LEVEL_VERBOSE(x, ...)
 
 #define ETW_LAST_ERROR()
+
+#pragma warning(pop)
 
 #endif

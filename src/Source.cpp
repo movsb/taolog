@@ -82,21 +82,14 @@ ULONG __stdcall BufferCallback(EVENT_TRACE_LOGFILE* logfile)
 {
     return TRUE;
 }
-
+;
 void __stdcall ProcessEvents(EVENT_TRACE* pEvent)
 {
     if(!pEvent || !IsEqualGUID(pEvent->Header.Guid, clsGuid))
         return;
 
-    Log * log = (Log *)pEvent->MofData;
-    if(pEvent->Header.Class.Type == LOGSTACK)
-    {			
-        std::wcout << log->u.logS.data << std::endl;
-    }
-    else if(pEvent->Header.Class.Type == LOGHEAP)
-    {
-        std::wcout << log->u.logH.data << std::endl;
-    }
+    const ETWLogger::LogData& log = *(ETWLogger::LogData*)pEvent->MofData;
+    std::wcout << log.text << std::endl;
 }
 
 int main()

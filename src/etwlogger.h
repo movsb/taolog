@@ -12,6 +12,7 @@
 #include <Windows.h>
 #include <wmistr.h>
 #include <Evntrace.h>
+#include <string>
 
 #define WIDEN2(x) L ## x
 #define WIDEN(x) WIDEN2(x)
@@ -30,21 +31,28 @@
 
 class ETWLogger
 {
+    typedef std::basic_string<TCHAR> string;
+
 public:
     struct LogData
     {
-        SYSTEMTIME time;                            // 时间戳
-        unsigned int line;                          // 行号
-        unsigned int size;                          // 字符数（包含null）
-        wchar_t file[1024];                         // 文件
-        wchar_t func[1024];                         // 函数
+        SYSTEMTIME time;        // 时间戳
+        unsigned int line;      // 行号
+        unsigned int size;      // 字符数（包含null）
+        wchar_t file[1024];     // 文件
+        wchar_t func[1024];     // 函数
         wchar_t text[ETW_LOGGER_MAX_LOG_SIZE];      // 日志
     };
 
     struct LogDataUI : LogData
     {
-        unsigned int pid;                           // 进程标识
-        unsigned int tid;                           // 线程标识
+        unsigned int pid;       // 进程标识
+        unsigned int tid;       // 线程标识
+
+        string strTime;
+        string strLine;
+        string strPid;
+        string strTid;
     };
 
     struct LogDataTrace

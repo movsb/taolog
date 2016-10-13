@@ -1,0 +1,11 @@
+*.swp
+
+*.VC.*
+
+.vs/
+
+/Debug/
+/Release/
+
+
+

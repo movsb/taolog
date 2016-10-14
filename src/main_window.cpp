@@ -39,82 +39,10 @@ LPCTSTR MainWindow::get_skin_xml() const
 
 LRESULT MainWindow::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
 {
-    switch (umsg) {
-    case WM_CREATE:
+    switch (umsg)
     {
-        _listview = _root->find<taowin::listview>(L"lv");
-
-        _columns.push_back({ L"时间", true, 160 });
-        _columns.push_back({ L"进程", true, 50 });
-        _columns.push_back({ L"线程", true, 50, });
-        _columns.push_back({ L"项目", true, 100, });
-        _columns.push_back({ L"文件", true, 200, });
-        _columns.push_back({ L"函数", true, 100, });
-        _columns.push_back({ L"行号", true, 50, });
-        _columns.push_back({ L"日志", true, 300, });
-
-        for (int i = 0; i < (int)_columns.size(); i++) {
-            auto& col = _columns[i];
-            _listview->insert_column(col.name.c_str(), col.width, i);
-        }
-
-        _colors[TRACE_LEVEL_INFORMATION]    = {RGB(  0,   0,   0), RGB(255, 255, 255)};
-        _colors[TRACE_LEVEL_WARNING]        = {RGB(255, 128,   0), RGB(255, 255, 255)};
-        _colors[TRACE_LEVEL_ERROR]          = {RGB(255,   0,   0), RGB(255, 255, 255)};
-        _colors[TRACE_LEVEL_CRITICAL]       = {RGB(255, 255, 255), RGB(255,   0,   0)};
-        _colors[TRACE_LEVEL_VERBOSE]        = {RGB(  0,   0,   0), RGB(255, 255, 255)};
-
-        MenuEntry menu;
-
-        menu.name = L"模块管理";
-        menu.onclick = [&]() {
-            auto* mgr = new ModuleManager(_modules);
-            mgr->domodal(this);
-        };
-
-        _menus.push_back(menu);
-
-        HMENU hMenu = ::CreateMenu();
-        for (int i = 0; i < (int)_menus.size(); i++)
-            ::AppendMenu(hMenu, MF_STRING, i, _menus[i].name.c_str());
-        ::SetMenu(_hwnd, hMenu);
-
-        _controller.start(g_etw_session);
-
-        GUID guid = { 0x630514b5, 0x7b96, 0x4b74,{ 0x9d, 0xb6, 0x66, 0xbd, 0x62, 0x1f, 0x93, 0x86 } };
-        _controller.enable(guid, true, 0);
-
-        taoetw::g_Consumer = &_consumer;
-
-        _consumer.init(_hwnd, WM_USER + 0);
-        _consumer.start(g_etw_session);
-
-        return 0;
-    }
-
-    case WM_USER + 0:
-    {
-        auto item = reinterpret_cast<ETWLogger::LogDataUI*>(lparam);
-
-        const std::wstring* root = nullptr;
-
-        _module_from_guid(item->guid, &item->strProject, &root);
-
-        // 相对路径
-        if (*item->file && root) {
-            if (::wcsnicmp(item->file, root->c_str(), root->size()) == 0) {
-                item->offset_of_file = (int)root->size();
-            }
-        }
-        else {
-            item->offset_of_file = 0;
-        }
-
-        _events.push_back(item);
-        _listview->set_item_count(_events.size(), LVSICF_NOINVALIDATEALL);
-
-        break;
-    }
+    case WM_CREATE: return _on_create();
+    case kDoLog:    return _on_log((ETWLogger::LogDataUI*)lparam);
     }
     return __super::handle_message(umsg, wparam, lparam);
 }
@@ -132,90 +60,198 @@ LRESULT MainWindow::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR *
     if (!pc) {
         if (hwnd == _listview->get_header()) {
             if (code == NM_RCLICK) {
-                auto colsel = new ColumnSelection(_columns);
-
-                colsel->OnToggle([&](int i) {
-                    auto& col = _columns[i];
-                    _listview->set_column_width(i, col.show ? col.width : 0);
-                });
-
-                colsel->domodal(this);
-
-                return 0;
+                return _on_select_column();
             }
             else if (code == HDN_ENDTRACK) {
-                auto nmhdr = (NMHEADER*)hdr;
-                auto& item = nmhdr->pitem;
-                auto& col = _columns[nmhdr->iItem];
-
-                col.show = item->cxy != 0;
-                if (item->cxy) col.width = item->cxy;
-
-                return 0;
+                return _on_drag_column(hdr);
             }
         }
 
         return 0;
     }
-
-    if (pc->name() == _T("lv")) {
+    else if (pc->name() == _T("lv")) {
         if (code == LVN_GETDISPINFO) {
-            auto pdi = reinterpret_cast<NMLVDISPINFO*>(hdr);
-            auto evt = _events[pdi->item.iItem];
-            auto lit = &pdi->item;
-
-            const TCHAR* value = _T("");
-
-            switch (lit->iSubItem) {
-            case 0: value = evt->strTime.c_str();               break;
-            case 1: value = evt->strPid.c_str();                break;
-            case 2: value = evt->strTid.c_str();                break;
-            case 3: value = evt->strProject.c_str();            break;
-            case 4: value = evt->file + evt->offset_of_file;    break;
-            case 5: value = evt->func;                          break;
-            case 6: value = evt->strLine.c_str();               break;
-            case 7: value = evt->text;                          break;
-            }
-
-            lit->pszText = const_cast<TCHAR*>(value);
-
-            return 0;
+            return _on_get_dispinfo(hdr);
         }
         else if (code == NM_CUSTOMDRAW) {
-            LRESULT lr = CDRF_DODEFAULT;
-            ETWLogger::LogDataUI* log;
-
-            auto lvcd = (LPNMLVCUSTOMDRAW)hdr;
-
-            switch (lvcd->nmcd.dwDrawStage) {
-            case CDDS_PREPAINT:
-                lr = CDRF_NOTIFYITEMDRAW;
-                break;
-
-            case CDDS_ITEMPREPAINT:
-                log = _events[lvcd->nmcd.dwItemSpec];
-                lvcd->clrText = _colors[log->level].fg;
-                lvcd->clrTextBk = _colors[log->level].bg;
-                lr = CDRF_NEWFONT;
-                break;
-            }
-
-            return lr;
+            return _on_custom_draw_listview(hdr);
         }
         else if (code == NM_DBLCLK) {
             auto nmlv = reinterpret_cast<NMITEMACTIVATE*>(hdr);
-
             if (nmlv->iItem != -1) {
-                auto evt = _events[nmlv->iItem];
-                auto& cr = _colors[evt->level];
-                auto detail_window = new EventDetail(evt, cr.fg, cr.bg);
-                detail_window->create();
-                detail_window->show();
+                _view_detail(nmlv->iItem);
             }
-
             return 0;
         }
     }
+
+    return 0;
+}
+
+void MainWindow::_init_listview()
+{
+    _listview = _root->find<taowin::listview>(L"lv");
+
+    _columns.push_back({ L"时间", true, 160 });
+    _columns.push_back({ L"进程", true, 50 });
+    _columns.push_back({ L"线程", true, 50, });
+    _columns.push_back({ L"项目", true, 100, });
+    _columns.push_back({ L"文件", true, 200, });
+    _columns.push_back({ L"函数", true, 100, });
+    _columns.push_back({ L"行号", true, 50, });
+    _columns.push_back({ L"日志", true, 300, });
+
+    for (int i = 0; i < (int)_columns.size(); i++) {
+        auto& col = _columns[i];
+        _listview->insert_column(col.name.c_str(), col.width, i);
+    }
+
+    _colors[TRACE_LEVEL_INFORMATION]    = {RGB(  0,   0,   0), RGB(255, 255, 255)};
+    _colors[TRACE_LEVEL_WARNING]        = {RGB(255, 128,   0), RGB(255, 255, 255)};
+    _colors[TRACE_LEVEL_ERROR]          = {RGB(255,   0,   0), RGB(255, 255, 255)};
+    _colors[TRACE_LEVEL_CRITICAL]       = {RGB(255, 255, 255), RGB(255,   0,   0)};
+    _colors[TRACE_LEVEL_VERBOSE]        = {RGB(  0,   0,   0), RGB(255, 255, 255)};
+}
+
+void MainWindow::_init_menu()
+{
+    MenuEntry menu;
+
+    menu.name = L"模块管理";
+    menu.onclick = [&]() {
+        auto* mgr = new ModuleManager(_modules);
+        mgr->domodal(this);
+    };
+
+    _menus.push_back(menu);
+
+    HMENU hMenu = ::CreateMenu();
+    for (int i = 0; i < (int)_menus.size(); i++)
+        ::AppendMenu(hMenu, MF_STRING, i, _menus[i].name.c_str());
+    ::SetMenu(_hwnd, hMenu);
+}
+
+void MainWindow::_view_detail(int i)
+{
+    auto evt = _events[i];
+    auto& cr = _colors[evt->level];
+    auto detail_window = new EventDetail(evt, cr.fg, cr.bg);
+    detail_window->create();
+    detail_window->show();
+}
+
+LRESULT MainWindow::_on_create()
+{
+    _init_listview();
+    _init_menu();
+
+    _controller.start(g_etw_session);
+
+    GUID guid = { 0x630514b5, 0x7b96, 0x4b74,{ 0x9d, 0xb6, 0x66, 0xbd, 0x62, 0x1f, 0x93, 0x86 } };
+    _controller.enable(guid, true, 0);
+
+    taoetw::g_Consumer = &_consumer;
+
+    _consumer.init(_hwnd, kDoLog);
+    _consumer.start(g_etw_session);
+
+    return 0;
+}
+
+LRESULT MainWindow::_on_log(ETWLogger::LogDataUI* item)
+{
+    const std::wstring* root = nullptr;
+
+    _module_from_guid(item->guid, &item->strProject, &root);
+
+    // 相对路径
+    if (*item->file && root) {
+        if (::wcsnicmp(item->file, root->c_str(), root->size()) == 0) {
+            item->offset_of_file = (int)root->size();
+        }
+    }
+    else {
+        item->offset_of_file = 0;
+    }
+
+    _events.push_back(item);
+    _listview->set_item_count(_events.size(), LVSICF_NOINVALIDATEALL);
+
+    return 0;
+}
+
+LRESULT MainWindow::_on_custom_draw_listview(NMHDR * hdr)
+{
+    LRESULT lr = CDRF_DODEFAULT;
+    ETWLogger::LogDataUI* log;
+
+    auto lvcd = (LPNMLVCUSTOMDRAW)hdr;
+
+    switch (lvcd->nmcd.dwDrawStage)
+    {
+    case CDDS_PREPAINT:
+        lr = CDRF_NOTIFYITEMDRAW;
+        break;
+
+    case CDDS_ITEMPREPAINT:
+        log = _events[lvcd->nmcd.dwItemSpec];
+        lvcd->clrText = _colors[log->level].fg;
+        lvcd->clrTextBk = _colors[log->level].bg;
+        lr = CDRF_NEWFONT;
+        break;
+    }
+
+    return lr;
+}
+
+LRESULT MainWindow::_on_get_dispinfo(NMHDR * hdr)
+{
+    auto pdi = reinterpret_cast<NMLVDISPINFO*>(hdr);
+    auto evt = _events[pdi->item.iItem];
+    auto lit = &pdi->item;
+
+    const TCHAR* value = _T("");
+
+    switch (lit->iSubItem)
+    {
+    case 0: value = evt->strTime.c_str();               break;
+    case 1: value = evt->strPid.c_str();                break;
+    case 2: value = evt->strTid.c_str();                break;
+    case 3: value = evt->strProject.c_str();            break;
+    case 4: value = evt->file + evt->offset_of_file;    break;
+    case 5: value = evt->func;                          break;
+    case 6: value = evt->strLine.c_str();               break;
+    case 7: value = evt->text;                          break;
+    }
+
+    lit->pszText = const_cast<TCHAR*>(value);
+
+    return 0;
+}
+
+LRESULT MainWindow::_on_select_column()
+{
+    auto colsel = new ColumnSelection(_columns);
+
+    colsel->OnToggle([&](int i) {
+        auto& col = _columns[i];
+        _listview->set_column_width(i, col.show ? col.width : 0);
+    });
+
+    colsel->domodal(this);
+
+    return 0;
+}
+
+LRESULT MainWindow::_on_drag_column(NMHDR* hdr)
+{
+    auto nmhdr = (NMHEADER*)hdr;
+    auto& item = nmhdr->pitem;
+    auto& col = _columns[nmhdr->iItem];
+
+    col.show = item->cxy != 0;
+    if (item->cxy) col.width = item->cxy;
+
     return 0;
 }
 

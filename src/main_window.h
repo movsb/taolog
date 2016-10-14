@@ -23,6 +23,9 @@ public:
     typedef std::map<int, ItemColor> MapColors;
 
     typedef std::vector<ETWLogger::LogDataUI*> EventContainer;
+
+private:
+    static const UINT kDoLog = WM_USER + 1;
     
 private:
     taowin::listview*   _listview;
@@ -44,7 +47,19 @@ protected:
     virtual LRESULT on_menu(int id, bool is_accel = false);
     virtual LRESULT on_notify(HWND hwnd, taowin::control* pc, int code, NMHDR* hdr) override;
 
-private:
+protected:
+    void _init_listview();
+    void _init_menu();
+    void _view_detail(int i);
+
+    LRESULT _on_create();
+    LRESULT _on_log(ETWLogger::LogDataUI* log);
+    LRESULT _on_custom_draw_listview(NMHDR* hdr);
+    LRESULT _on_get_dispinfo(NMHDR* hdr);
+    LRESULT _on_select_column();
+    LRESULT _on_drag_column(NMHDR* hdr);
+
+protected:
     void _module_from_guid(const GUID& guid, std::wstring* name, const std::wstring** root);
 };
 

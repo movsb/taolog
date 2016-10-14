@@ -211,6 +211,8 @@ protected:
 
     virtual LRESULT on_notify(HWND hwnd, taowin::control* pc, int code, NMHDR* hdr)
     {
+        if(!pc) return 0;
+
         if(pc->name() >= _T("0") && pc->name() < std::to_wstring(_data.cols.size())) {
             if(code == BN_CLICKED) {
                 int index = _ttoi(pc->name().c_str());
@@ -371,22 +373,6 @@ protected:
             _colors[TRACE_LEVEL_CRITICAL]       = {RGB(255, 255, 255),  RGB(255,   0,   0)};
             _colors[TRACE_LEVEL_VERBOSE]        = {RGB(  0,   0,   0),  RGB(255, 255, 255)};
 
-            MenuEntry menu;
-
-            menu.name = L"±íÍ·ÉèÖÃ";
-            menu.onclick = [&]() {
-                auto colsel = new ColumnSelection(_cols);
-
-                colsel->OnToggle([&](int i) {
-                    auto& col = _cols.cols[i];
-                    _listview->set_column_width(i, col.show ? col.width : 0);
-                });
-
-                colsel->domodal(this);
-            };
-
-            _menus.push_back(menu);
-
             HMENU hMenu = ::CreateMenu();
 
             for(int i = 0; i < (int)_menus.size(); i++) {
@@ -423,6 +409,25 @@ protected:
     }
 
     virtual LRESULT on_notify(HWND hwnd, taowin::control* pc, int code, NMHDR* hdr) override {
+        if(!pc) {
+            if(hwnd == _listview->get_header()) {
+                if(code == NM_RCLICK) {
+                    auto colsel = new ColumnSelection(_cols);
+
+                    colsel->OnToggle([&](int i) {
+                        auto& col = _cols.cols[i];
+                        _listview->set_column_width(i, col.show ? col.width : 0);
+                    });
+
+                    colsel->domodal(this);
+
+                    return 0;
+                }
+            }
+
+            return 0;
+        }
+
         if(pc->name() == _T("lv")) {
             if (code == LVN_GETDISPINFO) {
                 auto pdi = reinterpret_cast<NMLVDISPINFO*>(hdr);

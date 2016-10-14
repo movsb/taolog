@@ -36,6 +36,7 @@ class ETWLogger
 public:
     struct LogData
     {
+        GUID guid;              // 生成者 GUID
         SYSTEMTIME time;        // 时间戳
         unsigned int line;      // 行号
         unsigned int size;      // 字符数（包含null）
@@ -54,6 +55,8 @@ public:
         string strLine;
         string strPid;
         string strTid;
+
+        string strProject;
     };
 
     struct LogDataTrace
@@ -213,6 +216,9 @@ public:
         int cch;
 
         LogData& data = m_log.data;
+
+        // the guid
+        data.guid = m_providerGuid;
         
         // the file
         cch = min(_countof(data.file) - 1, _tcslen(file));

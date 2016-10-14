@@ -98,6 +98,7 @@ void __stdcall ProcessEvents(EVENT_TRACE* pEvent)
     auto log_ui = new ETWLogger::LogDataUI;
 
     ::memcpy(log_ui, &log_data, sizeof(log_data));
+
     log_ui->pid     = pEvent->Header.ProcessId;
     log_ui->tid     = pEvent->Header.ThreadId;
     log_ui->level   = pEvent->Header.Class.Level;
@@ -320,6 +321,8 @@ protected:
         switch(umsg) {
         case WM_CREATE:
         {
+            ::SetWindowText(_hwnd, !_mod ? L"添加模块" : L"修改模块");
+
             _name = _root->find<taowin::edit>(L"name");
             _path = _root->find<taowin::edit>(L"root");
             _level= _root->find<taowin::combobox>(L"level");
@@ -461,8 +464,8 @@ protected:
         <horizontal padding="5,5,5,5">
             <listview name="list" style="showselalways,ownerdata" exstyle="clientedge" />
             <vertical padding="5,5,5,5" width="50">
-                <button name="add" text="增加" height="24" />
-                <control height="5" />
+                <button name="add" text="添加" height="24" />
+                <control height="20" />
                 <button name="modify" text="修改" style="disabled" height="24"/>
                 <control height="5" />
                 <button name="enable" text="启用" style="disabled" height="24" />
@@ -615,6 +618,7 @@ protected:
         _listview->redraw_items(i, i);
 
         _root->find<taowin::button>(L"enable")->set_text(_modules[i]->enable ? L"禁用" : L"启用");
+        _root->find<taowin::button>(L"modify")->set_enabled(!_modules[i]->enable);
 
         // TODO fire event
     }
@@ -641,8 +645,9 @@ protected:
     void _delete_item()
     {
         int count = _listview->get_selected_count();
+        const wchar_t* title = count == 1 ? _modules[_listview->get_next_item(-1, LVNI_SELECTED)]->name.c_str() : L"确认";
 
-        if(msgbox((L"确定要删除选中的 " + std::to_wstring(count) + L" 项？").c_str(), MB_OKCANCEL|MB_ICONQUESTION) == IDOK) {
+        if(msgbox((L"确定要删除选中的 " + std::to_wstring(count) + L" 项？").c_str(), MB_OKCANCEL|MB_ICONQUESTION, title) == IDOK) {
             int index = -1;
             std::vector<int> selected;
             while((index = _listview->get_next_item(index, LVNI_SELECTED)) != -1) {
@@ -862,8 +867,13 @@ protected:
 
         case WM_DO_LOG:
         {
-            _events.push_back(reinterpret_cast<ETWLogger::LogDataUI*>(lparam));
+            auto item = reinterpret_cast<ETWLogger::LogDataUI*>(lparam);
+
+            item->strProject = _project_from_guid(item->guid);
+
+            _events.push_back(item);
             _listview->set_item_count(_events.size(), LVSICF_NOINVALIDATEALL);
+
             break;
         }
 		}
@@ -922,7 +932,7 @@ protected:
                 case 0: value = evt->strTime.c_str();   break;
                 case 1: value = evt->strPid.c_str();    break;
                 case 2: value = evt->strTid.c_str();    break;
-                case 3: value = _T("");                 break;
+                case 3: value = evt->strProject.c_str();break;
                 case 4: value = evt->file;              break;
                 case 5: value = evt->func;              break;
                 case 6: value = evt->strLine.c_str();   break;
@@ -970,6 +980,32 @@ protected:
             }
         }
         return 0;
+    }
+
+private:
+    struct GUIDLessComparer {
+        bool operator()(const GUID& left, const GUID& right) const {
+            return ::memcmp(&left, &right, sizeof(GUID)) < 0;
+        }
+    };
+
+    std::map<GUID, std::wstring, GUIDLessComparer> _map_proj;
+
+    std::wstring _project_from_guid(const GUID& guid)
+    {
+        if(!_map_proj.count(guid)) {
+            for(auto& item : _modules) {
+                if(::IsEqualGUID(item->guid, guid)) {
+                    _map_proj[guid] = item->name;
+                    break;
+                }
+            }
+
+            if(!_map_proj.count(guid))
+                _map_proj[guid] = L"<unknown>";
+        }
+
+        return _map_proj[guid];
     }
 };
 

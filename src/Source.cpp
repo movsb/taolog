@@ -858,18 +858,24 @@ protected:
 
 			return 0;
 		}
-        case WM_CLOSE:
-            break;
-            if(MessageBox(_hwnd, _T("确认关闭？"), nullptr, MB_OKCANCEL) != IDOK) {
-                return 0;
-            }
-            break;
 
         case WM_DO_LOG:
         {
             auto item = reinterpret_cast<ETWLogger::LogDataUI*>(lparam);
 
-            item->strProject = _project_from_guid(item->guid);
+            const std::wstring* root = nullptr;
+
+            _module_from_guid(item->guid, &item->strProject, &root);
+
+            // 相对路径
+            if(*item->file && root) {
+                if(::wcsnicmp(item->file, root->c_str(), root->size()) == 0) {
+                    item->offset_of_file = (int)root->size();
+                }
+            }
+            else {
+                item->offset_of_file = 0;
+            }
 
             _events.push_back(item);
             _listview->set_item_count(_events.size(), LVSICF_NOINVALIDATEALL);
@@ -929,14 +935,14 @@ protected:
 
                 switch(lit->iSubItem)
                 {
-                case 0: value = evt->strTime.c_str();   break;
-                case 1: value = evt->strPid.c_str();    break;
-                case 2: value = evt->strTid.c_str();    break;
-                case 3: value = evt->strProject.c_str();break;
-                case 4: value = evt->file;              break;
-                case 5: value = evt->func;              break;
-                case 6: value = evt->strLine.c_str();   break;
-                case 7: value = evt->text;              break;
+                case 0: value = evt->strTime.c_str();               break;
+                case 1: value = evt->strPid.c_str();                break;
+                case 2: value = evt->strTid.c_str();                break;
+                case 3: value = evt->strProject.c_str();            break;
+                case 4: value = evt->file + evt->offset_of_file;    break;
+                case 5: value = evt->func;                          break;
+                case 6: value = evt->strLine.c_str();               break;
+                case 7: value = evt->text;                          break;
                 }
 
                 lit->pszText = const_cast<TCHAR*>(value);
@@ -989,23 +995,29 @@ private:
         }
     };
 
-    std::map<GUID, std::wstring, GUIDLessComparer> _map_proj;
+    std::map<GUID, ModuleEntry*, GUIDLessComparer> _guid2mod;
 
-    std::wstring _project_from_guid(const GUID& guid)
+    void _module_from_guid(const GUID& guid, std::wstring* name, const std::wstring** root)
     {
-        if(!_map_proj.count(guid)) {
+        if(!_guid2mod.count(guid)) {
             for(auto& item : _modules) {
                 if(::IsEqualGUID(item->guid, guid)) {
-                    _map_proj[guid] = item->name;
+                    _guid2mod[guid] = item;
                     break;
                 }
             }
-
-            if(!_map_proj.count(guid))
-                _map_proj[guid] = L"<unknown>";
         }
 
-        return _map_proj[guid];
+        auto it = _guid2mod.find(guid);
+
+        if(it != _guid2mod.cend()) {
+            *name = it->second->name;
+            *root = &it->second->root;
+        }
+        else {
+            *name = L"<unknown>";
+            *root = nullptr;
+        }
     }
 };
 

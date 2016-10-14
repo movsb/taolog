@@ -57,6 +57,8 @@ public:
         string strTid;
 
         string strProject;
+
+        int offset_of_file;
     };
 
     struct LogDataTrace

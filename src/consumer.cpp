@@ -31,10 +31,11 @@ bool Consumer::start(const wchar_t * session)
         return false;
     }
 
-    _thread = (HANDLE)::_beginthreadex(nullptr, 0, ConsumerThread, (void*)_handle, 0, nullptr);
-    if (!_thread) {
+    HANDLE thread = (HANDLE)::_beginthreadex(nullptr, 0, ConsumerThread, (void*)_handle, 0, nullptr);
+    if (!thread) {
         return false;
     }
+    ::CloseHandle(thread);
 
     return true;
 }

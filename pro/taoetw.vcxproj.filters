@@ -116,9 +116,6 @@
     <ClInclude Include="..\src\main_window.h">
       <Filter>Source Files\gui</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\_menu_define.hpp">
-      <Filter>Source Files\gui</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\_module_entry.hpp">
       <Filter>Source Files\gui</Filter>
     </ClInclude>

@@ -35,7 +35,7 @@ void Controller::enable(const GUID& provider, bool enable_, const char* level)
 void Controller::stop()
 {
     ::ControlTrace(0, _name.c_str(), _props, EVENT_TRACE_CONTROL_STOP);
-    delete[] _props;
+    // delete[] _props;
 }
 
 } // namespace taoetw

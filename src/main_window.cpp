@@ -29,6 +29,14 @@ LPCTSTR MainWindow::get_skin_xml() const
     </res>
     <root>
         <vertical padding="5,5,5,5">
+            <horizontal height="30" padding="0,4,0,4">
+                <button name="start-logging" text="开始记录" width="60" />
+                <control width="5" />
+                <button name="stop-logging" text="停止记录" width="60" />
+                <control width="5" />
+                <button name="module-manager" text="模块管理" width="60" />
+                <control width="5" />
+            </horizontal>
             <listview name="lv" style="singlesel,showselalways,ownerdata" exstyle="clientedge">  </listview>
         </vertical>
     </root>
@@ -49,9 +57,11 @@ LRESULT MainWindow::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
 
 LRESULT MainWindow::on_menu(int id, bool is_accel)
 {
-    if (id < (int)_menus.size()) {
-        _menus[id].onclick();
+    /*
+    if (id < (int)_menus.subs.size()) {
+        _menus.subs[id].onclick();
     }
+    */
     return 0;
 }
 
@@ -84,8 +94,34 @@ LRESULT MainWindow::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR *
             return 0;
         }
     }
+    else if (pc->name() == L"start-logging") {
+        _start();
+    }
+    else if (pc->name() == L"stop-logging") {
+        _stop();
+    }
+    else if (pc->name() == L"module-manager") {
+        (new ModuleManager(_modules))->domodal(this);
+    }
 
     return 0;
+}
+
+void MainWindow::_start()
+{
+    _controller.start(g_etw_session);
+
+    GUID guid = { 0x630514b5, 0x7b96, 0x4b74,{ 0x9d, 0xb6, 0x66, 0xbd, 0x62, 0x1f, 0x93, 0x86 } };
+    _controller.enable(guid, true, 0);
+
+    _consumer.init(_hwnd, kDoLog);
+    _consumer.start(g_etw_session);
+}
+
+void MainWindow::_stop()
+{
+    _controller.stop();
+    _consumer.stop();
 }
 
 void MainWindow::_init_listview()
@@ -115,20 +151,44 @@ void MainWindow::_init_listview()
 
 void MainWindow::_init_menu()
 {
+    /*
     MenuEntry menu;
 
+    menu.enable = true;
+    menu.name = L"开始记录";
+    menu.onclick = [&]() {
+        _start();
+
+    };
+    _menus[L"start_logging"] = menu;
+
+    menu.enable = true;
+    menu.name = L"停止记录";
+    menu.onclick = [&]() {
+        _stop();
+    };
+    _menus[L"stop_logging"] = menu;
+
+    menu.enable = true;
     menu.name = L"模块管理";
     menu.onclick = [&]() {
-        auto* mgr = new ModuleManager(_modules);
-        mgr->domodal(this);
+        (new ModuleManager(_modules))->domodal(this);
     };
-
-    _menus.push_back(menu);
+    _menus[L"module_manager"] = menu;
 
     HMENU hMenu = ::CreateMenu();
-    for (int i = 0; i < (int)_menus.size(); i++)
+    _menus
+
+    int i = 0;
+    for (auto it = _menus.begin(), end = _menus.end(); it != end; ++it, ++i) {
+        auto& menu = it->second;
+        menu.id = i;
         ::AppendMenu(hMenu, MF_STRING, i, _menus[i].name.c_str());
+        ::EnableMenuItem(hMenu, i, MF_BYCOMMAND | (_menus[i].enable ? MF_ENABLED : MF_GRAYED | MF_DISABLED));
+    }
+
     ::SetMenu(_hwnd, hMenu);
+    */
 }
 
 void MainWindow::_view_detail(int i)
@@ -145,15 +205,7 @@ LRESULT MainWindow::_on_create()
     _init_listview();
     _init_menu();
 
-    _controller.start(g_etw_session);
-
-    GUID guid = { 0x630514b5, 0x7b96, 0x4b74,{ 0x9d, 0xb6, 0x66, 0xbd, 0x62, 0x1f, 0x93, 0x86 } };
-    _controller.enable(guid, true, 0);
-
     taoetw::g_Consumer = &_consumer;
-
-    _consumer.init(_hwnd, kDoLog);
-    _consumer.start(g_etw_session);
 
     return 0;
 }

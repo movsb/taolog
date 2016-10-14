@@ -21,7 +21,7 @@ public:
         : _hwnd(nullptr)
         , _umsg(0)
         , _handle(0)
-        , _thread(nullptr)
+        // , _thread(nullptr)
     {}
 
     ~Consumer()
@@ -41,7 +41,7 @@ protected:
     static unsigned int __stdcall ConsumerThread(void* ud);
 
 protected:
-    HANDLE _thread;
+    // HANDLE _thread;
     TRACEHANDLE _handle;
     HWND _hwnd;
     UINT _umsg;

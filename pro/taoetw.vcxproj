@@ -185,7 +185,6 @@
     <ClInclude Include="..\src\module_editor.h" />
     <ClInclude Include="..\src\_module_entry.hpp" />
     <ClInclude Include="..\src\module_manager.h" />
-    <ClInclude Include="..\src\_menu_define.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

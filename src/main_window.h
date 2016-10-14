@@ -4,7 +4,6 @@
 
 #include "etwlogger.h"
 
-#include "_menu_define.hpp"
 #include "_module_entry.hpp"
 
 #include "column_selection.h"
@@ -32,7 +31,7 @@ private:
 
     MapColors           _colors;
     ColumnContainer     _columns;
-    MenuContainer       _menus;
+    // MenuContainer       _menus;
     ModuleContainer     _modules;
     EventContainer      _events;
 
@@ -48,6 +47,9 @@ protected:
     virtual LRESULT on_notify(HWND hwnd, taowin::control* pc, int code, NMHDR* hdr) override;
 
 protected:
+    void _start();
+    void _stop();
+
     void _init_listview();
     void _init_menu();
     void _view_detail(int i);

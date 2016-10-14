@@ -126,12 +126,22 @@ class EventDetail : public taowin::window_creator
 {
 private:
     const ETWLogger::LogDataUI* _log;
+    COLORREF _fg, _bg;
+    HBRUSH _hbrBk;
+    HWND _hText;
 
 public:
-    EventDetail(const ETWLogger::LogDataUI* log)
+    EventDetail(const ETWLogger::LogDataUI* log, COLORREF fg = RGB(0,0,0), COLORREF bg=RGB(255,255,255))
         : _log(log)
+        , _fg(fg)
+        , _bg(bg)
     {
+        _hbrBk = ::CreateSolidBrush(_bg);
+    }
 
+    ~EventDetail()
+    {
+        ::DeleteObject(_hbrBk);
     }
 
 protected:
@@ -161,9 +171,24 @@ protected:
         case WM_CREATE:
         {
             auto edit = _root->find<taowin::edit>(L"text");
+            _hText = edit->hwnd();
             edit->set_text(_log->text);
             return 0;
         }
+        case WM_CTLCOLORSTATIC:
+        {
+            HDC hdc = (HDC)wparam;
+            HWND hwnd = (HWND)lparam;
+
+            if(hwnd == _hText) {
+                ::SetTextColor(hdc, _fg);
+                ::SetBkColor(hdc, _bg);
+                return LRESULT(_hbrBk);
+            }
+
+            break;
+        }
+
         }
         return __super::handle_message(umsg, wparam, lparam);
     }
@@ -301,7 +326,8 @@ protected:
 
                 if(nmlv->iItem != -1) {
                     auto evt = _events[nmlv->iItem];
-                    auto detail_window = new EventDetail(evt);
+                    auto& cr = _colors[evt->level];
+                    auto detail_window = new EventDetail(evt, cr.fg, cr.bg);
                     detail_window->create();
                     detail_window->show();
                 }

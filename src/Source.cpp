@@ -425,8 +425,11 @@ protected:
                 }
                 else if(code == HDN_ENDTRACK) {
                     auto nmhdr = (NMHEADER*)hdr;
+                    auto& item = nmhdr->pitem;
+                    auto& col = _cols.cols[nmhdr->iItem];
 
-                    _cols.cols[nmhdr->iItem].show = nmhdr->pitem->cxy != 0;
+                    col.show = item->cxy != 0;
+                    if(item->cxy) col.width = item->cxy;
 
                     return 0;
                 }

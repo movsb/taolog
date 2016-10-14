@@ -423,6 +423,13 @@ protected:
 
                     return 0;
                 }
+                else if(code == HDN_ENDTRACK) {
+                    auto nmhdr = (NMHEADER*)hdr;
+
+                    _cols.cols[nmhdr->iItem].show = nmhdr->pitem->cxy != 0;
+
+                    return 0;
+                }
             }
 
             return 0;

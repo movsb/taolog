@@ -10,18 +10,27 @@
 #include <process.h>
 #include <evntrace.h>
 
-#define ETW_LOGGER
 #include "etwlogger.h"
 
 #include <taowin/src/tw_taowin.h>
 
+#include "consumer.h"
+
 static HWND g_hWnd;
 static const UINT WM_DO_LOG = WM_USER + 0;
+
+static const wchar_t* g_etw_session = L"taoetw-session";
 
 // This GUID defines the event trace class. 	
 // {6E5E5CBC-8ACF-4fa6-98E4-0C63A075323B}
 static const GUID clsGuid = 
 { 0x6e5e5cbc, 0x8acf, 0x4fa6, { 0x98, 0xe4, 0xc, 0x63, 0xa0, 0x75, 0x32, 0x3b } };
+
+namespace taoetw {
+
+Consumer* g_Consumer;
+
+}
 
 
 class Controller
@@ -82,45 +91,6 @@ void Controller::stop()
 {
     ::ControlTrace(0, _name.c_str(), _props, EVENT_TRACE_CONTROL_STOP);
     delete[] _props;
-}
-
-ULONG __stdcall BufferCallback(EVENT_TRACE_LOGFILE* logfile)
-{
-    return TRUE;
-}
-;
-void __stdcall ProcessEvents(EVENT_TRACE* pEvent)
-{
-    if(!pEvent || !IsEqualGUID(pEvent->Header.Guid, clsGuid))
-        return;
-
-    const auto& log_data = *(ETWLogger::LogData*)pEvent->MofData;
-    auto log_ui = new ETWLogger::LogDataUI;
-
-    ::memcpy(log_ui, &log_data, sizeof(log_data));
-
-    log_ui->pid     = pEvent->Header.ProcessId;
-    log_ui->tid     = pEvent->Header.ThreadId;
-    log_ui->level   = pEvent->Header.Class.Level;
-
-    log_ui->strPid  = std::to_wstring(log_ui->pid);
-    log_ui->strTid  = std::to_wstring(log_ui->tid);
-    log_ui->strLine = std::to_wstring(log_ui->line);
-
-    {
-        TCHAR buf[1024];
-        auto& t = log_ui->time;
-
-        _sntprintf(&buf[0], _countof(buf),
-            _T("%d-%02d-%02d %02d:%02d:%02d:%03d"),
-            t.wYear, t.wMonth, t.wDay,
-            t.wHour, t.wMinute, t.wSecond, t.wMilliseconds
-        );
-
-        log_ui->strTime = buf;
-    }
-
-    ::PostMessage(g_hWnd, WM_DO_LOG, 0, LPARAM(log_ui));
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -786,6 +756,8 @@ private:
     ColumnData _cols;
     std::vector<MenuEntry> _menus;
     std::vector<ModuleEntry*> _modules;
+    Controller _controller;
+    taoetw::Consumer _consumer;
 
 public:
 	TW()
@@ -853,8 +825,15 @@ protected:
                 ::AppendMenu(hMenu, MF_STRING, i, _menus[i].name.c_str());
             ::SetMenu(_hwnd, hMenu);
 
-            _modules.push_back(new ModuleEntry{L"ThunderBrowser", L"", true});
-            _modules.push_back(new ModuleEntry{L"ThunderInstall", L"", false});
+            _controller.start(g_etw_session);
+
+            GUID guid = { 0x630514b5, 0x7b96, 0x4b74, { 0x9d, 0xb6, 0x66, 0xbd, 0x62, 0x1f, 0x93, 0x86 } };
+            _controller.enable(guid, true, 0);
+
+            taoetw::g_Consumer = &_consumer;
+
+            _consumer.init(_hwnd, WM_USER + 0);
+            _consumer.start(g_etw_session);
 
 			return 0;
 		}
@@ -1032,28 +1011,6 @@ int __stdcall wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR lpCmdlind, int nSh
     tw1.show();
 
     g_hWnd = tw1.hwnd();
-
-    std::wcout.imbue(std::locale("chs"));
-    Controller controller;
-    controller.start(L"xxxxxx");
-
-    GUID guid = { 0x630514b5, 0x7b96, 0x4b74, { 0x9d, 0xb6, 0x66, 0xbd, 0x62, 0x1f, 0x93, 0x86 } };
-    controller.enable(guid, true, 0);
-
-    std::thread([]() {
-        EVENT_TRACE_LOGFILE logfile {0};
-        logfile.LoggerName = L"xxxxxx";
-        logfile.LogFileMode = EVENT_TRACE_REAL_TIME_MODE;
-        logfile.EventCallback = ProcessEvents;
-        logfile.BufferCallback = BufferCallback;
-
-        TRACEHANDLE handle = ::OpenTrace(&logfile);
-        assert(handle != INVALID_PROCESSTRACE_HANDLE);
-
-        ::ProcessTrace(&handle, 1, nullptr, nullptr);
-
-        ::CloseTrace(handle);
-    }).detach();
 
     taowin::loop_message();
 

@@ -42,6 +42,9 @@
     <ClCompile Include="..\3rd\taowin\src\tw_window.cpp">
       <Filter>Source Files\taowin</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\consumer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="../src/etwlogger.h">
@@ -67,6 +70,9 @@
     </ClInclude>
     <ClInclude Include="..\3rd\taowin\src\tw_window.h">
       <Filter>Source Files\taowin</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\consumer.h">
+      <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

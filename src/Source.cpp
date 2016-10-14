@@ -4,6 +4,7 @@
 #include <string>
 #include <iostream>
 #include <thread>
+#include <unordered_map>
 
 #include <windows.h>
 #include <process.h>
@@ -140,6 +141,15 @@ struct ColumnData
     std::vector<Column> cols;
 };
 
+struct ModuleEntry
+{
+    std::wstring    name;
+    std::wstring    root;
+    bool            enable;
+    unsigned char   level;
+    GUID            guid;
+};
+
 class ColumnSelection : public taowin::window_creator
 {
 private:
@@ -164,7 +174,7 @@ protected:
     virtual LPCTSTR get_skin_xml() const override
     {
         LPCTSTR json = LR"tw(
-<window title="Event columns" size="512,480">
+<window title="表头" size="512,480">
     <res>
         <font name="default" face="微软雅黑" size="12"/>
         <font name="1" face="微软雅黑" size="12"/>
@@ -190,6 +200,7 @@ protected:
             for(int i = 0; i < (int)_data.cols.size(); i++) {
                 auto check = new taowin::check;
                 std::map<taowin::string, taowin::string> attrs;
+
                 attrs[_T("text")] = _data.cols[i].name.c_str();
                 attrs[_T("name")] = std::to_wstring(i).c_str();
                 attrs[_T("checked")] = _data.cols[i].show ? _T("true") : _T("false");
@@ -234,6 +245,454 @@ protected:
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+class ModuleEntryEditor : public taowin::window_creator
+{
+public:
+    typedef std::function<void(ModuleEntry* p)> fnOnOk;
+    typedef std::function<bool(const GUID& guid, std::wstring* err)> fnOnCheckGuid;
+
+private:
+    ModuleEntry* _mod;
+
+    fnOnOk _onok;
+    fnOnCheckGuid _oncheckguid;
+
+    taowin::edit* _name;
+    taowin::edit* _guid;
+    taowin::edit* _path;
+    taowin::combobox* _level;
+
+public:
+    ModuleEntryEditor(ModuleEntry* mod, fnOnOk onok, fnOnCheckGuid onguid)
+        : _mod(mod)
+        , _onok(onok)
+        , _oncheckguid(onguid)
+    {
+
+    }
+
+protected:
+    virtual LPCTSTR get_skin_xml() const override
+    {
+        LPCTSTR json = LR"tw(
+<window title="添加模块" size="350,200">
+    <res>
+        <font name="default" face="微软雅黑" size="12"/>
+        <font name="1" face="微软雅黑" size="12"/>
+        <font name="consolas" face="Consolas" size="12"/>
+    </res>
+    <root>
+        <vertical>
+            <vertical name="container" padding="10,10,10,10" height="144">
+                <horizontal height="30" padding="0,3,0,3">
+                    <label style="centerimage" text="名字" width="50"/>
+                    <edit name="name" style="tabstop" exstyle="clientedge" style=""/>
+                </horizontal>
+                <horizontal height="30" padding="0,3,0,3">
+                    <label style="centerimage" text="GUID" width="50"/>
+                    <edit name="guid" style="tabstop" exstyle="clientedge" />
+                </horizontal>
+                <horizontal height="30" padding="0,3,0,3">
+                    <label style="centerimage" text="目录" width="50"/>
+                    <edit name="root" style="tabstop" exstyle="clientedge" />
+                </horizontal>
+                <horizontal height="30" padding="0,3,0,3">
+                    <label style="centerimage" text="等级" width="50"/>
+                    <combobox name="level"  height="200"/>
+                </horizontal>
+            </vertical>
+            <horizontal height="40" padding="10,4,10,4">
+                <control />
+                <button name="ok" text="保存" width="50"/>
+                <control width="10" />
+                <button name="cancel" text="取消" width="50"/>
+            </horizontal>
+        </vertical>
+    </root>
+</window>
+)tw";
+        return json;
+    }
+
+    virtual LRESULT handle_message(UINT umsg, WPARAM wparam, LPARAM lparam) override
+    {
+        switch(umsg) {
+        case WM_CREATE:
+        {
+            _name = _root->find<taowin::edit>(L"name");
+            _path = _root->find<taowin::edit>(L"root");
+            _level= _root->find<taowin::combobox>(L"level");
+            _guid = _root->find<taowin::edit>(L"guid");
+
+            std::unordered_map<int, const TCHAR*> levels = {
+                {TRACE_LEVEL_INFORMATION,   L"TRACE_LEVEL_INFORMATION"  },
+                {TRACE_LEVEL_WARNING,       L"TRACE_LEVEL_WARNING"      },
+                {TRACE_LEVEL_ERROR,         L"TRACE_LEVEL_ERROR"        },
+                {TRACE_LEVEL_CRITICAL,      L"TRACE_LEVEL_CRITICAL"     },
+                {TRACE_LEVEL_VERBOSE,       L"TRACE_LEVEL_VERBOSE"      },
+            };
+
+            for(auto& pair : levels) {
+                int i = _level->add_string(pair.second);
+                _level->set_item_data(i, (void*)pair.first);
+            }
+
+            if(!_mod) {
+                _level->set_cur_sel(0);
+            }
+            else {
+                _name->set_text(_mod->name.c_str());
+                _path->set_text(_mod->root.c_str());
+
+                wchar_t guid[128];
+                if(::StringFromGUID2(_mod->guid, &guid[0], _countof(guid))) {
+                    _guid->set_text(guid);
+                }
+                else {
+                    _guid->set_text(L"{00000000-0000-0000-0000-000000000000}");
+                }
+
+                for(int i = 0, n = _level->get_count();; i++) {
+                    if(i < n) {
+                        if((int)_level->get_item_data(i) == _mod->level) {
+                            _level->set_cur_sel(i);
+                            break;
+                        }
+                    }
+                    else {
+                        _level->set_cur_sel(0);
+                        break;
+                    }
+                }
+            }
+
+            return 0;
+        }
+        }
+        return __super::handle_message(umsg, wparam, lparam);
+    }
+
+    virtual LRESULT on_notify(HWND hwnd, taowin::control* pc, int code, NMHDR* hdr)
+    {
+        if(!pc) return 0;
+
+        if(pc->name() == L"ok") {
+            if(!_validate_form())
+                return 0;
+
+            auto entry = _mod ? _mod : new ModuleEntry;
+            entry->name = _name->get_text();
+            entry->root = _path->get_text();
+            entry->level = (int)_level->get_item_data(_level->get_cur_sel());
+            ::CLSIDFromString(_guid->get_text().c_str(), &entry->guid);
+            entry->enable = false;
+
+            _onok(entry);
+
+            close();
+            return 0;
+        }
+        else if(pc->name() == L"cancel") {
+            close();
+            return 0;
+        }
+
+        return 0;
+    }
+
+    virtual void on_final_message() override
+    {
+        __super::on_final_message();
+        delete this;
+    }
+
+protected:
+    bool _validate_form()
+    {
+        if(_name->get_text() == L"") {
+            msgbox(L"模块名字不应为空。", MB_ICONERROR);
+            return false;
+        }
+
+        auto guid = _guid->get_text();
+        CLSID clsid;
+        if(FAILED(::CLSIDFromString(guid.c_str(), &clsid)) || ::IsEqualGUID(clsid, GUID_NULL)) {
+            msgbox(L"无效 GUID 值。", MB_ICONERROR);
+            return false;
+        }
+
+        std::wstring err;
+        if(!_oncheckguid(clsid, &err)) {
+            msgbox(err.c_str(), MB_ICONERROR);
+            return false;
+        }
+
+        return true;
+    }
+};
+
+//////////////////////////////////////////////////////////////////////////
+
+class ModuleManager : public taowin::window_creator
+{
+private:
+    taowin::listview* _listview;
+    std::vector<ModuleEntry*>& _modules;
+
+public:
+    ModuleManager(std::vector<ModuleEntry*>& modules)
+        : _modules(modules)
+    {
+
+    }
+
+protected:
+	virtual LPCTSTR get_skin_xml() const override
+	{
+        LPCTSTR json = LR"tw(
+<window title="模块管理" size="300,300">
+    <res>
+        <font name="default" face="微软雅黑" size="12"/>
+        <font name="1" face="微软雅黑" size="12"/>
+        <font name="consolas" face="Consolas" size="12"/>
+    </res>
+    <root>
+        <horizontal padding="5,5,5,5">
+            <listview name="list" style="showselalways,ownerdata" exstyle="clientedge" />
+            <vertical padding="5,5,5,5" width="50">
+                <button name="add" text="增加" height="24" />
+                <control height="5" />
+                <button name="modify" text="修改" style="disabled" height="24"/>
+                <control height="5" />
+                <button name="enable" text="启用" style="disabled" height="24" />
+                <control height="5" />
+                <button name="delete" text="删除" style="disabled" height="24"/>
+                <control height="5" />
+            </vertical>
+        </horizontal>
+    </root>
+</window>
+)tw";
+		return json;
+	}
+
+    virtual LRESULT handle_message(UINT umsg, WPARAM wparam, LPARAM lparam) override
+    {
+        switch(umsg)
+        {
+        case WM_CREATE:
+        {
+            _listview = _root->find<taowin::listview>(L"list");
+
+            _listview->insert_column(L"名字", 150, 0);
+            _listview->insert_column(L"状态", 50, 1);
+
+            _listview->set_item_count((int)_modules.size(), 0);
+
+            return 0;
+        }
+
+        }
+        return __super::handle_message(umsg, wparam, lparam);
+    }
+
+    virtual LRESULT on_notify(HWND hwnd, taowin::control* pc, int code, NMHDR* hdr) override {
+        if(!pc) return 0;
+
+        if(pc->name() == _T("list")) {
+            if(code == LVN_GETDISPINFO) {
+                auto pdi = reinterpret_cast<NMLVDISPINFO*>(hdr);
+                auto& mod = _modules[pdi->item.iItem];
+                auto lit = &pdi->item;
+
+                const TCHAR* value = _T("");
+
+                switch(lit->iSubItem) {
+                case 0: value = mod->name.c_str();                   break;
+                case 1: value = mod->enable ? L"已启用" : L"已禁用";  break;
+                }
+
+                lit->pszText = const_cast<TCHAR*>(value);
+
+                return 0;
+            }
+            else if(code == NM_CUSTOMDRAW) {
+                LRESULT lr = CDRF_DODEFAULT;
+                ModuleEntry* mod;
+
+                auto lvcd = (LPNMLVCUSTOMDRAW)hdr;
+
+                switch(lvcd->nmcd.dwDrawStage) {
+                case CDDS_PREPAINT:
+                    lr = CDRF_NOTIFYITEMDRAW;
+                    break;
+
+                case CDDS_ITEMPREPAINT:
+                    mod = _modules[lvcd->nmcd.dwItemSpec];
+
+                    if(mod->enable) {
+                        lvcd->clrText = RGB(0, 0, 255);
+                        lvcd->clrTextBk = RGB(255, 255, 255);
+                    }
+                    else {
+                        lvcd->clrText = RGB(0, 0, 0);
+                        lvcd->clrTextBk = RGB(255, 255, 255);
+                    }
+
+                    lr = CDRF_NEWFONT;
+                    break;
+                }
+
+                return lr;
+            }
+            else if(code == NM_DBLCLK) {
+                auto nmlv = reinterpret_cast<NMITEMACTIVATE*>(hdr);
+
+                if(nmlv->iItem != -1) {
+                    _toggle_enable(nmlv->iItem);
+                }
+
+                return 0;
+            }
+            else if(code == LVN_ITEMCHANGED
+                || code == LVN_DELETEITEM
+                || code == LVN_DELETEALLITEMS
+                )
+            {
+                auto btn_enable = _root->find<taowin::button>(L"enable");
+                auto btn_modify = _root->find<taowin::button>(L"modify");
+                auto btn_delete = _root->find<taowin::button>(L"delete");
+
+                int sel_count = _listview->get_selected_count();
+                int i = _listview->get_next_item(-1, LVNI_SELECTED);
+
+                btn_enable->set_enabled(sel_count != 0);
+                btn_modify->set_enabled(sel_count == 1 && i != -1 && !_modules[i]->enable);
+                btn_delete->set_enabled(sel_count != 0);
+
+                if(sel_count == 1) {
+                    btn_enable->set_text(_modules[i]->enable ? L"禁用" : L"启用");
+                }
+
+                return 0;
+            }
+        }
+        else if(pc->name() == L"enable") {
+            int index = _listview->get_next_item(-1, LVNI_SELECTED);
+            if(index != -1)
+                _toggle_enable(index);
+            return 0;
+        }
+        else if(pc->name() == L"add") {
+            _add_item();
+            return 0;
+        }
+        else if(pc->name() == L"modify") {
+            int index = _listview->get_next_item(-1, LVNI_SELECTED);
+            if(index != -1)
+                _modify_item(index);
+            return 0;
+        }
+        else if(pc->name() == L"delete") {
+            _delete_item();
+            return 0;
+        }
+
+        return 0;
+    }
+
+    virtual void on_final_message() override
+    {
+        __super::on_final_message();
+        delete this;
+    }
+
+protected:
+    void _toggle_enable(int i)
+    {
+        _modules[i]->enable = !_modules[i]->enable;
+        _listview->redraw_items(i, i);
+
+        _root->find<taowin::button>(L"enable")->set_text(_modules[i]->enable ? L"禁用" : L"启用");
+
+        // TODO fire event
+    }
+
+    void _modify_item(int i)
+    {
+        auto onok = [&](ModuleEntry* entry) {
+            _listview->redraw_items(i, i);
+            // TODO fire event
+        };
+
+        auto onguid = [&](const GUID& guid, std::wstring* err) {
+            if(_has_guid(guid) && !::IsEqualGUID(guid, _modules[i]->guid)) {
+                *err = L"此 GUID 已经存在。";
+                return false;
+            }
+
+            return true;
+        };
+
+        (new ModuleEntryEditor(_modules[i], onok, onguid))->domodal(this);
+    }
+
+    void _delete_item()
+    {
+        int count = _listview->get_selected_count();
+
+        if(msgbox((L"确定要删除选中的 " + std::to_wstring(count) + L" 项？").c_str(), MB_OKCANCEL|MB_ICONQUESTION) == IDOK) {
+            int index = -1;
+            std::vector<int> selected;
+            while((index = _listview->get_next_item(index, LVNI_SELECTED)) != -1) {
+                selected.push_back(index);
+            }
+
+            for(auto it = selected.crbegin(); it != selected.crend(); it++) {
+                _listview->delete_item(*it);
+                _modules.erase(_modules.begin() + *it);
+            }
+        }
+
+        // TODO fire event
+    }
+
+    void _add_item()
+    {
+        auto onok = [&](ModuleEntry* entry) {
+            _modules.push_back(entry);
+            _listview->set_item_count((int)_modules.size(), LVSICF_NOINVALIDATEALL);
+        };
+
+        auto onguid = [&](const GUID& guid, std::wstring* err) {
+            if(_has_guid(guid)) {
+                *err = L"此 GUID 已经存在。";
+                return false;
+            }
+
+            return true;
+        };
+
+        (new ModuleEntryEditor(nullptr, onok, onguid))->domodal(this);
+
+        // TODO fire event
+    }
+
+    bool _has_guid(const GUID& guid)
+    {
+        for(auto& mod : _modules) {
+            if(::IsEqualGUID(guid, mod->guid)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+};
+
+//////////////////////////////////////////////////////////////////////////
+
 class EventDetail : public taowin::window_creator
 {
 private:
@@ -260,7 +719,7 @@ protected:
 	virtual LPCTSTR get_skin_xml() const override
 	{
         LPCTSTR json = LR"tw(
-<window title="Event detail" size="512,480">
+<window title="详情" size="512,480">
     <res>
         <font name="default" face="微软雅黑" size="12"/>
         <font name="1" face="微软雅黑" size="12"/>
@@ -321,6 +780,7 @@ private:
     std::map<int, ItemColor> _colors;
     ColumnData _cols;
     std::vector<MenuEntry> _menus;
+    std::vector<ModuleEntry*> _modules;
 
 public:
 	TW()
@@ -373,17 +833,28 @@ protected:
             _colors[TRACE_LEVEL_CRITICAL]       = {RGB(255, 255, 255),  RGB(255,   0,   0)};
             _colors[TRACE_LEVEL_VERBOSE]        = {RGB(  0,   0,   0),  RGB(255, 255, 255)};
 
+            MenuEntry menu;
+
+            menu.name = L"模块管理";
+            menu.onclick = [&]() {
+                auto* mgr = new ModuleManager(_modules);
+                mgr->domodal(this);
+            };
+
+            _menus.push_back(menu);
+
             HMENU hMenu = ::CreateMenu();
-
-            for(int i = 0; i < (int)_menus.size(); i++) {
+            for(int i = 0; i < (int)_menus.size(); i++)
                 ::AppendMenu(hMenu, MF_STRING, i, _menus[i].name.c_str());
-            }
-
             ::SetMenu(_hwnd, hMenu);
+
+            _modules.push_back(new ModuleEntry{L"ThunderBrowser", L"", true});
+            _modules.push_back(new ModuleEntry{L"ThunderInstall", L"", false});
 
 			return 0;
 		}
         case WM_CLOSE:
+            break;
             if(MessageBox(_hwnd, _T("确认关闭？"), nullptr, MB_OKCANCEL) != IDOK) {
                 return 0;
             }

@@ -504,7 +504,7 @@ protected:
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-int main()
+int __stdcall wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR lpCmdlind, int nShowCmd)
 {
     taowin::init();
 

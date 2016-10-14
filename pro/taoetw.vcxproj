@@ -152,7 +152,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="../src/Source.cpp" />
+    <ClCompile Include="..\src\main.cpp" />
+    <ClCompile Include="..\src\main_window.cpp" />
     <ClCompile Include="..\3rd\taowin\src\tw_control.cpp" />
     <ClCompile Include="..\3rd\taowin\src\tw_parser.cpp" />
     <ClCompile Include="..\3rd\taowin\src\tw_resmgr.cpp" />
@@ -160,7 +161,12 @@
     <ClCompile Include="..\3rd\taowin\src\tw_taowin.cpp" />
     <ClCompile Include="..\3rd\taowin\src\tw_util.cpp" />
     <ClCompile Include="..\3rd\taowin\src\tw_window.cpp" />
+    <ClCompile Include="..\src\column_selection.cpp" />
     <ClCompile Include="..\src\consumer.cpp" />
+    <ClCompile Include="..\src\controller.cpp" />
+    <ClCompile Include="..\src\event_detail.cpp" />
+    <ClCompile Include="..\src\module_editor.cpp" />
+    <ClCompile Include="..\src\module_manager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="../src/etwlogger.h" />
@@ -171,7 +177,15 @@
     <ClInclude Include="..\3rd\taowin\src\tw_taowin.h" />
     <ClInclude Include="..\3rd\taowin\src\tw_util.h" />
     <ClInclude Include="..\3rd\taowin\src\tw_window.h" />
+    <ClInclude Include="..\src\column_selection.h" />
     <ClInclude Include="..\src\consumer.h" />
+    <ClInclude Include="..\src\controller.h" />
+    <ClInclude Include="..\src\event_detail.h" />
+    <ClInclude Include="..\src\main_window.h" />
+    <ClInclude Include="..\src\module_editor.h" />
+    <ClInclude Include="..\src\_module_entry.hpp" />
+    <ClInclude Include="..\src\module_manager.h" />
+    <ClInclude Include="..\src\_menu_define.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

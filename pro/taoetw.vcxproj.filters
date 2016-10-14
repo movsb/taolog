@@ -16,11 +16,14 @@
     <Filter Include="Source Files\taowin">
       <UniqueIdentifier>{efdaa5a1-8fad-4f69-af4f-45461087fb15}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\etw">
+      <UniqueIdentifier>{7acd843e-c1d4-483f-922d-8dd2b7b94753}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\gui">
+      <UniqueIdentifier>{8a0991d9-164b-4be7-ac08-f4e7a509f62e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="../src/Source.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\3rd\taowin\src\tw_control.cpp">
       <Filter>Source Files\taowin</Filter>
     </ClCompile>
@@ -43,13 +46,31 @@
       <Filter>Source Files\taowin</Filter>
     </ClCompile>
     <ClCompile Include="..\src\consumer.cpp">
+      <Filter>Source Files\etw</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\controller.cpp">
+      <Filter>Source Files\etw</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\column_selection.cpp">
+      <Filter>Source Files\gui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\module_manager.cpp">
+      <Filter>Source Files\gui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\module_editor.cpp">
+      <Filter>Source Files\gui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\event_detail.cpp">
+      <Filter>Source Files\gui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\main_window.cpp">
+      <Filter>Source Files\gui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="../src/etwlogger.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\3rd\taowin\src\tw_control.h">
       <Filter>Source Files\taowin</Filter>
     </ClInclude>
@@ -72,7 +93,34 @@
       <Filter>Source Files\taowin</Filter>
     </ClInclude>
     <ClInclude Include="..\src\consumer.h">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\etw</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\controller.h">
+      <Filter>Source Files\etw</Filter>
+    </ClInclude>
+    <ClInclude Include="../src/etwlogger.h">
+      <Filter>Source Files\etw</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\column_selection.h">
+      <Filter>Source Files\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\module_manager.h">
+      <Filter>Source Files\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\module_editor.h">
+      <Filter>Source Files\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\event_detail.h">
+      <Filter>Source Files\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\main_window.h">
+      <Filter>Source Files\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\_menu_define.hpp">
+      <Filter>Source Files\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\_module_entry.hpp">
+      <Filter>Source Files\gui</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

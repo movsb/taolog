@@ -122,6 +122,59 @@ void __stdcall ProcessEvents(EVENT_TRACE* pEvent)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
+class EventDetail : public taowin::window_creator
+{
+private:
+    const ETWLogger::LogDataUI* _log;
+
+public:
+    EventDetail(const ETWLogger::LogDataUI* log)
+        : _log(log)
+    {
+
+    }
+
+protected:
+	virtual LPCTSTR get_skin_xml() const override
+	{
+        LPCTSTR json = LR"tw(
+<window title="Event detail" size="512,480">
+    <res>
+        <font name="default" face="Î¢ÈíÑÅºÚ" size="12"/>
+        <font name="1" face="Î¢ÈíÑÅºÚ" size="12"/>
+        <font name="consolas" face="Consolas" size="12"/>
+    </res>
+    <root>
+        <vertical padding="5,5,5,5">
+            <edit name="text" font="consolas" style="multiline,vscroll,hscroll,readonly" exstyle="clientedge"/>
+        </vertical>
+    </root>
+</window>
+)tw";
+		return json;
+	}
+
+    virtual LRESULT handle_message(UINT umsg, WPARAM wparam, LPARAM lparam) override
+    {
+        switch(umsg)
+        {
+        case WM_CREATE:
+        {
+            auto edit = _root->find<taowin::edit>(L"text");
+            edit->set_text(_log->text);
+            return 0;
+        }
+        }
+        return __super::handle_message(umsg, wparam, lparam);
+    }
+
+    virtual void on_final_message() override
+    {
+        __super::on_final_message();
+        delete this;
+    }
+};
+
 class TW : public taowin::window_creator
 {
 private:
@@ -242,6 +295,18 @@ protected:
                 }
 
                 return lr;
+            }
+            else if(code == NM_DBLCLK) {
+                auto nmlv = reinterpret_cast<NMITEMACTIVATE*>(hdr);
+
+                if(nmlv->iItem != -1) {
+                    auto evt = _events[nmlv->iItem];
+                    auto detail_window = new EventDetail(evt);
+                    detail_window->create();
+                    detail_window->show();
+                }
+
+                return 0;
             }
         }
         return 0;

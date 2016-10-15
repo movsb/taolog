@@ -36,6 +36,8 @@ LPCTSTR MainWindow::get_skin_xml() const
                 <control width="5" />
                 <button name="module-manager" text="模块管理" width="60" />
                 <control width="5" />
+                <control width="5" />
+                <button name="topmost" text="窗口置顶" width="60" />
             </horizontal>
             <listview name="lv" style="singlesel,showselalways,ownerdata" exstyle="clientedge">  </listview>
         </vertical>
@@ -107,6 +109,11 @@ LRESULT MainWindow::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR *
     }
     else if (pc == _btn_modules) {
         _manage_modules();
+    }
+    else if (pc == _btn_topmost) {
+        bool totop = !(::GetWindowLongPtr(_hwnd, GWL_EXSTYLE) & WS_EX_TOPMOST);
+        _btn_topmost->set_text(totop ? L"取消置顶" : L"窗口置顶");
+        ::SetWindowPos(_hwnd, totop ? HWND_TOPMOST : HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
     }
 
     return 0;
@@ -257,6 +264,7 @@ LRESULT MainWindow::_on_create()
     _btn_start      = _root->find<taowin::button>(L"start-logging");
     _btn_stop       = _root->find<taowin::button>(L"stop-logging");
     _btn_modules    = _root->find<taowin::button>(L"module-manager");
+    _btn_topmost    = _root->find<taowin::button>(L"topmost");
 
     _init_listview();
     _init_menu();

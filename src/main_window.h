@@ -51,6 +51,7 @@ private:
     taowin::button*     _btn_start;
     taowin::button*     _btn_stop;
     taowin::button*     _btn_modules;
+    taowin::button*     _btn_topmost;
 
     MapColors           _colors;
     ColumnContainer     _columns;

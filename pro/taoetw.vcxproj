@@ -185,7 +185,6 @@
     <ClInclude Include="..\src\event_detail.h" />
     <ClInclude Include="..\src\main_window.h" />
     <ClInclude Include="..\src\module_editor.h" />
-    <ClInclude Include="..\src\utils.h" />
     <ClInclude Include="..\src\_module_entry.hpp" />
     <ClInclude Include="..\src\module_manager.h" />
   </ItemGroup>

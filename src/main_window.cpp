@@ -11,8 +11,6 @@
 
 #include <taowin/src/tw_taowin.h>
 
-#include "utils.h"
-
 #include "main_window.h"
 
 static const wchar_t* g_etw_session = L"taoetw-session";
@@ -117,7 +115,7 @@ LRESULT MainWindow::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR *
 bool MainWindow::_start()
 {
     if (!_controller.start(g_etw_session)) {
-        msgbox(last_error(), MB_ICONERROR);
+        msgbox(taowin::last_error(), MB_ICONERROR);
         return false;
     }
 
@@ -125,7 +123,7 @@ bool MainWindow::_start()
 
     if (!_consumer.start(g_etw_session)) {
         _controller.stop();
-        msgbox(last_error(), MB_ICONERROR);
+        msgbox(taowin::last_error(), MB_ICONERROR);
         return false;
     }
 
@@ -133,7 +131,7 @@ bool MainWindow::_start()
     for (auto& mod : _modules) {
         if (mod->enable) {
             if (!_controller.enable(mod->guid, true, mod->level)) {
-                msgbox(last_error(), MB_ICONERROR, L"无法开启模块：" + mod->name);
+                msgbox(taowin::last_error(), MB_ICONERROR, L"无法开启模块：" + mod->name);
             }
             else {
                 opend++;
@@ -242,7 +240,7 @@ void MainWindow::_manage_modules()
             return true;
 
         if (!_controller.enable(mod->guid, enable, mod->level)) {
-            *err = last_error();
+            *err = taowin::last_error();
             return false;
         }
 
@@ -263,7 +261,8 @@ LRESULT MainWindow::_on_create()
     _init_listview();
     _init_menu();
 
-    taoetw::g_Consumer = &_consumer;
+    assert(g_Consumer == nullptr);
+    g_Consumer = &_consumer;
 
     GUID guids[] = {
         { 0x1ca17b9b, 0xe3f4, 0x4fa4, { 0x91, 0xa3, 0xd0, 0x39, 0xa6, 0x26, 0x1f, 0x88 } },

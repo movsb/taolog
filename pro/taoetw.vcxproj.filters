@@ -119,8 +119,5 @@
     <ClInclude Include="..\src\_module_entry.hpp">
       <Filter>Source Files\gui</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\utils.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
   </ItemGroup>
 </Project>

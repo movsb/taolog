@@ -21,7 +21,7 @@ LPCTSTR ModuleEntryEditor::get_skin_xml() const
             <vertical name="container" padding="10,10,10,10" height="144">
                 <horizontal height="30" padding="0,3,0,3">
                     <label style="centerimage" text="名字" width="50"/>
-                    <edit name="name" style="tabstop" exstyle="clientedge" style=""/>
+                    <edit name="name" style="tabstop" exstyle="clientedge"/>
                 </horizontal>
                 <horizontal height="30" padding="0,3,0,3">
                     <label style="centerimage" text="GUID" width="50"/>
@@ -33,14 +33,14 @@ LPCTSTR ModuleEntryEditor::get_skin_xml() const
                 </horizontal>
                 <horizontal height="30" padding="0,3,0,3">
                     <label style="centerimage" text="等级" width="50"/>
-                    <combobox name="level"  height="200"/>
+                    <combobox name="level" style="tabstop" height="200"/>
                 </horizontal>
             </vertical>
             <horizontal height="40" padding="10,4,10,4">
                 <control />
-                <button name="ok" text="保存" width="50"/>
+                <button name="ok" text="保存" width="50" style="tabstop,default"/>
                 <control width="10" />
-                <button name="cancel" text="取消" width="50"/>
+                <button name="cancel" text="取消" width="50" style="tabstop"/>
             </horizontal>
         </vertical>
     </root>
@@ -60,6 +60,8 @@ LRESULT ModuleEntryEditor::handle_message(UINT umsg, WPARAM wparam, LPARAM lpara
         _path = _root->find<taowin::edit>(L"root");
         _level = _root->find<taowin::combobox>(L"level");
         _guid = _root->find<taowin::edit>(L"guid");
+        _ok = _root->find<taowin::button>(L"ok");
+        _cancel = _root->find<taowin::button>(L"cancel");
 
         std::unordered_map<int, const TCHAR*> levels = {
             { TRACE_LEVEL_INFORMATION,   L"TRACE_LEVEL_INFORMATION" },
@@ -103,6 +105,8 @@ LRESULT ModuleEntryEditor::handle_message(UINT umsg, WPARAM wparam, LPARAM lpara
             }
         }
 
+        _name->focus();
+
         return 0;
     }
     }
@@ -114,20 +118,7 @@ LRESULT ModuleEntryEditor::on_notify(HWND hwnd, taowin::control * pc, int code, 
     if (!pc) return 0;
 
     if (pc->name() == L"ok") {
-        if (!_validate_form())
-            return 0;
-
-        auto entry = _mod ? _mod : new ModuleEntry;
-        entry->name = _name->get_text();
-        entry->root = _path->get_text();
-        entry->level = (int)_level->get_item_data(_level->get_cur_sel());
-        ::CLSIDFromString(_guid->get_text().c_str(), &entry->guid);
-        entry->enable = false;
-
-        _onok(entry);
-
-        close();
-        return 0;
+        _on_ok();
     }
     else if (pc->name() == L"cancel") {
         close();
@@ -137,10 +128,40 @@ LRESULT ModuleEntryEditor::on_notify(HWND hwnd, taowin::control * pc, int code, 
     return 0;
 }
 
+bool ModuleEntryEditor::filter_special_key(int vk)
+{
+    if (vk == VK_RETURN) {
+        _on_ok();
+        return true;
+    }
+
+    return __super::filter_special_key(vk);
+}
+
+int ModuleEntryEditor::_on_ok()
+{
+    if (!_validate_form())
+        return 0;
+
+    auto entry = _mod ? _mod : new ModuleEntry;
+    entry->name = _name->get_text();
+    entry->root = _path->get_text();
+    entry->level = (int)_level->get_item_data(_level->get_cur_sel());
+    ::CLSIDFromString(_guid->get_text().c_str(), &entry->guid);
+    entry->enable = false;
+
+    _onok(entry);
+
+    close();
+
+    return 0;
+}
+
 bool ModuleEntryEditor::_validate_form()
 {
     if (_name->get_text() == L"") {
         msgbox(L"模块名字不应为空。", MB_ICONERROR);
+        _name->focus();
         return false;
     }
 
@@ -148,12 +169,14 @@ bool ModuleEntryEditor::_validate_form()
     CLSID clsid;
     if (FAILED(::CLSIDFromString(guid.c_str(), &clsid)) || ::IsEqualGUID(clsid, GUID_NULL)) {
         msgbox(L"无效 GUID 值。", MB_ICONERROR);
+        _guid->focus();
         return false;
     }
 
     std::wstring err;
     if (!_oncheckguid(clsid, &err)) {
         msgbox(err.c_str(), MB_ICONERROR);
+        _guid->focus();
         return false;
     }
 

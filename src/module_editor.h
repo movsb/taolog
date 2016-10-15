@@ -22,6 +22,8 @@ private:
     taowin::edit* _guid;
     taowin::edit* _path;
     taowin::combobox* _level;
+    taowin::button* _ok;
+    taowin::button* _cancel;
 
 public:
     ModuleEntryEditor(ModuleEntry* mod, fnOnOk onok, fnOnCheckGuid onguid)
@@ -35,8 +37,10 @@ protected:
     virtual LRESULT handle_message(UINT umsg, WPARAM wparam, LPARAM lparam) override;
     virtual LRESULT on_notify(HWND hwnd, taowin::control* pc, int code, NMHDR* hdr);
     virtual void on_final_message() override { __super::on_final_message(); delete this; }
+    virtual bool filter_special_key(int vk) override;
 
 protected:
+    int _on_ok();
     bool _validate_form();
 };
 

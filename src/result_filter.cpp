@@ -16,16 +16,16 @@ LPCTSTR ResultFilter::get_skin_xml() const
             <horizontal>
                 <vertical>
                     <label text="已有过滤器：" height="18" />
-                    <listview name="list" style="ownerdata,showselalways" exstyle="clientedge" />
+                    <listview name="list" style="ownerdata,showselalways,tabstop" exstyle="clientedge" />
                 </vertical>
                 <control width="5" />
                 <vertical width="50">
                     <control height="18" />
-                    <button name="all" text="全部" height="24" />
+                    <button name="all" text="全部" height="24" style="tabstop" />
                     <control height="5" />
-                    <button name="add" text="添加" height="24" />
+                    <button name="add" text="添加" height="24" style="tabstop"/>
                     <control height="5" />
-                    <button name="delete" text="删除" style="disabled" height="24"/>
+                    <button name="delete" text="删除" style="disabled,tabstop" height="24"/>
                     <control height="5" />
                 </vertical>
             </horizontal>
@@ -148,7 +148,7 @@ LPCTSTR AddNewFilter::get_skin_xml() const
             <vertical name="container" padding="10,10,10,10" height="108">
                 <horizontal height="30" padding="0,3,0,3">
                     <label style="centerimage" text="名字" width="50"/>
-                    <edit name="name" text="(none)" style="tabstop" exstyle="clientedge" style=""/>
+                    <edit name="name" text="(none)" style="tabstop" exstyle="clientedge"/>
                 </horizontal>
                 <horizontal height="30" padding="0,3,0,3">
                     <label style="centerimage" text="基于" width="50"/>
@@ -161,9 +161,9 @@ LPCTSTR AddNewFilter::get_skin_xml() const
             </vertical>
             <horizontal height="40" padding="10,4,10,4">
                 <control />
-                <button name="save" text="保存" width="50"/>
+                <button name="save" text="保存" width="50" style="tabstop,default"/>
                 <control width="10" />
-                <button name="cancel" text="取消" width="50"/>
+                <button name="cancel" text="取消" width="50" style="tabstop"/>
             </horizontal>
         </vertical>
     </root>
@@ -208,24 +208,42 @@ LRESULT AddNewFilter::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR
     if (!pc) return 0;
 
     if (pc == _save) {
-        try {
-            rule = _rule->get_text();
-            if (rule == L"") throw 0;
-
-            std::wregex re(rule, std::regex_constants::icase);
-
-            name = _name->get_text();
-            base_int = _base->get_cur_sel();
-            base = _bases[base_int];
-            close(IDOK);
-        }
-        catch (...) {
-            msgbox(L"无效正则表达式。", MB_ICONERROR);
-        }
+        _on_save();
     }
     else if (pc == _cancel) {
         close(IDCANCEL);
     }
+    return 0;
+}
+
+bool AddNewFilter::filter_special_key(int vk)
+{
+    if (vk == VK_RETURN) {
+        _on_save();
+        return true;
+    }
+
+    return __super::filter_special_key(vk);
+}
+
+int AddNewFilter::_on_save()
+{
+    try {
+        rule = _rule->get_text();
+        if (rule == L"") throw 0;
+
+        std::wregex re(rule, std::regex_constants::icase);
+
+        name = _name->get_text();
+        base_int = _base->get_cur_sel();
+        base = _bases[base_int];
+        close(IDOK);
+    }
+    catch (...) {
+        msgbox(L"无效正则表达式。", MB_ICONERROR);
+        _rule->focus();
+    }
+
     return 0;
 }
 

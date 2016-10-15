@@ -30,19 +30,19 @@ LPCTSTR MainWindow::get_skin_xml() const
     <root>
         <vertical padding="5,5,5,5">
             <horizontal height="30" padding="0,4,0,4">
-                <button name="start-logging" text="开始记录" width="60" />
+                <button name="start-logging" text="开始记录" width="60" style="tabstop"/>
                 <control width="5" />
-                <button name="stop-logging" text="停止记录" width="60" style="disabled"/>
+                <button name="stop-logging" text="停止记录" width="60" style="disabled,tabstop"/>
                 <control width="5" />
-                <button name="module-manager" text="模块管理" width="60" />
+                <button name="module-manager" text="模块管理" width="60" style="tabstop"/>
                 <control width="5" />
-                <button name="filter-result" text="结果过滤" width="60" />
+                <button name="filter-result" text="结果过滤" width="60" style="tabstop"/>
                 <control width="5" />
                 <control />
                 <control width="5" />
-                <button name="topmost" text="窗口置顶" width="60" />
+                <button name="topmost" text="窗口置顶" width="60" style="tabstop"/>
             </horizontal>
-            <listview name="lv" style="showselalways,ownerdata" exstyle="clientedge">  </listview>
+            <listview name="lv" style="showselalways,ownerdata,tabstop" exstyle="clientedge">  </listview>
         </vertical>
     </root>
 </window>

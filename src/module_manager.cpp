@@ -15,15 +15,15 @@ LPCTSTR ModuleManager::get_skin_xml() const
     </res>
     <root>
         <horizontal padding="5,5,5,5">
-            <listview name="list" style="showselalways,ownerdata" exstyle="clientedge" />
+            <listview name="list" style="showselalways,ownerdata,tabstop" exstyle="clientedge" />
             <vertical padding="5,5,5,5" width="50">
-                <button name="add" text="Ìí¼Ó" height="24" />
+                <button name="add" text="Ìí¼Ó" height="24" style="tabstop" />
                 <control height="20" />
-                <button name="modify" text="ÐÞ¸Ä" style="disabled" height="24"/>
+                <button name="modify" text="ÐÞ¸Ä" style="disabled,tabstop" height="24"/>
                 <control height="5" />
-                <button name="enable" text="ÆôÓÃ" style="disabled" height="24" />
+                <button name="enable" text="ÆôÓÃ" style="disabled,tabstop" height="24" />
                 <control height="5" />
-                <button name="delete" text="É¾³ý" style="disabled" height="24"/>
+                <button name="delete" text="É¾³ý" style="disabled,tabstop" height="24"/>
                 <control height="5" />
             </vertical>
         </horizontal>

@@ -154,6 +154,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\event_container.cpp" />
     <ClCompile Include="..\src\main.cpp" />
     <ClCompile Include="..\src\main_window.cpp" />
     <ClCompile Include="..\3rd\taowin\src\tw_control.cpp" />
@@ -169,6 +170,7 @@
     <ClCompile Include="..\src\event_detail.cpp" />
     <ClCompile Include="..\src\module_editor.cpp" />
     <ClCompile Include="..\src\module_manager.cpp" />
+    <ClCompile Include="..\src\result_filter.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="../src/etwlogger.h" />
@@ -185,6 +187,8 @@
     <ClInclude Include="..\src\event_detail.h" />
     <ClInclude Include="..\src\main_window.h" />
     <ClInclude Include="..\src\module_editor.h" />
+    <ClInclude Include="..\src\result_filter.h" />
+    <ClInclude Include="..\src\event_container.h" />
     <ClInclude Include="..\src\_module_entry.hpp" />
     <ClInclude Include="..\src\module_manager.h" />
   </ItemGroup>

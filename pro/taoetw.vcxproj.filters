@@ -69,6 +69,12 @@
     <ClCompile Include="..\src\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\result_filter.cpp">
+      <Filter>Source Files\gui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\event_container.cpp">
+      <Filter>Source Files\gui</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\3rd\taowin\src\tw_control.h">
@@ -117,6 +123,12 @@
       <Filter>Source Files\gui</Filter>
     </ClInclude>
     <ClInclude Include="..\src\_module_entry.hpp">
+      <Filter>Source Files\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\result_filter.h">
+      <Filter>Source Files\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\event_container.h">
       <Filter>Source Files\gui</Filter>
     </ClInclude>
   </ItemGroup>

@@ -5,10 +5,12 @@
 #include "etwlogger.h"
 
 #include "_module_entry.hpp"
+#include "event_container.h"
 
 #include "column_selection.h"
 #include "module_manager.h"
 #include "event_detail.h"
+#include "result_filter.h"
 
 #include "controller.h"
 #include "consumer.h"
@@ -29,9 +31,7 @@ public:
         { }
     };
 
-    typedef std::map<int, ItemColor> MapColors;
-
-    typedef std::vector<ETWLogger::LogDataUI*> EventContainer;
+    typedef std::map<int /* level */, ItemColor> MapColors;
 
 private:
     static const UINT kDoLog = WM_USER + 1;
@@ -51,13 +51,16 @@ private:
     taowin::button*     _btn_start;
     taowin::button*     _btn_stop;
     taowin::button*     _btn_modules;
+    taowin::button*     _btn_filter;
     taowin::button*     _btn_topmost;
 
     MapColors           _colors;
     ColumnContainer     _columns;
-    // MenuContainer       _menus;
+
     ModuleContainer     _modules;
     EventContainer      _events;
+    EventContainerS     _filters;
+    EventContainer*     _current_filter;
 
     Controller          _controller;
     Consumer            _consumer;
@@ -78,6 +81,7 @@ protected:
     void _init_menu();
     void _view_detail(int i);
     void _manage_modules();
+    void _show_filters();
 
     LRESULT _on_create();
     LRESULT _on_log(ETWLogger::LogDataUI* log);

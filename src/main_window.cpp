@@ -36,10 +36,13 @@ LPCTSTR MainWindow::get_skin_xml() const
                 <control width="5" />
                 <button name="module-manager" text="模块管理" width="60" />
                 <control width="5" />
+                <button name="filter-result" text="结果过滤" width="60" />
+                <control width="5" />
+                <control />
                 <control width="5" />
                 <button name="topmost" text="窗口置顶" width="60" />
             </horizontal>
-            <listview name="lv" style="singlesel,showselalways,ownerdata" exstyle="clientedge">  </listview>
+            <listview name="lv" style="showselalways,ownerdata" exstyle="clientedge">  </listview>
         </vertical>
     </root>
 </window>
@@ -109,6 +112,9 @@ LRESULT MainWindow::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR *
     }
     else if (pc == _btn_modules) {
         _manage_modules();
+    }
+    else if (pc == _btn_filter) {
+        _show_filters();
     }
     else if (pc == _btn_topmost) {
         bool totop = !(::GetWindowLongPtr(_hwnd, GWL_EXSTYLE) & WS_EX_TOPMOST);
@@ -233,7 +239,7 @@ void MainWindow::_init_menu()
 
 void MainWindow::_view_detail(int i)
 {
-    auto evt = _events[i];
+    auto evt = (*_current_filter)[i];
     auto& cr = _colors[evt->level];
     auto detail_window = new EventDetail(evt, cr.fg, cr.bg);
     detail_window->create();
@@ -259,11 +265,49 @@ void MainWindow::_manage_modules()
     mgr->domodal(this);
 }
 
+void MainWindow::_show_filters()
+{
+    auto get_base = [&](std::vector<std::wstring>* bases) {
+        for (auto& col : _columns) {
+            bases->push_back(col.name);
+        }
+    };
+
+    auto ondelete = [&](int i) {
+        auto it = _filters.begin() + i;
+
+        if (*it == _current_filter) {
+            _current_filter = &_events;
+            _listview->set_item_count(_current_filter->size(), 0);
+            _listview->redraw_items(0, _listview->get_item_count() -1);
+        }
+
+        delete *it;
+        _filters.erase(it);
+    };
+
+    auto onaddnew = [&](EventContainer* p) {
+        _filters.push_back(p);
+        _events.filter_results(p);
+    };
+
+    auto onsetfilter = [&](EventContainer* p) {
+        _current_filter = p ? p : &_events;
+        _listview->set_item_count(_current_filter->size(), 0);
+        _listview->redraw_items(0, _listview->get_item_count() -1);
+    };
+
+    auto dlg = new ResultFilter(_filters, get_base, ondelete, onsetfilter, onaddnew);
+    dlg->create();
+    dlg->show();
+}
+
 LRESULT MainWindow::_on_create()
 {
     _btn_start      = _root->find<taowin::button>(L"start-logging");
     _btn_stop       = _root->find<taowin::button>(L"stop-logging");
     _btn_modules    = _root->find<taowin::button>(L"module-manager");
+    _btn_filter     = _root->find<taowin::button>(L"filter-result");
     _btn_topmost    = _root->find<taowin::button>(L"topmost");
 
     _init_listview();
@@ -271,6 +315,8 @@ LRESULT MainWindow::_on_create()
 
     assert(g_Consumer == nullptr);
     g_Consumer = &_consumer;
+
+    _current_filter = &_events;
 
     GUID guids[] = {
         { 0x1ca17b9b, 0xe3f4, 0x4fa4, { 0x91, 0xa3, 0xd0, 0x39, 0xa6, 0x26, 0x1f, 0x88 } },
@@ -303,8 +349,15 @@ LRESULT MainWindow::_on_log(ETWLogger::LogDataUI* item)
         item->offset_of_file = 0;
     }
 
-    _events.push_back(item);
-    _listview->set_item_count(_events.size(), LVSICF_NOINVALIDATEALL);
+    _events.add(item);
+
+    if (!_filters.empty()) {
+        for (auto& f : _filters) {
+            f->add(item);
+        }
+    }
+
+    _listview->set_item_count(_current_filter->size(), LVSICF_NOINVALIDATEALL);
 
     return 0;
 }
@@ -323,7 +376,7 @@ LRESULT MainWindow::_on_custom_draw_listview(NMHDR * hdr)
         break;
 
     case CDDS_ITEMPREPAINT:
-        log = _events[lvcd->nmcd.dwItemSpec];
+        log = (*_current_filter)[lvcd->nmcd.dwItemSpec];
         lvcd->clrText = _colors[log->level].fg;
         lvcd->clrTextBk = _colors[log->level].bg;
         lr = CDRF_NEWFONT;
@@ -336,7 +389,7 @@ LRESULT MainWindow::_on_custom_draw_listview(NMHDR * hdr)
 LRESULT MainWindow::_on_get_dispinfo(NMHDR * hdr)
 {
     auto pdi = reinterpret_cast<NMLVDISPINFO*>(hdr);
-    auto evt = _events[pdi->item.iItem];
+    auto evt = (*_current_filter)[pdi->item.iItem];
     auto lit = &pdi->item;
 
     const TCHAR* value = _T("");
@@ -406,5 +459,7 @@ void MainWindow::_module_from_guid(const GUID & guid, std::wstring * name, const
         *root = nullptr;
     }
 }
+
+/////////////////////////////////////////////////////////////////////////////////////
 
 }

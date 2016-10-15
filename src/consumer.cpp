@@ -78,8 +78,7 @@ void Consumer::ProcessEvents(EVENT_TRACE * pEvent)
         auto& t = log_ui->time;
 
         _sntprintf(&buf[0], _countof(buf),
-            _T("%d-%02d-%02d %02d:%02d:%02d:%03d"),
-            t.wYear, t.wMonth, t.wDay,
+            _T("%02d:%02d:%02d:%03d"),
             t.wHour, t.wMinute, t.wSecond, t.wMilliseconds
         );
 

@@ -18,7 +18,17 @@ namespace taoetw {
 class MainWindow : public taowin::window_creator
 {
 public:
-    struct ItemColor { COLORREF fg; COLORREF bg; };
+    struct ItemColor
+    { 
+        COLORREF fg;
+        COLORREF bg;
+
+        ItemColor(COLORREF fg_ = RGB(0,0,0), COLORREF bg_=RGB(255,255,255))
+            : fg(fg_)
+            , bg(bg_)
+        { }
+    };
+
     typedef std::map<int, ItemColor> MapColors;
 
     typedef std::vector<ETWLogger::LogDataUI*> EventContainer;

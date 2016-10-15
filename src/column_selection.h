@@ -8,6 +8,14 @@ struct Column {
     taowin::string name;
     bool show;
     int width;
+
+    Column(const wchar_t* name_, bool show_, int width_)
+        : name(name_)
+        , show(show_)
+        , width(width_)
+    {
+
+    }
 };
 
 typedef std::function<void(int i)> OnToggleCallback;

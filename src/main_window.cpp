@@ -163,25 +163,25 @@ void MainWindow::_init_listview()
 {
     _listview = _root->find<taowin::listview>(L"lv");
 
-    _columns.push_back({ L"时间", true, 160 });
-    _columns.push_back({ L"进程", true, 50 });
-    _columns.push_back({ L"线程", true, 50, });
-    _columns.push_back({ L"项目", true, 100, });
-    _columns.push_back({ L"文件", true, 200, });
-    _columns.push_back({ L"函数", true, 100, });
-    _columns.push_back({ L"行号", true, 50, });
-    _columns.push_back({ L"日志", true, 300, });
+    _columns.emplace_back(L"时间", true, 160);
+    _columns.emplace_back(L"进程", true, 50);
+    _columns.emplace_back(L"线程", true, 50);
+    _columns.emplace_back(L"项目", true, 100);
+    _columns.emplace_back(L"文件", true, 200);
+    _columns.emplace_back(L"函数", true, 100);
+    _columns.emplace_back(L"行号", true, 50);
+    _columns.emplace_back(L"日志", true, 300);
 
     for (int i = 0; i < (int)_columns.size(); i++) {
         auto& col = _columns[i];
         _listview->insert_column(col.name.c_str(), col.width, i);
     }
 
-    _colors[TRACE_LEVEL_INFORMATION]    = {RGB(  0,   0,   0), RGB(255, 255, 255)};
-    _colors[TRACE_LEVEL_WARNING]        = {RGB(255, 128,   0), RGB(255, 255, 255)};
-    _colors[TRACE_LEVEL_ERROR]          = {RGB(255,   0,   0), RGB(255, 255, 255)};
-    _colors[TRACE_LEVEL_CRITICAL]       = {RGB(255, 255, 255), RGB(255,   0,   0)};
-    _colors[TRACE_LEVEL_VERBOSE]        = {RGB(  0,   0,   0), RGB(255, 255, 255)};
+    _colors.try_emplace(TRACE_LEVEL_INFORMATION, RGB(  0,   0,   0), RGB(255, 255, 255));
+    _colors.try_emplace(TRACE_LEVEL_WARNING,     RGB(255, 128,   0), RGB(255, 255, 255));
+    _colors.try_emplace(TRACE_LEVEL_ERROR,       RGB(255,   0,   0), RGB(255, 255, 255));
+    _colors.try_emplace(TRACE_LEVEL_CRITICAL,    RGB(255, 255, 255), RGB(255,   0,   0));
+    _colors.try_emplace(TRACE_LEVEL_VERBOSE,     RGB(  0,   0,   0), RGB(255, 255, 255));
 }
 
 void MainWindow::_init_menu()

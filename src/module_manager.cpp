@@ -38,7 +38,11 @@ LRESULT ModuleManager::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
     switch (umsg) {
     case WM_CREATE:
     {
-        _listview = _root->find<taowin::listview>(L"list");
+        _btn_add    = _root->find<taowin::button>(L"add");
+        _btn_enable = _root->find<taowin::button>(L"enable");
+        _btn_modify = _root->find<taowin::button>(L"modify");
+        _btn_delete = _root->find<taowin::button>(L"delete");
+        _listview   = _root->find<taowin::listview>(L"list");
 
         _listview->insert_column(L"名字", 150, 0);
         _listview->insert_column(L"状态", 50, 1);
@@ -106,37 +110,36 @@ LRESULT ModuleManager::on_notify(HWND hwnd, taowin::control * pc, int code, NMHD
             auto nmlv = reinterpret_cast<NMITEMACTIVATE*>(hdr);
 
             if (nmlv->iItem != -1) {
-                _toggle_enable(nmlv->iItem);
+                std::vector<int> items{ nmlv->iItem };
+                _enable_items(items, -1);
             }
 
             return 0;
         }
-        else if (code == LVN_ITEMCHANGED
-            || code == LVN_DELETEITEM
-            || code == LVN_DELETEALLITEMS
-            ) {
-            auto btn_enable = _root->find<taowin::button>(L"enable");
-            auto btn_modify = _root->find<taowin::button>(L"modify");
-            auto btn_delete = _root->find<taowin::button>(L"delete");
-
-            int sel_count = _listview->get_selected_count();
-            int i = _listview->get_next_item(-1, LVNI_SELECTED);
-
-            btn_enable->set_enabled(sel_count != 0);
-            btn_modify->set_enabled(sel_count == 1 && i != -1 && !_modules[i]->enable);
-            btn_delete->set_enabled(sel_count != 0);
-
-            if (sel_count == 1) {
-                btn_enable->set_text(_modules[i]->enable ? L"禁用" : L"启用");
-            }
-
+        else if (code == LVN_ITEMCHANGED) {
+            _on_item_state_change();
             return 0;
         }
     }
     else if (pc->name() == L"enable") {
-        int index = _listview->get_next_item(-1, LVNI_SELECTED);
-        if (index != -1)
-            _toggle_enable(index);
+        std::vector<int> items;
+
+        if (_listview->get_selected_items(&items)) {
+            int state = _get_enable_state_for_items(items);
+
+            // 说明选中了多个不同状态的项
+            if (state == -1) {
+                int choice = msgbox(L"【是】启用这些模块；\n【否】禁用这些模块。", MB_ICONQUESTION | MB_YESNOCANCEL);
+                if (choice == IDCANCEL) return 0;
+                state = choice == IDYES;
+            }
+            else {
+                state = state == 1 ? 0 : 1;
+            }
+
+            _enable_items(items, state);
+        }
+
         return 0;
     }
     else if (pc->name() == L"add") {
@@ -150,33 +153,90 @@ LRESULT ModuleManager::on_notify(HWND hwnd, taowin::control * pc, int code, NMHD
         return 0;
     }
     else if (pc->name() == L"delete") {
-        _delete_item();
+        std::vector<int> items;
+
+        if (!_listview->get_selected_items(&items))
+            return 0;
+
+        // 在全部为禁用状态的时候进行提示（不全部为禁用时后边会提示哪些处于启用状态，此提示就不必要了）
+        const wchar_t* title = items.size()==1 ? _modules[items[0]]->name.c_str() : L"确认";
+        int state = _get_enable_state_for_items(items);
+        if (state == 0 && msgbox((L"确定要删除选中的 " + std::to_wstring(items.size()) + L" 项？").c_str(), MB_OKCANCEL | MB_ICONQUESTION, title) != IDOK)
+            return 0;
+
+        // 计算哪些模块已经启用，已经启用的模块不能被删除
+        std::wstring modules_enabled;
+
+        for (auto i = items.begin(); i != items.end();) {
+            auto mod = _modules[*i];
+
+            if (mod->enable) {
+                wchar_t guid[128];
+
+                if (::StringFromGUID2(mod->guid, &guid[0], _countof(guid))) {
+                    modules_enabled += L"    " + mod->name + L"\n";
+                }
+                i = items.erase(i);
+            }
+            else {
+                ++i;
+            }
+        }
+
+        if(!modules_enabled.empty()) {
+            std::wstring msg;
+
+            msg += L"以下模块由于已经启用而不能删除：\n\n";
+            msg += modules_enabled;
+            msg += L"\n是否仅删除被禁用的模块？";
+
+            if (msgbox(msg, MB_ICONQUESTION | MB_OKCANCEL) == IDCANCEL)
+                return 0;
+        }
+
+        _delete_items(items);
+
         return 0;
     }
 
     return 0;
 }
 
-void ModuleManager::_toggle_enable(int i)
+// state == -1 仅对items为1个时有效
+void ModuleManager::_enable_items(const std::vector<int>& items, int state)
 {
-    _modules[i]->enable = !_modules[i]->enable;
-    _listview->redraw_items(i, i);
+    bool enable = state == -1 ? !_modules[items[0]]->enable : state == 1;
 
-    _root->find<taowin::button>(L"enable")->set_text(_modules[i]->enable ? L"禁用" : L"启用");
-    _root->find<taowin::button>(L"modify")->set_enabled(!_modules[i]->enable);
+    for (auto i : items) {
+        auto& mod = _modules[i];
 
-    // TODO fire event
+        std::wstring err;
+
+        if (!_on_toggle(mod, enable, &err)) {
+            msgbox(err, MB_ICONERROR, mod->name);
+            continue;
+        }
+
+        mod->enable = enable;
+
+        _listview->redraw_items(i, i);
+    }
+
+    _on_item_state_change();
 }
 
 void ModuleManager::_modify_item(int i)
 {
+    auto& mod = _modules[i];
+
+    if (mod->enable) return;
+
     auto onok = [&](ModuleEntry* entry) {
         _listview->redraw_items(i, i);
-        // TODO fire event
     };
 
     auto onguid = [&](const GUID& guid, std::wstring* err) {
-        if (_has_guid(guid) && !::IsEqualGUID(guid, _modules[i]->guid)) {
+        if (_has_guid(guid) && !::IsEqualGUID(guid, mod->guid)) {
             *err = L"此 GUID 已经存在。";
             return false;
         }
@@ -184,28 +244,22 @@ void ModuleManager::_modify_item(int i)
         return true;
     };
 
-    (new ModuleEntryEditor(_modules[i], onok, onguid))->domodal(this);
+    (new ModuleEntryEditor(mod, onok, onguid))->domodal(this);
 }
 
-void ModuleManager::_delete_item()
+void ModuleManager::_delete_items(const std::vector<int>& items)
 {
-    int count = _listview->get_selected_count();
-    const wchar_t* title = count == 1 ? _modules[_listview->get_next_item(-1, LVNI_SELECTED)]->name.c_str() : L"确认";
-
-    if (msgbox((L"确定要删除选中的 " + std::to_wstring(count) + L" 项？").c_str(), MB_OKCANCEL | MB_ICONQUESTION, title) == IDOK) {
-        int index = -1;
-        std::vector<int> selected;
-        while ((index = _listview->get_next_item(index, LVNI_SELECTED)) != -1) {
-            selected.push_back(index);
-        }
-
-        for (auto it = selected.crbegin(); it != selected.crend(); it++) {
-            _listview->delete_item(*it);
-            _modules.erase(_modules.begin() + *it);
-        }
+    // 从后往前删
+    for (auto it = items.crbegin(); it != items.crend(); it++) {
+        _modules.erase(_modules.begin() + *it);
     }
 
-    // TODO fire event
+    // just in case
+    _listview->set_item_count((int)_modules.size(), 0);
+
+    _listview->redraw_items(0, _listview->get_item_count());
+
+    _on_item_state_change();
 }
 
 void ModuleManager::_add_item()
@@ -213,6 +267,11 @@ void ModuleManager::_add_item()
     auto onok = [&](ModuleEntry* entry) {
         _modules.push_back(entry);
         _listview->set_item_count((int)_modules.size(), LVSICF_NOINVALIDATEALL);
+
+        int index = _listview->get_item_count() - 1;
+        _listview->ensure_visible(index);   // 确保可见
+        _listview->set_item_state(-1, LVIS_SELECTED, 0); //取消选中其它的
+        _listview->set_item_state(index, LVIS_SELECTED, LVIS_SELECTED); //选中当前新增的
     };
 
     auto onguid = [&](const GUID& guid, std::wstring* err) {
@@ -225,8 +284,6 @@ void ModuleManager::_add_item()
     };
 
     (new ModuleEntryEditor(nullptr, onok, onguid))->domodal(this);
-
-    // TODO fire event
 }
 
 bool ModuleManager::_has_guid(const GUID & guid)
@@ -238,6 +295,36 @@ bool ModuleManager::_has_guid(const GUID & guid)
     }
 
     return false;
+}
+
+int ModuleManager::_get_enable_state_for_items(const std::vector<int>& items)
+{
+    bool state = _modules[items[0]]->enable;
+    bool same = true;
+
+    for (auto i : items) {
+        if (_modules[i]->enable != state) {
+            same = false;
+            break;
+        }
+    }
+
+    return same ? (state ? 1 : 0) : -1;
+}
+
+void ModuleManager::_on_item_state_change()
+{
+    std::vector<int> items;
+    _listview->get_selected_items(&items);
+
+    _btn_enable->set_enabled(!items.empty());
+    _btn_modify->set_enabled(items.size()==1 && items[0] != -1 && !_modules[items[0]]->enable);
+    _btn_delete->set_enabled(items.size() > 1 && _get_enable_state_for_items(items) != 1 || (!items.empty() && !_modules[items[0]]->enable));
+
+    if (!items.empty()) {
+        int state = _get_enable_state_for_items(items);
+        _btn_enable->set_text(state != -1 ? (state == 1 ? L"禁用" : L"启用") : L"启/禁");
+    }
 }
 
 }

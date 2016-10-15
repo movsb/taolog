@@ -94,6 +94,7 @@
       <PreprocessorDefinitions>WIN32;_CRT_SECURE_NO_WARNINGS;ETW_LOGGER;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>../3rd</AdditionalIncludeDirectories>
+      <AssemblerOutput>NoListing</AssemblerOutput>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -125,6 +126,7 @@
       <PreprocessorDefinitions>WIN32;_CRT_SECURE_NO_WARNINGS;ETW_LOGGER;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>../3rd</AdditionalIncludeDirectories>
+      <AssemblerOutput>NoListing</AssemblerOutput>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -183,6 +185,7 @@
     <ClInclude Include="..\src\event_detail.h" />
     <ClInclude Include="..\src\main_window.h" />
     <ClInclude Include="..\src\module_editor.h" />
+    <ClInclude Include="..\src\utils.h" />
     <ClInclude Include="..\src\_module_entry.hpp" />
     <ClInclude Include="..\src\module_manager.h" />
   </ItemGroup>

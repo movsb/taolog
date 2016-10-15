@@ -21,9 +21,10 @@ public:
     }
 
 public:
-    void start(const wchar_t* session);
-    void enable(const GUID& provider, bool enable_, const char* level);
+    bool start(const wchar_t* session);
+    bool enable(const GUID& provider, bool enable_, int level);
     void stop();
+    bool started();
 
 protected:
     TRACEHANDLE             _handle;

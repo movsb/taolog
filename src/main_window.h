@@ -25,9 +25,22 @@ public:
 
 private:
     static const UINT kDoLog = WM_USER + 1;
+
+public:
+    MainWindow()
+        : _listview(nullptr)
+        , _btn_start(nullptr)
+        , _btn_stop(nullptr)
+        , _btn_modules(nullptr)
+    {
+
+    }
     
 private:
     taowin::listview*   _listview;
+    taowin::button*     _btn_start;
+    taowin::button*     _btn_stop;
+    taowin::button*     _btn_modules;
 
     MapColors           _colors;
     ColumnContainer     _columns;
@@ -47,12 +60,13 @@ protected:
     virtual LRESULT on_notify(HWND hwnd, taowin::control* pc, int code, NMHDR* hdr) override;
 
 protected:
-    void _start();
-    void _stop();
+    bool _start();
+    bool _stop();
 
     void _init_listview();
     void _init_menu();
     void _view_detail(int i);
+    void _manage_modules();
 
     LRESULT _on_create();
     LRESULT _on_log(ETWLogger::LogDataUI* log);

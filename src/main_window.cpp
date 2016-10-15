@@ -11,6 +11,8 @@
 
 #include <taowin/src/tw_taowin.h>
 
+#include "utils.h"
+
 #include "main_window.h"
 
 static const wchar_t* g_etw_session = L"taoetw-session";
@@ -32,7 +34,7 @@ LPCTSTR MainWindow::get_skin_xml() const
             <horizontal height="30" padding="0,4,0,4">
                 <button name="start-logging" text="开始记录" width="60" />
                 <control width="5" />
-                <button name="stop-logging" text="停止记录" width="60" />
+                <button name="stop-logging" text="停止记录" width="60" style="disabled"/>
                 <control width="5" />
                 <button name="module-manager" text="模块管理" width="60" />
                 <control width="5" />
@@ -79,7 +81,7 @@ LRESULT MainWindow::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR *
 
         return 0;
     }
-    else if (pc->name() == _T("lv")) {
+    else if (pc == _listview) {
         if (code == LVN_GETDISPINFO) {
             return _on_get_dispinfo(hdr);
         }
@@ -94,34 +96,67 @@ LRESULT MainWindow::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR *
             return 0;
         }
     }
-    else if (pc->name() == L"start-logging") {
-        _start();
+    else if (pc == _btn_start) {
+        if (_start()) {
+            _btn_start->set_enabled(false);
+            _btn_stop->set_enabled(true);
+        }
     }
-    else if (pc->name() == L"stop-logging") {
+    else if (pc == _btn_stop) {
         _stop();
+        _btn_start->set_enabled(true);
+        _btn_stop->set_enabled(false);
     }
-    else if (pc->name() == L"module-manager") {
-        (new ModuleManager(_modules))->domodal(this);
+    else if (pc == _btn_modules) {
+        _manage_modules();
     }
 
     return 0;
 }
 
-void MainWindow::_start()
+bool MainWindow::_start()
 {
-    _controller.start(g_etw_session);
-
-    GUID guid = { 0x630514b5, 0x7b96, 0x4b74,{ 0x9d, 0xb6, 0x66, 0xbd, 0x62, 0x1f, 0x93, 0x86 } };
-    _controller.enable(guid, true, 0);
+    if (!_controller.start(g_etw_session)) {
+        msgbox(last_error(), MB_ICONERROR);
+        return false;
+    }
 
     _consumer.init(_hwnd, kDoLog);
-    _consumer.start(g_etw_session);
+
+    if (!_consumer.start(g_etw_session)) {
+        _controller.stop();
+        msgbox(last_error(), MB_ICONERROR);
+        return false;
+    }
+
+    int opend = 0;
+    for (auto& mod : _modules) {
+        if (mod->enable) {
+            if (!_controller.enable(mod->guid, true, mod->level)) {
+                msgbox(last_error(), MB_ICONERROR, L"无法开启模块：" + mod->name);
+            }
+            else {
+                opend++;
+            }
+        }
+    }
+
+    if (opend == 0) {
+        msgbox(L"没有模块启用记录。", MB_ICONEXCLAMATION);
+        _controller.stop();
+        _consumer.stop();
+        return false;
+    }
+
+    return true;
 }
 
-void MainWindow::_stop()
+bool MainWindow::_stop()
 {
     _controller.stop();
     _consumer.stop();
+
+    return true;
 }
 
 void MainWindow::_init_listview()
@@ -200,12 +235,46 @@ void MainWindow::_view_detail(int i)
     detail_window->show();
 }
 
+void MainWindow::_manage_modules()
+{
+    auto on_toggle_enable = [&](ModuleEntry* mod, bool enable, std::wstring* err) {
+        if (!_controller.started())
+            return true;
+
+        if (!_controller.enable(mod->guid, enable, mod->level)) {
+            *err = last_error();
+            return false;
+        }
+
+        return true;
+    };
+
+    auto mgr = new ModuleManager(_modules);
+    mgr->on_toggle_enable(on_toggle_enable);
+    mgr->domodal(this);
+}
+
 LRESULT MainWindow::_on_create()
 {
+    _btn_start      = _root->find<taowin::button>(L"start-logging");
+    _btn_stop       = _root->find<taowin::button>(L"stop-logging");
+    _btn_modules    = _root->find<taowin::button>(L"module-manager");
+
     _init_listview();
     _init_menu();
 
     taoetw::g_Consumer = &_consumer;
+
+    GUID guids[] = {
+        { 0x1ca17b9b, 0xe3f4, 0x4fa4, { 0x91, 0xa3, 0xd0, 0x39, 0xa6, 0x26, 0x1f, 0x88 } },
+        { 0xb2a2be3c, 0x90f2, 0x4778, { 0x85, 0x72, 0x48, 0x47, 0x9e, 0x8e, 0x0b, 0x2e } },
+        { 0xd3fcccc4, 0xeb1c, 0x441e, { 0x97, 0xe4, 0x06, 0x1b, 0x24, 0xb1, 0x7f, 0x26 } },
+        { 0xfa5f6043, 0xa918, 0x4de4, { 0x80, 0xbd, 0x15, 0x62, 0x54, 0x7f, 0x1b, 0xa4 } },
+    };
+
+    int i = 0;
+    for(auto& guid : guids)
+        _modules.push_back(new ModuleEntry{ std::to_wstring(i++),L"",i % 2 == 0,0, guid });
 
     return 0;
 }

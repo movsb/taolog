@@ -63,7 +63,8 @@ void Consumer::ProcessEvents(EVENT_TRACE * pEvent)
     const auto& log_data = *(ETWLogger::LogData*)pEvent->MofData;
     auto log_ui = new ETWLogger::LogDataUI;
 
-    ::memcpy(log_ui, &log_data, sizeof(log_data));
+    ::memcpy(log_ui, &log_data, pEvent->MofLength);
+    assert(log_ui->text[log_ui->size - 1] == 0);
 
     log_ui->pid = pEvent->Header.ProcessId;
     log_ui->tid = pEvent->Header.ThreadId;

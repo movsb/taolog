@@ -34,14 +34,15 @@ void EventContainer::_init()
 
         switch (base_int)
         {
-        case 0: p = evt->strTime.c_str();       break;
-        case 1: p = evt->strPid.c_str();        break;
-        case 2: p = evt->strTid.c_str();        break;
-        case 3: p = evt->strProject.c_str();    break;
-        case 4: p = evt->file;                  break;
-        case 5: p = evt->func;                  break;
-        case 6: p = evt->strLine.c_str();       break;
-        case 7: p = evt->text;                  break;
+        case 0: p = evt->id;                    break;
+        case 1: p = evt->strTime.c_str();       break;
+        case 2: p = evt->strPid.c_str();        break;
+        case 3: p = evt->strTid.c_str();        break;
+        case 4: p = evt->strProject.c_str();    break;
+        case 5: p = evt->file;                  break;
+        case 6: p = evt->func;                  break;
+        case 7: p = evt->strLine.c_str();       break;
+        case 8: p = evt->text;                  break;
         }
 
         return !p || !std::regex_search(p, _reobj);

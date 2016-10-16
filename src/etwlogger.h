@@ -51,6 +51,7 @@ public:
         unsigned int tid;       // 线程标识
         unsigned char level;    // 日志等级
 
+        TCHAR id[22];
         string strTime;
         string strLine;
         string strPid;

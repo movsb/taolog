@@ -174,18 +174,19 @@ void MainWindow::_init_listview()
 {
     _listview = _root->find<taowin::listview>(L"lv");
 
-    _columns.emplace_back(L"时间", true, 80);
-    _columns.emplace_back(L"进程", true, 50);
-    _columns.emplace_back(L"线程", true, 50);
-    _columns.emplace_back(L"项目", true, 100);
-    _columns.emplace_back(L"文件", true, 200);
-    _columns.emplace_back(L"函数", true, 100);
-    _columns.emplace_back(L"行号", true, 50);
-    _columns.emplace_back(L"日志", true, 300);
+    _columns.emplace_back(L"编号", false,  50);
+    _columns.emplace_back(L"时间", true,   86);
+    _columns.emplace_back(L"进程", false,  50);
+    _columns.emplace_back(L"线程", false,  50);
+    _columns.emplace_back(L"项目", true,  100);
+    _columns.emplace_back(L"文件", true,  140);
+    _columns.emplace_back(L"函数", true,  100);
+    _columns.emplace_back(L"行号", true,   50);
+    _columns.emplace_back(L"日志", true,  300);
 
     for (int i = 0; i < (int)_columns.size(); i++) {
         auto& col = _columns[i];
-        _listview->insert_column(col.name.c_str(), col.width, i);
+        _listview->insert_column(col.name.c_str(), col.show ? col.width : 0, i);
     }
 
     _colors.try_emplace(TRACE_LEVEL_INFORMATION, RGB(  0,   0,   0), RGB(255, 255, 255));
@@ -336,7 +337,7 @@ LRESULT MainWindow::_on_create()
 
     int i = 0;
     for(auto& guid : guids)
-        _modules.push_back(new ModuleEntry{ std::to_wstring(i++),L"",i % 2 == 0,0, guid });
+        _modules.push_back(new ModuleEntry{ std::to_wstring(i++),L"",i % 2 == 1,0, guid });
 
     return 0;
 }
@@ -344,6 +345,8 @@ LRESULT MainWindow::_on_create()
 LRESULT MainWindow::_on_log(ETWLogger::LogDataUI* item)
 {
     const std::wstring* root = nullptr;
+
+    _snwprintf(item->id, _countof(item->id), L"%llu", (unsigned long long)_events.size()+1);
 
     _module_from_guid(item->guid, &item->strProject, &root);
 
@@ -406,14 +409,15 @@ LRESULT MainWindow::_on_get_dispinfo(NMHDR * hdr)
 
     switch (lit->iSubItem)
     {
-    case 0: value = evt->strTime.c_str();               break;
-    case 1: value = evt->strPid.c_str();                break;
-    case 2: value = evt->strTid.c_str();                break;
-    case 3: value = evt->strProject.c_str();            break;
-    case 4: value = evt->file + evt->offset_of_file;    break;
-    case 5: value = evt->func;                          break;
-    case 6: value = evt->strLine.c_str();               break;
-    case 7: value = evt->text;                          break;
+    case 0: value = evt->id;                            break;
+    case 1: value = evt->strTime.c_str();               break;
+    case 2: value = evt->strPid.c_str();                break;
+    case 3: value = evt->strTid.c_str();                break;
+    case 4: value = evt->strProject.c_str();            break;
+    case 5: value = evt->file + evt->offset_of_file;    break;
+    case 6: value = evt->func;                          break;
+    case 7: value = evt->strLine.c_str();               break;
+    case 8: value = evt->text;                          break;
     }
 
     lit->pszText = const_cast<TCHAR*>(value);

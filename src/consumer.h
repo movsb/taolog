@@ -12,7 +12,7 @@ namespace taoetw {
 
 class Consumer;
 
-extern Consumer* g_Consumer;
+extern void DoEtwLog(ETWLogger::LogDataUI* log);
 
 class Consumer
 {

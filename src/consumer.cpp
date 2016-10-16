@@ -86,7 +86,7 @@ void Consumer::ProcessEvents(EVENT_TRACE * pEvent)
         log_ui->strTime = buf;
     }
 
-    ::PostMessage(g_Consumer->_hwnd, g_Consumer->_umsg, 0, LPARAM(log_ui));
+    DoEtwLog(log_ui);
 }
 
 unsigned int Consumer::ConsumerThread(void * ud)

@@ -18,7 +18,13 @@ static const wchar_t* g_etw_session = L"taoetw-session";
 
 namespace taoetw {
 
-Consumer* g_Consumer;
+static HWND g_logger_hwnd;
+static UINT g_logger_message;
+
+void DoEtwLog(ETWLogger::LogDataUI* log)
+{
+    ::PostMessage(g_logger_hwnd, g_logger_message, 0, LPARAM(log));
+}
 
 LPCTSTR MainWindow::get_skin_xml() const
 {
@@ -174,7 +180,11 @@ bool MainWindow::_start()
         return false;
     }
 
+    // TODO 参数未使用
     _consumer.init(_hwnd, kDoLog);
+    
+    g_logger_hwnd = _hwnd;
+    g_logger_message = kDoLog;
 
     if (!_consumer.start(g_etw_session)) {
         _controller.stop();
@@ -414,9 +424,6 @@ LRESULT MainWindow::_on_create()
 
     _init_listview();
     _init_menu();
-
-    assert(g_Consumer == nullptr);
-    g_Consumer = &_consumer;
 
     _current_filter = &_events;
 

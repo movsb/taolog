@@ -102,8 +102,7 @@ LRESULT ResultFilter::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR
     else if (pc == _btn_add) {
         AddNewFilter dlg(_on_get_bases);
         if (dlg.domodal(this) == IDOK) {
-            auto p = new EventContainer(dlg.name, dlg.base, dlg.rule, dlg.base_int);
-            _on_add_new(p);
+            _on_add_new(new EventContainer(dlg.name, dlg.base, dlg.rule, dlg.base_int));
             _listview->set_item_count(_filters.size(), LVSICF_NOINVALIDATEALL);
         }
     }

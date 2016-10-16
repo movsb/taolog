@@ -27,10 +27,7 @@ public:
         , rule(regex)
         , base_int(base_int)
     {
-        _reobj = std::wregex(regex, std::regex_constants::icase);
-        _filter = [&](const EVENT* evt) {
-            return !std::regex_search(evt->text, _reobj);
-        };
+        _init();
     }
 
 public:
@@ -38,6 +35,9 @@ public:
     bool filter_results(EventContainer* container);
     EVENT* operator[](int index) { return _events[index]; }
     size_t size() const { return _events.size(); }
+
+protected:
+    void _init();
 
 public:
     std::wstring name;

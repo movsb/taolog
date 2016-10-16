@@ -349,8 +349,10 @@ LRESULT MainWindow::_on_log(ETWLogger::LogDataUI* item)
         item->offset_of_file = 0;
     }
 
+    // 全部事件容器
     _events.add(item);
 
+    // 带过滤的事件容器（指针复用）
     if (!_filters.empty()) {
         for (auto& f : _filters) {
             f->add(item);

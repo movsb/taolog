@@ -3,6 +3,7 @@
 
 #include <string>
 #include <unordered_map>
+#include <algorithm>
 
 #include <windows.h>
 #include <evntrace.h>
@@ -368,8 +369,13 @@ void MainWindow::_do_search(const std::wstring& s, int start)
     bool valid = false;
 
     for (; next >= 0 && next < (int)_current_filter->size();) {
-        auto& s1 = (*_current_filter)[next]->text;
-        if (::wcsnicmp(s1, s.c_str(), s.size()) == 0) {
+        // ¸Ò²»¸ÒÔÙÂé·³µã£¬ÆH¡£¡£¡£
+        std::wstring s1 = (*_current_filter)[next]->text;
+        std::wstring s2 = s;
+        std::transform(s1.begin(), s1.end(), s1.begin(), ::tolower);
+        std::transform(s2.begin(), s2.end(), s2.begin(), ::tolower);
+
+        if (::wcsstr(s1.c_str(), s2.c_str()) != nullptr) {
             valid = true;
             break;
         }

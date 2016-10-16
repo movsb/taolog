@@ -29,7 +29,7 @@ LPCTSTR MainWindow::get_skin_xml() const
     </res>
     <root>
         <vertical padding="5,5,5,5">
-            <horizontal height="30" padding="0,4,0,4">
+            <horizontal name="toolbar" height="30" padding="0,4,0,4">
                 <button name="start-logging" text="开始记录" width="60" style="tabstop"/>
                 <control width="5" />
                 <button name="stop-logging" text="停止记录" width="60" style="disabled,tabstop"/>
@@ -97,6 +97,15 @@ LRESULT MainWindow::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR *
                 _view_detail(nmlv->iItem);
             }
             return 0;
+        }
+        else if (code == LVN_KEYDOWN) {
+            auto nmlv = reinterpret_cast<NMLVKEYDOWN*>(hdr);
+            if (nmlv->wVKey == VK_F11) {
+                auto toolbar = _root->find<taowin::container>(L"toolbar");
+                toolbar->set_visible(!toolbar->is_visible());
+                _listview->show_header(toolbar->is_visible());
+                return 0;
+            }
         }
     }
     else if (pc == _btn_start) {

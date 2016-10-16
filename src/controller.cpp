@@ -34,7 +34,7 @@ restart:
 
 bool Controller::enable(const GUID& provider, bool enable_, int level)
 {
-    return ::EnableTrace(enable_, 0, TRACE_LEVEL_INFORMATION, &provider, _handle) == ERROR_SUCCESS;
+    return ::EnableTrace(enable_, 0, level, &provider, _handle) == ERROR_SUCCESS;
 }
 
 void Controller::stop()

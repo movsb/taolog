@@ -13,6 +13,7 @@ public:
 
 protected:
     std::vector<ModuleEntry*>& _modules;
+    ModuleLevelMap&            _levels;
 
     fnOnToggleEnable    _on_toggle;
 
@@ -24,8 +25,9 @@ protected:
     taowin::button*     _btn_delete;
 
 public:
-    ModuleManager(std::vector<ModuleEntry*>& modules)
+    ModuleManager(std::vector<ModuleEntry*>& modules, ModuleLevelMap& levels)
         : _modules(modules)
+        , _levels(levels)
     {}
 
     void on_toggle_enable(fnOnToggleEnable fn) { _on_toggle = fn; }

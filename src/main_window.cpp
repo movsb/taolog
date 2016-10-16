@@ -217,6 +217,7 @@ void MainWindow::_init_listview()
     _columns.emplace_back(L"文件", true,  140);
     _columns.emplace_back(L"函数", true,  100);
     _columns.emplace_back(L"行号", true,   50);
+    _columns.emplace_back(L"等级", false, 100);
     _columns.emplace_back(L"日志", true,  300);
 
     for (int i = 0; i < (int)_columns.size(); i++) {
@@ -296,7 +297,7 @@ void MainWindow::_manage_modules()
         return true;
     };
 
-    auto mgr = new ModuleManager(_modules);
+    auto mgr = new ModuleManager(_modules, _level_maps);
     mgr->on_toggle_enable(on_toggle_enable);
     mgr->domodal(this);
 }
@@ -407,6 +408,13 @@ LRESULT MainWindow::_on_create()
     for(auto& guid : guids)
         _modules.push_back(new ModuleEntry{ std::to_wstring(i++),L"",i % 2 == 1,0, guid });
 
+    
+    _level_maps.try_emplace(TRACE_LEVEL_INFORMATION, L"Information",  L"信息 - TRACE_LEVEL_INFORMATION");
+    _level_maps.try_emplace(TRACE_LEVEL_WARNING,     L"Warning",      L"警告 - TRACE_LEVEL_WARNING" );
+    _level_maps.try_emplace(TRACE_LEVEL_ERROR,       L"Error",        L"错误 - TRACE_LEVEL_ERROR" );
+    _level_maps.try_emplace(TRACE_LEVEL_CRITICAL,    L"Critical",     L"严重 - TRACE_LEVEL_CRITICAL" );
+    _level_maps.try_emplace(TRACE_LEVEL_VERBOSE,     L"Verbose",      L"详细 - TRACE_LEVEL_VERBOSE" );
+
     return 0;
 }
 
@@ -427,6 +435,8 @@ LRESULT MainWindow::_on_log(ETWLogger::LogDataUI* item)
     else {
         item->offset_of_file = 0;
     }
+
+    item->strLevel = &_level_maps[item->level];
 
     // 全部事件容器
     _events.add(item);
@@ -485,7 +495,8 @@ LRESULT MainWindow::_on_get_dispinfo(NMHDR * hdr)
     case 5: value = evt->file + evt->offset_of_file;    break;
     case 6: value = evt->func;                          break;
     case 7: value = evt->strLine.c_str();               break;
-    case 8: value = evt->text;                          break;
+    case 8: value = ((ModuleLevel*)evt->strLevel)->cmt1.c_str(); break;
+    case 9: value = evt->text;                          break;
     }
 
     lit->pszText = const_cast<TCHAR*>(value);

@@ -239,7 +239,7 @@ void ModuleManager::_modify_item(int i)
         return true;
     };
 
-    (new ModuleEntryEditor(mod, onok, onguid))->domodal(this);
+    (new ModuleEntryEditor(mod, _levels ,onok, onguid))->domodal(this);
 }
 
 void ModuleManager::_delete_items(const std::vector<int>& items)
@@ -279,7 +279,7 @@ void ModuleManager::_add_item()
         return true;
     };
 
-    (new ModuleEntryEditor(nullptr, onok, onguid))->domodal(this);
+    (new ModuleEntryEditor(nullptr, _levels, onok, onguid))->domodal(this);
 }
 
 bool ModuleManager::_has_guid(const GUID & guid)

@@ -14,7 +14,7 @@ public:
 
 private:
     ModuleEntry* _mod;
-
+    ModuleLevelMap* _levels;
     fnOnOk _onok;
     fnOnCheckGuid _oncheckguid;
 
@@ -26,10 +26,11 @@ private:
     taowin::button* _cancel;
 
 public:
-    ModuleEntryEditor(ModuleEntry* mod, fnOnOk onok, fnOnCheckGuid onguid)
+    ModuleEntryEditor(ModuleEntry* mod, ModuleLevelMap& levels, fnOnOk onok, fnOnCheckGuid onguid)
         : _mod(mod)
         , _onok(onok)
         , _oncheckguid(onguid)
+        , _levels(&levels)
     {}
 
 protected:

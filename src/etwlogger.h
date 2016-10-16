@@ -60,6 +60,8 @@ public:
         string strProject;
 
         int offset_of_file;
+
+        void* strLevel;
     };
 
     struct LogDataTrace

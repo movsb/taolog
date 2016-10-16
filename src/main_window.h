@@ -63,6 +63,7 @@ private:
     EventContainer      _events;
     EventContainerS     _filters;
     EventContainer*     _current_filter;
+    ModuleLevelMap      _level_maps;
 
     int                 _last_search_index;
     std::wstring        _last_search_string;

@@ -56,7 +56,10 @@ LRESULT ColumnSelection::on_notify(HWND hwnd, taowin::control * pc, int code, NM
 {
     if (!pc) return 0;
 
-    if (pc->name() >= _T("0") && pc->name() < std::to_wstring(_columns.size())) {
+    int id = -1;
+    ::swscanf(pc->name().c_str(), L"%d", &id);
+
+    if (id >= 0 && id < int(_columns.size())) {
         if (code == BN_CLICKED) {
             int index = _ttoi(pc->name().c_str());
             auto& col = _columns[index];

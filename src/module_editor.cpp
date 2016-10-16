@@ -63,16 +63,8 @@ LRESULT ModuleEntryEditor::handle_message(UINT umsg, WPARAM wparam, LPARAM lpara
         _ok = _root->find<taowin::button>(L"ok");
         _cancel = _root->find<taowin::button>(L"cancel");
 
-        std::unordered_map<int, const TCHAR*> levels = {
-            { TRACE_LEVEL_INFORMATION,   L"信息 - TRACE_LEVEL_INFORMATION" },
-            { TRACE_LEVEL_WARNING,       L"警告 - TRACE_LEVEL_WARNING" },
-            { TRACE_LEVEL_ERROR,         L"错误 - TRACE_LEVEL_ERROR" },
-            { TRACE_LEVEL_CRITICAL,      L"严重 - TRACE_LEVEL_CRITICAL" },
-            { TRACE_LEVEL_VERBOSE,       L"详细 - TRACE_LEVEL_VERBOSE" },
-        };
-
-        for (auto& pair : levels) {
-            int i = _level->add_string(pair.second);
+        for (auto& pair : *_levels) {
+            int i = _level->add_string(pair.second.cmt2.c_str());
             _level->set_item_data(i, (void*)pair.first);
         }
 

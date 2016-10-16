@@ -165,7 +165,8 @@ bool MainWindow::filter_special_key(int vk)
         _last_search_string = _edt_search->get_text();
 
         if (!_last_search_string.empty()) {
-            _do_search(_last_search_string, _last_search_index);
+            if (!_do_search(_last_search_string, _last_search_index))
+                _edt_search->focus();
             return true;
         }
     }
@@ -376,9 +377,9 @@ void MainWindow::_show_filters()
     dlg->show();
 }
 
-void MainWindow::_do_search(const std::wstring& s, int start)
+bool MainWindow::_do_search(const std::wstring& s, int start)
 {
-    if (s.empty()) { return; }
+    if (s.empty()) { return false; }
 
     int dir = ::GetAsyncKeyState(VK_SHIFT) & 0x8000 ? -1 : 1;
     int next = dir == 1 ? start + 1 : start - 1;
@@ -402,7 +403,7 @@ void MainWindow::_do_search(const std::wstring& s, int start)
     if (!valid) {
         msgbox(std::wstring(L"没有") + (dir==1 ? L"下" : L"上") + L"一个了。", MB_ICONINFORMATION);
         _listview->focus();
-        return;
+        return false;
     }
 
     _listview->focus();
@@ -411,6 +412,8 @@ void MainWindow::_do_search(const std::wstring& s, int start)
     _listview->set_item_state(next, LVIS_SELECTED|LVIS_FOCUSED, LVIS_SELECTED|LVIS_FOCUSED);
 
     _last_search_index = next;
+
+    return true;
 }
 
 LRESULT MainWindow::_on_create()

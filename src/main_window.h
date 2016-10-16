@@ -89,7 +89,7 @@ protected:
     void _view_detail(int i);
     void _manage_modules();
     void _show_filters();
-    void _do_search(const std::wstring& s, int start);
+    bool _do_search(const std::wstring& s, int start);
 
     LRESULT _on_create();
     LRESULT _on_log(ETWLogger::LogDataUI* log);

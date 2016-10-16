@@ -69,7 +69,7 @@ LRESULT ModuleEntryEditor::handle_message(UINT umsg, WPARAM wparam, LPARAM lpara
         }
 
         if (!_mod) {
-            _level->set_cur_sel(0);
+            _level->set_cur_sel(1);
         }
         else {
             _name->set_text(_mod->name.c_str());
@@ -91,7 +91,7 @@ LRESULT ModuleEntryEditor::handle_message(UINT umsg, WPARAM wparam, LPARAM lpara
                     }
                 }
                 else {
-                    _level->set_cur_sel(0);
+                    _level->set_cur_sel(1);
                     break;
                 }
             }

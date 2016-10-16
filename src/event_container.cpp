@@ -32,6 +32,8 @@ void EventContainer::_init()
         // 这里我不知道怎么根据base_int拿字段，所以特殊处理（为了效率）
         const wchar_t* p = nullptr;
 
+        bool processed = true;
+
         switch (base_int)
         {
         case 0: p = evt->id;                    break;
@@ -42,10 +44,20 @@ void EventContainer::_init()
         case 5: p = evt->file;                  break;
         case 6: p = evt->func;                  break;
         case 7: p = evt->strLine.c_str();       break;
-        case 8: p = evt->text;                  break;
+        case 9: p = evt->text;                  break;
+        default: processed = false;             break;
         }
 
-        return !p || !std::regex_search(p, _reobj);
+        if(processed) return !p || !std::regex_search(p, _reobj);
+        else {
+            switch(base_int)
+            {
+            case 8: return evt->level != base_value;
+            }
+        }
+
+        assert(0);
+        return false;
     };
 }
 

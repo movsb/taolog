@@ -342,7 +342,19 @@ void MainWindow::_show_filters()
         _listview->redraw_items(0, _listview->get_item_count() -1);
     };
 
-    auto dlg = new ResultFilter(_filters, get_base, ondelete, onsetfilter, onaddnew, _current_filter);
+    auto ongetvalues = [&](int baseindex, std::unordered_map<int, const wchar_t*>* values) {
+        values->clear();
+
+        // TODO: 警告：修改列的时候注意这里
+        if (baseindex == 8) {
+
+            for (auto& pair : _level_maps) {
+                (*values)[pair.first] = pair.second.cmt2.c_str();
+            }
+        }
+    };
+
+    auto dlg = new ResultFilter(_filters, get_base, ondelete, onsetfilter, onaddnew, _current_filter, ongetvalues);
     dlg->create();
     dlg->show();
 }

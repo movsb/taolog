@@ -77,7 +77,7 @@ LRESULT ResultFilter::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR
             switch (lit->iSubItem) {
             case 0: value = flt.name.c_str();  break;
             case 1: value = flt.base.c_str();  break;
-            case 2: value = flt.rule.c_str(); break;
+            case 2: value = *flt.rule.c_str() ? flt.rule.c_str() : flt.str_base_value.c_str(); break;
             }
 
             lit->pszText = const_cast<TCHAR*>(value);
@@ -123,9 +123,9 @@ LRESULT ResultFilter::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR
         }
     }
     else if (pc == _btn_add) {
-        AddNewFilter dlg(_on_get_bases);
+        AddNewFilter dlg(_on_get_bases, _get_value_list);
         if (dlg.domodal(this) == IDOK) {
-            _on_add_new(new EventContainer(dlg.name, dlg.base, dlg.rule, dlg.base_int));
+            _on_add_new(new EventContainer(dlg.name, dlg.base, dlg.rule, dlg.base_int, dlg.rule2, dlg.str_base_value));
             _listview->set_item_count(_filters.size(), LVSICF_NOINVALIDATEALL);
 
             int index = _listview->get_item_count() - 1;
@@ -184,7 +184,12 @@ LPCTSTR AddNewFilter::get_skin_xml() const
                 </horizontal>
                 <horizontal height="30" padding="0,3,0,3">
                     <label style="centerimage" text="规则" width="50"/>
-                    <edit name="rule" text="正则表达式（C++11 / Javascript）" style="tabstop" exstyle="clientedge" />
+                    <container>
+                        <edit name="rule" text="正则表达式（C++11 / Javascript）" style="tabstop" exstyle="clientedge" />
+                        <vertical name="不加这个，下面的combobox显示不出来">
+                            <combobox name="rule2" style="tabstop" height="200" />
+                        </vertical>
+                    </container>
                 </horizontal>
             </vertical>
             <horizontal height="40" padding="10,4,10,4">
@@ -209,6 +214,7 @@ LRESULT AddNewFilter::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
         _name = _root->find<taowin::edit>(L"name");
         _base = _root->find<taowin::combobox>(L"base");
         _rule = _root->find<taowin::edit>(L"rule");
+        _rule2 = _root->find<taowin::combobox>(L"rule2");
 
         _save = _root->find<taowin::button>(L"save");
         _cancel = _root->find<taowin::button>(L"cancel");
@@ -241,6 +247,33 @@ LRESULT AddNewFilter::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR
     else if (pc == _cancel) {
         close(IDCANCEL);
     }
+    else if (pc == _base) {
+        if (code == CBN_SELCHANGE) {
+            int sel = _base->get_cur_sel();
+
+            _values.clear();
+            _get_values(sel, &_values);
+
+            _rule2->set_visible(!_values.empty());
+            _rule->set_visible(_values.empty());
+
+            if (!_values.empty()) {
+                _rule2->reset_content();
+
+                for (auto& pair : _values) {
+                    int i = _rule2->add_string(pair.second);
+                    _rule2->set_item_data(i, (void*)pair.first);
+                }
+
+                _rule2->set_cur_sel(0);
+                _rule2->focus();
+            }
+            else {
+                _rule->focus();
+            }
+        }
+    }
+
     return 0;
 }
 
@@ -256,11 +289,20 @@ bool AddNewFilter::filter_special_key(int vk)
 
 int AddNewFilter::_on_save()
 {
-    try {
-        rule = _rule->get_text();
-        if (rule == L"") throw 0;
+    bool iscbo = _rule2->is_visible();
 
-        std::wregex re(rule, std::regex_constants::icase);
+    try {
+        if (iscbo) {
+            rule = L"";
+            rule2 = (int)_rule2->get_item_data(_rule2->get_cur_sel());
+            str_base_value = _values[rule2];
+        }
+        else {
+            rule = _rule->get_text();
+            if (rule == L"") throw 0;
+            std::wregex re(rule, std::regex_constants::icase);
+            str_base_value = L"";
+        }
 
         name = _name->get_text();
         base_int = _base->get_cur_sel();

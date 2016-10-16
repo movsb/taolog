@@ -19,13 +19,16 @@ protected:
 public:
     EventContainer()
         : base_int(0)
+        , base_value(0)
     {}
 
-    EventContainer(const std::wstring& name, std::wstring& base, const std::wstring regex, int base_int)
+    EventContainer(const std::wstring& name, std::wstring& base, const std::wstring regex, int base_int, int base_value, std::wstring sbv)
         : name(name)
         , base(base)
         , rule(regex)
         , base_int(base_int)
+        , base_value(base_value)
+        , str_base_value(sbv)
     {
         _init();
     }
@@ -43,6 +46,8 @@ public:
     std::wstring name;
     std::wstring base;
     int          base_int;
+    int          base_value;
+    std::wstring str_base_value;
     std::wstring rule;
 
 protected:

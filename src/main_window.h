@@ -42,6 +42,7 @@ public:
         , _btn_start(nullptr)
         , _btn_stop(nullptr)
         , _btn_modules(nullptr)
+        , _last_search_index(-1)
     {
 
     }
@@ -53,6 +54,7 @@ private:
     taowin::button*     _btn_modules;
     taowin::button*     _btn_filter;
     taowin::button*     _btn_topmost;
+    taowin::edit*       _edt_search;
 
     MapColors           _colors;
     ColumnContainer     _columns;
@@ -61,6 +63,9 @@ private:
     EventContainer      _events;
     EventContainerS     _filters;
     EventContainer*     _current_filter;
+
+    int                 _last_search_index;
+    std::wstring        _last_search_string;
 
     Controller          _controller;
     Consumer            _consumer;
@@ -72,6 +77,7 @@ protected:
     virtual LRESULT handle_message(UINT umsg, WPARAM wparam, LPARAM lparam) override;
     virtual LRESULT on_menu(int id, bool is_accel = false);
     virtual LRESULT on_notify(HWND hwnd, taowin::control* pc, int code, NMHDR* hdr) override;
+    virtual bool filter_special_key(int vk) override;
 
 protected:
     bool _start();
@@ -82,6 +88,7 @@ protected:
     void _view_detail(int i);
     void _manage_modules();
     void _show_filters();
+    void _do_search(const std::wstring& s, int start);
 
     LRESULT _on_create();
     LRESULT _on_log(ETWLogger::LogDataUI* log);

@@ -39,6 +39,8 @@ LPCTSTR MainWindow::get_skin_xml() const
                 <button name="filter-result" text="结果过滤" width="60" style="tabstop"/>
                 <control width="5" />
                 <control />
+                <label text="查找：" width="42" style="centerimage"/>
+                <edit name="s" width="80" style="tabstop" exstyle="clientedge"/>
                 <control width="5" />
                 <button name="topmost" text="窗口置顶" width="60" style="tabstop"/>
             </horizontal>
@@ -106,6 +108,15 @@ LRESULT MainWindow::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR *
                 _listview->show_header(toolbar->is_visible());
                 return 0;
             }
+            else if (nmlv->wVKey == VK_F3) {
+                _do_search(_last_search_string, _last_search_index);
+            }
+        }
+        else if (code == LVN_ITEMCHANGED) {
+            int i = _listview->get_next_item(-1, LVNI_SELECTED);
+            if (i != -1) {
+                _last_search_index = i;
+            }
         }
     }
     else if (pc == _btn_start) {
@@ -132,6 +143,21 @@ LRESULT MainWindow::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR *
     }
 
     return 0;
+}
+
+bool MainWindow::filter_special_key(int vk)
+{
+    if (vk == VK_RETURN && ::GetFocus() == _edt_search->hwnd()) {
+        _last_search_index = -1;
+        _last_search_string = _edt_search->get_text();
+
+        if (!_last_search_string.empty()) {
+            _do_search(_last_search_string, _last_search_index);
+            return true;
+        }
+    }
+
+    return __super::filter_special_key(vk);
 }
 
 bool MainWindow::_start()
@@ -320,6 +346,38 @@ void MainWindow::_show_filters()
     dlg->show();
 }
 
+void MainWindow::_do_search(const std::wstring& s, int start)
+{
+    if (s.empty()) { return; }
+
+    int dir = ::GetAsyncKeyState(VK_SHIFT) & 0x8000 ? -1 : 1;
+    int next = dir == 1 ? start + 1 : start - 1;
+    bool valid = false;
+
+    for (; next >= 0 && next < (int)_current_filter->size();) {
+        auto& s1 = (*_current_filter)[next]->text;
+        if (::wcsnicmp(s1, s.c_str(), s.size()) == 0) {
+            valid = true;
+            break;
+        }
+
+        next += dir == 1 ? 1 : -1;
+    }
+
+    if (!valid) {
+        msgbox(std::wstring(L"没有") + (dir==1 ? L"下" : L"上") + L"一个了。", MB_ICONINFORMATION);
+        _listview->focus();
+        return;
+    }
+
+    _listview->focus();
+    _listview->ensure_visible(next);
+    _listview->set_item_state(-1, LVIS_SELECTED|LVFIS_FOCUSED, 0);
+    _listview->set_item_state(next, LVIS_SELECTED|LVIS_FOCUSED, LVIS_SELECTED|LVIS_FOCUSED);
+
+    _last_search_index = next;
+}
+
 LRESULT MainWindow::_on_create()
 {
     _btn_start      = _root->find<taowin::button>(L"start-logging");
@@ -327,6 +385,7 @@ LRESULT MainWindow::_on_create()
     _btn_modules    = _root->find<taowin::button>(L"module-manager");
     _btn_filter     = _root->find<taowin::button>(L"filter-result");
     _btn_topmost    = _root->find<taowin::button>(L"topmost");
+    _edt_search     = _root->find<taowin::edit>(L"s");
 
     _init_listview();
     _init_menu();
@@ -482,7 +541,5 @@ void MainWindow::_module_from_guid(const GUID & guid, std::wstring * name, const
         *root = nullptr;
     }
 }
-
-/////////////////////////////////////////////////////////////////////////////////////
 
 }

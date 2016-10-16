@@ -112,6 +112,12 @@ LRESULT MainWindow::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR *
             else if (nmlv->wVKey == VK_F3) {
                 _do_search(_last_search_string, _last_search_index);
             }
+            else if (nmlv->wVKey == L'F') {
+                if (::GetAsyncKeyState(VK_CONTROL) & 0x8000) {
+                    _edt_search->focus();
+                    _edt_search->set_sel(0, -1);
+                }
+            }
         }
         else if (code == LVN_ITEMCHANGED) {
             int i = _listview->get_next_item(-1, LVNI_SELECTED);

@@ -2,6 +2,8 @@
 
 namespace taoetw {
 
+ResultFilter* ResultFilter::_this_instance;
+
 LPCTSTR ResultFilter::get_skin_xml() const
 {
     LPCTSTR json = LR"tw(
@@ -15,7 +17,7 @@ LPCTSTR ResultFilter::get_skin_xml() const
         <vertical padding="5,5,5,5">
             <horizontal>
                 <vertical>
-                    <label text="已有过滤器：" height="18" />
+                    <label text="已有过滤器（双击以使用）：" height="18" />
                     <listview name="list" style="ownerdata,showselalways,tabstop" exstyle="clientedge" />
                 </vertical>
                 <control width="5" />

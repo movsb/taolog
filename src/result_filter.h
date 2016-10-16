@@ -24,7 +24,14 @@ public:
         , _on_set_filter(onsetfilter)
         , _on_add_new(onaddnew)
         , _current_filter(curflt)
-    { }
+    {
+        _this_instance = this;
+    }
+
+    ~ResultFilter()
+    {
+        _this_instance = nullptr;
+    }
 
 protected:
     taowin::listview*   _listview;
@@ -39,6 +46,9 @@ protected:
     fnOnSetFilter       _on_set_filter;
     fnOnAddNewFilter    _on_add_new;
     EventContainer*     _current_filter;
+
+public:
+    static ResultFilter* _this_instance;
 
 protected:
     virtual LPCTSTR get_skin_xml() const override;

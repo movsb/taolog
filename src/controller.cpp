@@ -20,7 +20,8 @@ restart:
     _props->LogFileNameOffset = 0;
     _props->FlushTimer = 1;
 
-    wcscpy((wchar_t*)_props + _props->LoggerNameOffset, session);
+    wchar_t* logger_name = (wchar_t*)((char*)_props + _props->LoggerNameOffset);
+    wcscpy(logger_name, session);
 
     auto ret = ::StartTrace(&_handle, _name.c_str(), _props);
     

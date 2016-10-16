@@ -219,6 +219,9 @@ LRESULT AddNewFilter::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
         _save = _root->find<taowin::button>(L"save");
         _cancel = _root->find<taowin::button>(L"cancel");
 
+        // 界面库暂时不支持配置隐藏，所以先写在这里
+        _rule2->set_visible(false);
+
         _on_get_bases(&_bases);
 
         for (auto& base : _bases) {

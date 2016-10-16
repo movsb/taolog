@@ -7,7 +7,7 @@ namespace taoetw {
 LPCTSTR ModuleManager::get_skin_xml() const
 {
     LPCTSTR json = LR"tw(
-<window title="模块管理" size="300,300">
+<window title="模块管理" size="280,300">
     <res>
         <font name="default" face="微软雅黑" size="12"/>
         <font name="1" face="微软雅黑" size="12"/>
@@ -92,15 +92,10 @@ LRESULT ModuleManager::on_notify(HWND hwnd, taowin::control * pc, int code, NMHD
                 mod = _modules[lvcd->nmcd.dwItemSpec];
 
                 if (mod->enable) {
-                    lvcd->clrText = RGB(0, 0, 255);
                     lvcd->clrTextBk = RGB(255, 255, 255);
+                    lvcd->clrText = RGB(0xff, 0x60, 0xd8);
+                    lr = CDRF_NEWFONT;
                 }
-                else {
-                    lvcd->clrText = RGB(0, 0, 0);
-                    lvcd->clrTextBk = RGB(255, 255, 255);
-                }
-
-                lr = CDRF_NEWFONT;
                 break;
             }
 
@@ -272,6 +267,7 @@ void ModuleManager::_add_item()
         _listview->ensure_visible(index);   // 确保可见
         _listview->set_item_state(-1, LVIS_SELECTED, 0); //取消选中其它的
         _listview->set_item_state(index, LVIS_SELECTED, LVIS_SELECTED); //选中当前新增的
+        async_call([&]() {_listview->focus(); }); // 之前有窗口处于处于正在关闭状态，所以异步调
     };
 
     auto onguid = [&](const GUID& guid, std::wstring* err) {

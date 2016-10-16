@@ -98,12 +98,39 @@ LRESULT ResultFilter::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR
                     close(0);
             }
         }
+        else if (code == NM_CUSTOMDRAW) {
+            LRESULT lr = CDRF_DODEFAULT;
+            auto lvcd = (LPNMLVCUSTOMDRAW)hdr;
+
+            switch (lvcd->nmcd.dwDrawStage)
+            {
+            case CDDS_PREPAINT:
+                lr = CDRF_NOTIFYITEMDRAW;
+                break;
+
+            case CDDS_ITEMPREPAINT:
+                if (_current_filter == _filters[lvcd->nmcd.dwItemSpec]) {
+                    lvcd->clrText = RGB(255, 255, 255);
+                    lvcd->clrTextBk = RGB(0xff, 0x60, 0xd8);
+                    lr = CDRF_NEWFONT;
+                }
+                break;
+            }
+
+            return lr;
+        }
     }
     else if (pc == _btn_add) {
         AddNewFilter dlg(_on_get_bases);
         if (dlg.domodal(this) == IDOK) {
             _on_add_new(new EventContainer(dlg.name, dlg.base, dlg.rule, dlg.base_int));
             _listview->set_item_count(_filters.size(), LVSICF_NOINVALIDATEALL);
+
+            int index = _listview->get_item_count() - 1;
+            _listview->ensure_visible(index);   // 确保可见
+            _listview->set_item_state(-1, LVIS_SELECTED, 0); //取消选中其它的
+            _listview->set_item_state(index, LVIS_SELECTED, LVIS_SELECTED); //选中当前新增的
+            _listview->focus();
         }
     }
     else if (pc == _btn_delete) {

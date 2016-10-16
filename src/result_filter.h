@@ -17,12 +17,13 @@ public:
     typedef std::function<void(EventContainer* p)> fnOnAddNewFilter;
 
 public:
-    ResultFilter(EventContainerS& filters, fnOnGetBases getbases, fnOnDeleteFilter ondelete, fnOnSetFilter onsetfilter, fnOnAddNewFilter onaddnew)
+    ResultFilter(EventContainerS& filters, fnOnGetBases getbases, fnOnDeleteFilter ondelete, fnOnSetFilter onsetfilter, fnOnAddNewFilter onaddnew, EventContainer* curflt)
         : _filters(filters)
         , _on_get_bases(getbases)
         , _on_delete(ondelete)
         , _on_set_filter(onsetfilter)
         , _on_add_new(onaddnew)
+        , _current_filter(curflt)
     { }
 
 protected:
@@ -37,6 +38,7 @@ protected:
     fnOnDeleteFilter    _on_delete;
     fnOnSetFilter       _on_set_filter;
     fnOnAddNewFilter    _on_add_new;
+    EventContainer*     _current_filter;
 
 protected:
     virtual LPCTSTR get_skin_xml() const override;

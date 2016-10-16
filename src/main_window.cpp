@@ -297,7 +297,7 @@ void MainWindow::_show_filters()
         _listview->redraw_items(0, _listview->get_item_count() -1);
     };
 
-    auto dlg = new ResultFilter(_filters, get_base, ondelete, onsetfilter, onaddnew);
+    auto dlg = new ResultFilter(_filters, get_base, ondelete, onsetfilter, onaddnew, _current_filter);
     dlg->create();
     dlg->show();
 }

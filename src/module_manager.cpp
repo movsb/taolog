@@ -156,37 +156,40 @@ LRESULT ModuleManager::on_notify(HWND hwnd, taowin::control * pc, int code, NMHD
         // 在全部为禁用状态的时候进行提示（不全部为禁用时后边会提示哪些处于启用状态，此提示就不必要了）
         const wchar_t* title = items.size()==1 ? _modules[items[0]]->name.c_str() : L"确认";
         int state = _get_enable_state_for_items(items);
-        if (state == 0 && msgbox((L"确定要删除选中的 " + std::to_wstring(items.size()) + L" 项？").c_str(), MB_OKCANCEL | MB_ICONQUESTION, title) != IDOK)
+        if ((!_get_is_open() || (_get_is_open() && state == 0)) 
+            && msgbox((L"确定要删除选中的 " + std::to_wstring(items.size()) + L" 项？").c_str(), MB_OKCANCEL | MB_ICONQUESTION, title) != IDOK)
             return 0;
 
-        // 计算哪些模块已经启用，已经启用的模块不能被删除
-        std::wstring modules_enabled;
+        if (_get_is_open()) {
+            // 计算哪些模块已经启用，已经启用的模块不能被删除
+            std::wstring modules_enabled;
 
-        for (auto i = items.begin(); i != items.end();) {
-            auto mod = _modules[*i];
+            for (auto i = items.begin(); i != items.end();) {
+                auto mod = _modules[*i];
 
-            if (mod->enable) {
-                wchar_t guid[128];
+                if (mod->enable) {
+                    wchar_t guid[128];
 
-                if (::StringFromGUID2(mod->guid, &guid[0], _countof(guid))) {
-                    modules_enabled += L"    " + mod->name + L"\n";
+                    if (::StringFromGUID2(mod->guid, &guid[0], _countof(guid))) {
+                        modules_enabled += L"    " + mod->name + L"\n";
+                    }
+                    i = items.erase(i);
                 }
-                i = items.erase(i);
+                else {
+                    ++i;
+                }
             }
-            else {
-                ++i;
+
+            if (!modules_enabled.empty()) {
+                std::wstring msg;
+
+                msg += L"以下模块由于已经启用而不能删除：\n\n";
+                msg += modules_enabled;
+                msg += L"\n是否仅删除被禁用的模块？";
+
+                if (msgbox(msg, MB_ICONQUESTION | MB_OKCANCEL) == IDCANCEL)
+                    return 0;
             }
-        }
-
-        if(!modules_enabled.empty()) {
-            std::wstring msg;
-
-            msg += L"以下模块由于已经启用而不能删除：\n\n";
-            msg += modules_enabled;
-            msg += L"\n是否仅删除被禁用的模块？";
-
-            if (msgbox(msg, MB_ICONQUESTION | MB_OKCANCEL) == IDCANCEL)
-                return 0;
         }
 
         _delete_items(items);
@@ -224,7 +227,7 @@ void ModuleManager::_modify_item(int i)
 {
     auto& mod = _modules[i];
 
-    if (mod->enable) return;
+    if (mod->enable && _get_is_open()) return;
 
     auto onok = [&](ModuleEntry* entry) {
         _listview->redraw_items(i, i);
@@ -313,9 +316,11 @@ void ModuleManager::_on_item_state_change()
     std::vector<int> items;
     _listview->get_selected_items(&items);
 
+    bool opened = _get_is_open();
+
     _btn_enable->set_enabled(!items.empty());
-    _btn_modify->set_enabled(items.size()==1 && items[0] != -1 && !_modules[items[0]]->enable);
-    _btn_delete->set_enabled(items.size() > 1 && _get_enable_state_for_items(items) != 1 || (!items.empty() && !_modules[items[0]]->enable));
+    _btn_modify->set_enabled(items.size()==1 && (!opened || (items[0] != -1 && !_modules[items[0]]->enable)));
+    _btn_delete->set_enabled(items.size() > 1 && (!opened || _get_enable_state_for_items(items) != 1) || (!items.empty() && (!opened || !_modules[items[0]]->enable)));
 
     if (!items.empty()) {
         int state = _get_enable_state_for_items(items);

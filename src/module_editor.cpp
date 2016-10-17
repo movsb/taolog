@@ -140,7 +140,8 @@ int ModuleEntryEditor::_on_ok()
     entry->level = (int)_level->get_item_data(_level->get_cur_sel());
     entry->guid_str = _guid->get_text();
     ::CLSIDFromString(entry->guid_str.c_str(), &entry->guid);
-    entry->enable = false;
+
+    if (!_mod) entry->enable = false;
 
     _onok(entry);
 

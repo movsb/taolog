@@ -335,8 +335,13 @@ void MainWindow::_manage_modules()
         return true;
     };
 
+    auto on_get_is_open = [&]() {
+        return _controller.started();
+    };
+
     auto mgr = new ModuleManager(_modules, _level_maps);
     mgr->on_toggle_enable(on_toggle_enable);
+    mgr->on_get_is_open(on_get_is_open);
     mgr->domodal(this);
 }
 

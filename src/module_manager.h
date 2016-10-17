@@ -10,12 +10,14 @@ class ModuleManager : public taowin::window_creator
 {
 public:
     typedef std::function<bool(ModuleEntry* module, bool enable, std::wstring* err)> fnOnToggleEnable;
+    typedef std::function<bool()> fnIsEtwOpen;
 
 protected:
     std::vector<ModuleEntry*>& _modules;
     ModuleLevelMap&            _levels;
 
     fnOnToggleEnable    _on_toggle;
+    fnIsEtwOpen         _get_is_open;
 
 protected:
     taowin::listview*   _listview;
@@ -31,6 +33,7 @@ public:
     {}
 
     void on_toggle_enable(fnOnToggleEnable fn) { _on_toggle = fn; }
+    void on_get_is_open(fnIsEtwOpen fn) { _get_is_open = fn; }
 
 protected:
     virtual LPCTSTR get_skin_xml() const override;

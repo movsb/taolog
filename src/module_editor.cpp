@@ -139,7 +139,8 @@ int ModuleEntryEditor::_on_ok()
     entry->name = _name->get_text();
     entry->root = _path->get_text();
     entry->level = (int)_level->get_item_data(_level->get_cur_sel());
-    ::CLSIDFromString(_guid->get_text().c_str(), &entry->guid);
+    entry->guid_str = _guid->get_text();
+    ::CLSIDFromString(entry->guid_str.c_str(), &entry->guid);
     entry->enable = false;
 
     _onok(entry);

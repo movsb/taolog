@@ -15,6 +15,7 @@ struct ModuleEntry
     bool            enable;
     unsigned char   level;
     GUID            guid;
+    std::wstring    guid_str;
 };
 
 struct GUIDLessComparer {

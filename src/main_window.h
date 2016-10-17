@@ -15,6 +15,8 @@
 #include "controller.h"
 #include "consumer.h"
 
+#include "config.h"
+
 namespace taoetw {
 
 class MainWindow : public taowin::window_creator
@@ -48,6 +50,7 @@ public:
     }
     
 private:
+    json11::Json::object _config;
     taowin::listview*   _listview;
     taowin::button*     _btn_start;
     taowin::button*     _btn_stop;
@@ -85,13 +88,15 @@ protected:
     bool _stop();
 
     void _init_listview();
-    void _init_menu();
+    void _init_config();
     void _view_detail(int i);
     void _manage_modules();
     void _show_filters();
     bool _do_search(const std::wstring& s, int start);
+    void _save_modules();
 
     LRESULT _on_create();
+    LRESULT _on_close();
     LRESULT _on_log(ETWLogger::LogDataUI* log);
     LRESULT _on_custom_draw_listview(NMHDR* hdr);
     LRESULT _on_get_dispinfo(NMHDR* hdr);

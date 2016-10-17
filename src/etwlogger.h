@@ -11,6 +11,7 @@
 #include <assert.h>
 #include <Windows.h>
 #include <wmistr.h>
+#include <guiddef.h>
 #include <Evntrace.h>
 #include <string>
 
@@ -176,7 +177,7 @@ public:
 	{
 		TRACE_GUID_REGISTRATION eventClassGuids[] = { (LPGUID)&m_clsGuid, NULL};
 
-		ULONG status = ::RegisterTraceGuids( (WMIDPREQUEST)ControlCallback, this, (LPGUID)&m_providerGuid, 
+		ULONG status = RegisterTraceGuids( (WMIDPREQUEST)ControlCallback, this, (LPGUID)&m_providerGuid, 
 			sizeof(eventClassGuids)/sizeof(TRACE_GUID_REGISTRATION), eventClassGuids, NULL, NULL, &m_registrationHandle);
 		if (ERROR_SUCCESS == status)
 		{

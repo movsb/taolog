@@ -6,15 +6,13 @@
 #include <algorithm>
 
 #include <windows.h>
-#include <evntrace.h>
 
 #include "etwlogger.h"
 
 #include <taowin/src/tw_taowin.h>
 
 #include "main_window.h"
-
-static const wchar_t* g_etw_session = L"taoetw-session";
+#include "config.h"
 
 namespace taoetw {
 
@@ -64,6 +62,7 @@ LRESULT MainWindow::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
     switch (umsg)
     {
     case WM_CREATE: return _on_create();
+    case WM_CLOSE:  return _on_close();
     case kDoLog:    return _on_log((ETWLogger::LogDataUI*)lparam);
     }
     return __super::handle_message(umsg, wparam, lparam);
@@ -176,7 +175,15 @@ bool MainWindow::filter_special_key(int vk)
 
 bool MainWindow::_start()
 {
-    if (!_controller.start(g_etw_session)) {
+    /*auto session = g_config.ws(g_config[u8"session"].string_value());
+    if(session.empty()) {
+        session = L"taoetw-session";
+        g_config(u8"session", session);
+    }*/
+
+    auto session = std::wstring(L"asdf");
+
+    if (!_controller.start(session.c_str())) {
         msgbox(taowin::last_error(), MB_ICONERROR);
         return false;
     }
@@ -187,7 +194,7 @@ bool MainWindow::_start()
     g_logger_hwnd = _hwnd;
     g_logger_message = kDoLog;
 
-    if (!_consumer.start(g_etw_session)) {
+    if (!_consumer.start(session.c_str())) {
         _controller.stop();
         msgbox(taowin::last_error(), MB_ICONERROR);
         return false;
@@ -250,46 +257,44 @@ void MainWindow::_init_listview()
     _colors.try_emplace(TRACE_LEVEL_VERBOSE,     RGB(  0,   0,   0), RGB(255, 255, 255));
 }
 
-void MainWindow::_init_menu()
+void MainWindow::_init_config()
 {
-    /*
-    MenuEntry menu;
+    auto modules = g_config[u8"modules"];
+    if(modules.is_array()) {
+        for(auto& mod : modules.array_items()) {
+            if(mod.is_object()) {
+                auto name = mod["name"];
+                auto root = mod["root"];
+                auto enable = mod["enable"];
+                auto level = mod["level"];
+                auto guidstr = mod["guid"];
+                GUID guid;
 
-    menu.enable = true;
-    menu.name = L"开始记录";
-    menu.onclick = [&]() {
-        _start();
+                if((name.is_string() && root.is_string() && enable.is_bool() && level.is_number() && guidstr.is_string())
+                    && (level >= TRACE_LEVEL_CRITICAL && level <= TRACE_LEVEL_VERBOSE)
+                    && (!FAILED(::CLSIDFromString(g_config.ws(guidstr.string_value()).c_str(), &guid)))
+                )
+                {
+                    auto m = new ModuleEntry;
+                    m->name = g_config.ws(name.string_value());
+                    m->root = g_config.ws(root.string_value());
+                    m->enable = enable.bool_value();
+                    m->level = level.int_value();
+                    m->guid = guid;
+                    m->guid_str = g_config.ws(guidstr.string_value());
 
-    };
-    _menus[L"start_logging"] = menu;
-
-    menu.enable = true;
-    menu.name = L"停止记录";
-    menu.onclick = [&]() {
-        _stop();
-    };
-    _menus[L"stop_logging"] = menu;
-
-    menu.enable = true;
-    menu.name = L"模块管理";
-    menu.onclick = [&]() {
-        (new ModuleManager(_modules))->domodal(this);
-    };
-    _menus[L"module_manager"] = menu;
-
-    HMENU hMenu = ::CreateMenu();
-    _menus
-
-    int i = 0;
-    for (auto it = _menus.begin(), end = _menus.end(); it != end; ++it, ++i) {
-        auto& menu = it->second;
-        menu.id = i;
-        ::AppendMenu(hMenu, MF_STRING, i, _menus[i].name.c_str());
-        ::EnableMenuItem(hMenu, i, MF_BYCOMMAND | (_menus[i].enable ? MF_ENABLED : MF_GRAYED | MF_DISABLED));
+                    _modules.push_back(m);
+                }
+                else {
+                    msgbox(L"无效模块配置。", MB_ICONERROR);
+                }
+            }
+        }
     }
-
-    ::SetMenu(_hwnd, hMenu);
-    */
+    else {
+        auto& map = const_cast<json11::Json::object&>(g_config.obj().object_items());
+        map["modules"] = json11::Json::array {};
+    }
 }
 
 void MainWindow::_view_detail(int i)
@@ -416,6 +421,26 @@ bool MainWindow::_do_search(const std::wstring& s, int start)
     return true;
 }
 
+void MainWindow::_save_modules()
+{
+    auto& module_array = const_cast<json11::Json::array&>(g_config["modules"].array_items());
+
+    module_array.clear();
+
+    for(int i = 0; i < (int)_modules.size(); i++) {
+        auto& mod = _modules[i];
+        json11::Json::object m;
+
+        m["name"]   = g_config.us(mod->name);
+        m["root"]   = g_config.us(mod->root);
+        m["enable"] = mod->enable;
+        m["level"]  = mod->level;
+        m["guid"]   = g_config.us(mod->guid_str);
+
+        module_array.push_back(std::move(m));
+    }
+}
+
 LRESULT MainWindow::_on_create()
 {
     _btn_start      = _root->find<taowin::button>(L"start-logging");
@@ -426,28 +451,24 @@ LRESULT MainWindow::_on_create()
     _edt_search     = _root->find<taowin::edit>(L"s");
 
     _init_listview();
-    _init_menu();
+    _init_config();
 
     _current_filter = &_events;
-
-    GUID guids[] = {
-        // { 0x1ca17b9b, 0xe3f4, 0x4fa4, { 0x91, 0xa3, 0xd0, 0x39, 0xa6, 0x26, 0x1f, 0x88 } },
-        // { 0xb2a2be3c, 0x90f2, 0x4778, { 0x85, 0x72, 0x48, 0x47, 0x9e, 0x8e, 0x0b, 0x2e } },
-        // { 0xd3fcccc4, 0xeb1c, 0x441e, { 0x97, 0xe4, 0x06, 0x1b, 0x24, 0xb1, 0x7f, 0x26 } },
-        // { 0xfa5f6043, 0xa918, 0x4de4, { 0x80, 0xbd, 0x15, 0x62, 0x54, 0x7f, 0x1b, 0xa4 } },
-        { 0x630514b5, 0x7b96, 0x4b74, { 0x9d, 0xb6, 0x66, 0xbd, 0x62, 0x1f, 0x93, 0x86 } }, // test
-    };
-
-    int i = 0;
-    for(auto& guid : guids)
-        _modules.push_back(new ModuleEntry{ std::to_wstring(i++),L"",true, TRACE_LEVEL_INFORMATION, guid });
-
     
     _level_maps.try_emplace(TRACE_LEVEL_VERBOSE,     L"Verbose",      L"详细 - TRACE_LEVEL_VERBOSE" );
     _level_maps.try_emplace(TRACE_LEVEL_INFORMATION, L"Information",  L"信息 - TRACE_LEVEL_INFORMATION");
     _level_maps.try_emplace(TRACE_LEVEL_WARNING,     L"Warning",      L"警告 - TRACE_LEVEL_WARNING" );
     _level_maps.try_emplace(TRACE_LEVEL_ERROR,       L"Error",        L"错误 - TRACE_LEVEL_ERROR" );
     _level_maps.try_emplace(TRACE_LEVEL_CRITICAL,    L"Critical",     L"严重 - TRACE_LEVEL_CRITICAL" );
+
+    return 0;
+}
+
+LRESULT MainWindow::_on_close()
+{
+    _save_modules();
+
+    DestroyWindow(_hwnd);
 
     return 0;
 }

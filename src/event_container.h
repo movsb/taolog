@@ -38,6 +38,8 @@ public:
     bool filter_results(EventContainer* container);
     EVENT* operator[](int index) { return _events[index]; }
     size_t size() const { return _events.size(); }
+    void clear() { return _events.clear(); }
+    EVENTS& events() { return _events; }
 
 protected:
     void _init();

@@ -39,6 +39,8 @@ LPCTSTR MainWindow::get_skin_xml() const
                 <control width="5" />
                 <button name="stop-logging" text="停止记录" width="60" style="disabled,tabstop"/>
                 <control width="5" />
+                <button name="clear-logging" text="清空记录" width="60" style="tabstop"/>
+                <control width="5" />
                 <button name="module-manager" text="模块管理" width="60" style="tabstop"/>
                 <control width="5" />
                 <button name="filter-result" text="结果过滤" width="60" style="tabstop"/>
@@ -150,8 +152,11 @@ LRESULT MainWindow::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR *
     }
     else if (pc == _btn_topmost) {
         bool totop = !(::GetWindowLongPtr(_hwnd, GWL_EXSTYLE) & WS_EX_TOPMOST);
-        _btn_topmost->set_text(totop ? L"取消置顶" : L"窗口置顶");
-        ::SetWindowPos(_hwnd, totop ? HWND_TOPMOST : HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+        _set_top_most(totop);
+        g_config.obj(_config)["topmost"] = totop;
+    }
+    else if (pc == _btn_clear) {
+        _clear_results();
     }
 
     return 0;
@@ -259,7 +264,18 @@ void MainWindow::_init_listview()
 
 void MainWindow::_init_config()
 {
-    auto modules = g_config[u8"modules"];
+    std::string err;
+
+    // the gui main
+    auto& windows = g_config.ensure_object(g_config.root(), "windows");
+
+    // main window config
+    _config = g_config.ensure_object(windows, "main");
+
+    _set_top_most(_config["topmost"].bool_value());
+
+    // the modules
+    auto modules = g_config["modules"];
     if(modules.is_array()) {
         for(auto& mod : modules.array_items()) {
             if(mod.is_object()) {
@@ -292,8 +308,7 @@ void MainWindow::_init_config()
         }
     }
     else {
-        auto& map = const_cast<json11::Json::object&>(g_config.obj().object_items());
-        map["modules"] = json11::Json::array {};
+        g_config("modules", json11::Json::array {});
     }
 }
 
@@ -441,17 +456,46 @@ void MainWindow::_save_modules()
     }
 }
 
+void MainWindow::_clear_results()
+{
+    // 需要先关闭引用了日志记录的某某些（因为当前的日志记录没有引用计数功能）
+
+    // 包括：查看详情窗口
+    // 但它目前不会修改事件记录（仅初始化使用，所以先不管它）
+
+    // 各事件过滤器应该清空了（它们只是引用）
+    for (auto& f : _filters)
+        f->clear();
+
+    // 主事件拥有日志事件，由它删除
+    for (auto& evt : _events.events())
+        delete evt;
+
+    _events.clear();
+
+    // 更新界面
+    _listview->set_item_count(0, 0);
+}
+
+void MainWindow::_set_top_most(bool top)
+{
+    _btn_topmost->set_text(top ? L"取消置顶" : L"窗口置顶");
+    ::SetWindowPos(_hwnd, top ? HWND_TOPMOST : HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+}
+
 LRESULT MainWindow::_on_create()
 {
     _btn_start      = _root->find<taowin::button>(L"start-logging");
     _btn_stop       = _root->find<taowin::button>(L"stop-logging");
+    _btn_clear      = _root->find<taowin::button>(L"clear-logging");
     _btn_modules    = _root->find<taowin::button>(L"module-manager");
     _btn_filter     = _root->find<taowin::button>(L"filter-result");
     _btn_topmost    = _root->find<taowin::button>(L"topmost");
     _edt_search     = _root->find<taowin::edit>(L"s");
 
-    _init_listview();
     _init_config();
+
+    _init_listview();
 
     _current_filter = &_events;
     

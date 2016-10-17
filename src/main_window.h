@@ -43,17 +43,20 @@ public:
         : _listview(nullptr)
         , _btn_start(nullptr)
         , _btn_stop(nullptr)
+        , _btn_clear(nullptr)
         , _btn_modules(nullptr)
         , _last_search_index(-1)
     {
 
     }
     
-private:
-    json11::Json::object _config;
+protected:
+    json11::Json        _config;
+
     taowin::listview*   _listview;
     taowin::button*     _btn_start;
     taowin::button*     _btn_stop;
+    taowin::button*     _btn_clear;
     taowin::button*     _btn_modules;
     taowin::button*     _btn_filter;
     taowin::button*     _btn_topmost;
@@ -94,6 +97,8 @@ protected:
     void _show_filters();
     bool _do_search(const std::wstring& s, int start);
     void _save_modules();
+    void _clear_results();
+    void _set_top_most(bool top);
 
     LRESULT _on_create();
     LRESULT _on_close();

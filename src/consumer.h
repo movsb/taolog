@@ -4,7 +4,6 @@
 #include <functional>
 
 #include <windows.h>
-#include <evntrace.h>
 
 #include "etwlogger.h"
 

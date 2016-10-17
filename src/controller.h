@@ -3,7 +3,8 @@
 #include <string>
 
 #include <Windows.h>
-#include <evntrace.h>
+
+#include "etwlogger.h"
 
 namespace taoetw {
 

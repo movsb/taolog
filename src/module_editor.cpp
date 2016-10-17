@@ -1,7 +1,6 @@
 #include <unordered_map>
 
 #include <windows.h>
-#include <evntrace.h>
 
 #include "module_editor.h"
 

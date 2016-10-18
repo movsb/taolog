@@ -3,6 +3,7 @@
 #include <string>
 
 #include <Windows.h>
+#include <wmistr.h>
 #include <Evntrace.h>
 
 #include "_logdata_define.hpp"

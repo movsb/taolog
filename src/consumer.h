@@ -4,6 +4,7 @@
 #include <functional>
 
 #include <windows.h>
+#include <wmistr.h>
 #include <Evntrace.h>
 
 #include "_logdata_define.hpp"

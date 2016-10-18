@@ -1,7 +1,8 @@
+#include "consumer.h"
+
 #include <process.h>
 #include <cassert>
 
-#include "consumer.h"
 
 namespace taoetw {
 

@@ -28,6 +28,9 @@
     <Filter Include="Source Files\3rd\json11">
       <UniqueIdentifier>{7a710f4d-174e-4416-9a2f-a6b8471f977f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\inc">
+      <UniqueIdentifier>{da573099-c8e2-43fe-95e1-bc29ca0239a2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\3rd\taowin\src\tw_control.cpp">
@@ -148,6 +151,9 @@
     </ClInclude>
     <ClInclude Include="..\src\_logdata_define.hpp">
       <Filter>Source Files\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\etwlogger.h">
+      <Filter>Source Files\inc</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

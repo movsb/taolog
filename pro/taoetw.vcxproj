@@ -185,6 +185,7 @@
     <ClInclude Include="..\3rd\taowin\src\tw_taowin.h" />
     <ClInclude Include="..\3rd\taowin\src\tw_util.h" />
     <ClInclude Include="..\3rd\taowin\src\tw_window.h" />
+    <ClInclude Include="..\inc\etwlogger.h" />
     <ClInclude Include="..\src\column_selection.h" />
     <ClInclude Include="..\src\config.h" />
     <ClInclude Include="..\src\consumer.h" />

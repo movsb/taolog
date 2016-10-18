@@ -12,6 +12,7 @@ namespace taoetw {
 #define ETW_LOGGER_MAX_LOG_SIZE (60*1024)
 
 // 一定要跟 etwlogger.h 中的定义一样
+#pragma pack(push,1)
 struct LogData
 {
     GUID guid;              // 生成者 GUID
@@ -22,6 +23,7 @@ struct LogData
     wchar_t func[1024];     // 函数
     wchar_t text[ETW_LOGGER_MAX_LOG_SIZE];      // 日志
 };
+#pragma pack(pop)
 
 // 界面需要使用更多的数据
 struct LogDataUI : LogData

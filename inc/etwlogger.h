@@ -35,6 +35,8 @@ class ETWLogger
     typedef std::basic_string<TCHAR> string;
 
 public:
+
+    #pragma pack(push,1)
     struct LogData
     {
         GUID guid;              // 生成者 GUID
@@ -45,6 +47,7 @@ public:
         wchar_t func[1024];     // 函数
         wchar_t text[ETW_LOGGER_MAX_LOG_SIZE];      // 日志
     };
+    #pragma pack(pop)
 
     struct LogDataTrace
     {

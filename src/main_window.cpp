@@ -239,6 +239,7 @@ void MainWindow::_init_listview()
 {
     _listview = _root->find<taowin::listview>(L"lv");
 
+    // 表头栏
     if(_config.has_arr("columns")) {
         for(auto& jsoncol : _config.arr("columns").as_arr()) {
             auto& c = JsonWrapper(jsoncol).as_obj();
@@ -264,11 +265,48 @@ void MainWindow::_init_listview()
         _listview->insert_column(col.name.c_str(), col.show ? col.width : 0, i);
     }
 
-    _colors.try_emplace(TRACE_LEVEL_INFORMATION, RGB(  0,   0,   0), RGB(255, 255, 255));
-    _colors.try_emplace(TRACE_LEVEL_WARNING,     RGB(255, 128,   0), RGB(255, 255, 255));
-    _colors.try_emplace(TRACE_LEVEL_ERROR,       RGB(255,   0,   0), RGB(255, 255, 255));
-    _colors.try_emplace(TRACE_LEVEL_CRITICAL,    RGB(255, 255, 255), RGB(255,   0,   0));
-    _colors.try_emplace(TRACE_LEVEL_VERBOSE,     RGB(  0,   0,   0), RGB(255, 255, 255));
+    // 列表颜色栏
+    JsonWrapper config_listview = _config.obj("listview");
+    if(config_listview.has_arr("colors")) {
+        for(auto& color : config_listview.arr("colors").as_arr()) {
+            auto& co = JsonWrapper(color).as_obj();
+
+            int level = co["level"].int_value();
+
+            unsigned int fgc[3], bgc[3];
+            ::sscanf(co["fgc"].string_value().c_str(), "%d,%d,%d", &fgc[0], &fgc[1], &fgc[2]);
+            ::sscanf(co["bgc"].string_value().c_str(), "%d,%d,%d", &bgc[0], &bgc[1], &bgc[2]);
+
+            COLORREF crfg = RGB(fgc[0] & 0xff, fgc[1] & 0xff, fgc[2] & 0xff);
+            COLORREF crbg = RGB(bgc[0] & 0xff, bgc[1] & 0xff, bgc[2] & 0xff);
+
+            _colors.try_emplace(level, crfg, crbg);
+        }
+    }
+    else {
+        _colors.try_emplace(TRACE_LEVEL_VERBOSE,     RGB(  0,   0,   0), RGB(255, 255, 255));
+        _colors.try_emplace(TRACE_LEVEL_INFORMATION, RGB(  0,   0,   0), RGB(255, 255, 255));
+        _colors.try_emplace(TRACE_LEVEL_WARNING,     RGB(255, 128,   0), RGB(255, 255, 255));
+        _colors.try_emplace(TRACE_LEVEL_ERROR,       RGB(255,   0,   0), RGB(255, 255, 255));
+        _colors.try_emplace(TRACE_LEVEL_CRITICAL,    RGB(255, 255, 255), RGB(255,   0,   0));
+
+        auto& colors = config_listview.arr("colors").as_arr();
+
+        for(auto& pair : _colors) {
+            auto fgp = (unsigned char*)(&pair.second.fg + 1);
+            auto bgp = (unsigned char*)(&pair.second.bg + 1);
+
+            char buf[2][12];
+            sprintf(&buf[0][0], "%d,%d,%d", fgp[-4], fgp[-3], fgp[-2]);
+            sprintf(&buf[1][0], "%d,%d,%d", bgp[-4], bgp[-3], bgp[-2]);
+
+            colors.push_back(json11::Json::object {
+                {"level",   pair.first},
+                {"fgc",     buf[0]},
+                {"bgc",     buf[1]},
+            });
+        }
+    }
 }
 
 void MainWindow::_init_config()

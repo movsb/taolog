@@ -146,8 +146,8 @@
     <ClInclude Include="..\src\config.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\inc\etwlogger.h">
-      <Filter>Source Files\etw</Filter>
+    <ClInclude Include="..\src\_logdata_define.hpp">
+      <Filter>Source Files\gui</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

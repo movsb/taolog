@@ -2,20 +2,20 @@
 
 #include <taowin/src/tw_taowin.h>
 
-#include "etwlogger.h"
+#include "_logdata_define.hpp"
 
 namespace taoetw {
 
 class EventDetail : public taowin::window_creator
 {
 private:
-    const ETWLogger::LogDataUI* _log;
+    const LogDataUI* _log;
     COLORREF _fg, _bg;
     HBRUSH _hbrBk;
     HWND _hText;
 
 public:
-    EventDetail(const ETWLogger::LogDataUI* log, COLORREF fg = RGB(0, 0, 0), COLORREF bg = RGB(255, 255, 255))
+    EventDetail(const LogDataUI* log, COLORREF fg = RGB(0, 0, 0), COLORREF bg = RGB(255, 255, 255))
         : _log(log)
         , _fg(fg)
         , _bg(bg)

@@ -7,7 +7,7 @@
 
 #include <windows.h>
 
-#include "etwlogger.h"
+#include "_logdata_define.hpp"
 
 #include <taowin/src/tw_taowin.h>
 
@@ -19,7 +19,7 @@ namespace taoetw {
 static HWND g_logger_hwnd;
 static UINT g_logger_message;
 
-void DoEtwLog(ETWLogger::LogDataUI* log)
+void DoEtwLog(LogDataUI* log)
 {
     ::PostMessage(g_logger_hwnd, g_logger_message, 0, LPARAM(log));
 }
@@ -65,7 +65,7 @@ LRESULT MainWindow::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
     {
     case WM_CREATE: return _on_create();
     case WM_CLOSE:  return _on_close();
-    case kDoLog:    return _on_log((ETWLogger::LogDataUI*)lparam);
+    case kDoLog:    return _on_log((LogDataUI*)lparam);
     }
     return __super::handle_message(umsg, wparam, lparam);
 }
@@ -551,7 +551,7 @@ LRESULT MainWindow::_on_close()
     return 0;
 }
 
-LRESULT MainWindow::_on_log(ETWLogger::LogDataUI* item)
+LRESULT MainWindow::_on_log(LogDataUI* item)
 {
     const std::wstring* root = nullptr;
 
@@ -561,7 +561,7 @@ LRESULT MainWindow::_on_log(ETWLogger::LogDataUI* item)
 
     // Ïà¶ÔÂ·¾¶
     if (*item->file && root) {
-        if (::wcsnicmp(item->file, root->c_str(), root->size()) == 0) {
+        if (::_wcsnicmp(item->file, root->c_str(), root->size()) == 0) {
             item->offset_of_file = (int)root->size();
         }
     }
@@ -589,7 +589,7 @@ LRESULT MainWindow::_on_log(ETWLogger::LogDataUI* item)
 LRESULT MainWindow::_on_custom_draw_listview(NMHDR * hdr)
 {
     LRESULT lr = CDRF_DODEFAULT;
-    ETWLogger::LogDataUI* log;
+    LogDataUI* log;
 
     auto lvcd = (LPNMLVCUSTOMDRAW)hdr;
 

@@ -1,4 +1,5 @@
 #include <process.h>
+#include <cassert>
 
 #include "consumer.h"
 
@@ -60,8 +61,8 @@ void Consumer::ProcessEvents(EVENT_TRACE * pEvent)
     if (!pEvent || !IsEqualGUID(pEvent->Header.Guid, g_clsGuid))
         return;
 
-    const auto& log_data = *(ETWLogger::LogData*)pEvent->MofData;
-    auto log_ui = new ETWLogger::LogDataUI;
+    const auto& log_data = *(LogData*)pEvent->MofData;
+    auto log_ui = new LogDataUI;
 
     ::memcpy(log_ui, &log_data, pEvent->MofLength);
     assert(log_ui->text[log_ui->size - 1] == 0);

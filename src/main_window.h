@@ -2,7 +2,7 @@
 
 #include <taowin/src/tw_taowin.h>
 
-#include "etwlogger.h"
+#include "_logdata_define.hpp"
 
 #include "_module_entry.hpp"
 #include "event_container.h"
@@ -101,7 +101,7 @@ protected:
 
     LRESULT _on_create();
     LRESULT _on_close();
-    LRESULT _on_log(ETWLogger::LogDataUI* log);
+    LRESULT _on_log(LogDataUI* log);
     LRESULT _on_custom_draw_listview(NMHDR* hdr);
     LRESULT _on_get_dispinfo(NMHDR* hdr);
     LRESULT _on_select_column();

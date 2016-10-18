@@ -5,14 +5,14 @@
 #include <functional>
 #include <regex>
 
-#include "etwlogger.h"
+#include "_logdata_define.hpp"
 
 namespace taoetw {
 
 class EventContainer
 {
 protected:
-    typedef ETWLogger::LogDataUI EVENT;
+    typedef LogDataUI EVENT;
     typedef std::function<bool(const EVENT*)> FILTER;
     typedef std::vector<EVENT*> EVENTS;
 

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cassert>
+
 #include "event_container.h"
 
 namespace taoetw {

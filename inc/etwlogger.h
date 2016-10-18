@@ -46,25 +46,6 @@ public:
         wchar_t text[ETW_LOGGER_MAX_LOG_SIZE];      // 日志
     };
 
-    struct LogDataUI : LogData
-    {
-        unsigned int pid;       // 进程标识
-        unsigned int tid;       // 线程标识
-        unsigned char level;    // 日志等级
-
-        TCHAR id[22];
-        string strTime;
-        string strLine;
-        string strPid;
-        string strTid;
-
-        string strProject;
-
-        int offset_of_file;
-
-        void* strLevel;
-    };
-
     struct LogDataTrace
     {
         EVENT_TRACE_HEADER hdr;

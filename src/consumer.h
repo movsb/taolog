@@ -4,14 +4,15 @@
 #include <functional>
 
 #include <windows.h>
+#include <Evntrace.h>
 
-#include "etwlogger.h"
+#include "_logdata_define.hpp"
 
 namespace taoetw {
 
 class Consumer;
 
-extern void DoEtwLog(ETWLogger::LogDataUI* log);
+extern void DoEtwLog(LogDataUI* log);
 
 class Consumer
 {

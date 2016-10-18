@@ -93,7 +93,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_CRT_SECURE_NO_WARNINGS;ETW_LOGGER;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>../3rd;../inc</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../3rd</AdditionalIncludeDirectories>
       <AssemblerOutput>NoListing</AssemblerOutput>
     </ClCompile>
     <Link>
@@ -125,7 +125,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;_CRT_SECURE_NO_WARNINGS;ETW_LOGGER;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>../3rd;../inc</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../3rd</AdditionalIncludeDirectories>
       <AssemblerOutput>NoListing</AssemblerOutput>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
@@ -185,7 +185,6 @@
     <ClInclude Include="..\3rd\taowin\src\tw_taowin.h" />
     <ClInclude Include="..\3rd\taowin\src\tw_util.h" />
     <ClInclude Include="..\3rd\taowin\src\tw_window.h" />
-    <ClInclude Include="..\inc\etwlogger.h" />
     <ClInclude Include="..\src\column_selection.h" />
     <ClInclude Include="..\src\config.h" />
     <ClInclude Include="..\src\consumer.h" />
@@ -195,6 +194,7 @@
     <ClInclude Include="..\src\module_editor.h" />
     <ClInclude Include="..\src\result_filter.h" />
     <ClInclude Include="..\src\event_container.h" />
+    <ClInclude Include="..\src\_logdata_define.hpp" />
     <ClInclude Include="..\src\_module_entry.hpp" />
     <ClInclude Include="..\src\module_manager.h" />
   </ItemGroup>

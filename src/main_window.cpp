@@ -582,7 +582,7 @@ LRESULT MainWindow::_on_log(LogDataUI* item)
         }
     }
 
-    _listview->set_item_count(_current_filter->size(), LVSICF_NOINVALIDATEALL);
+    _listview->set_item_count(_current_filter->size(), LVSICF_NOINVALIDATEALL|LVSICF_NOSCROLL);
 
     return 0;
 }

@@ -10,12 +10,6 @@ namespace taoetw {
 static const GUID g_clsGuid = 
 { 0x6e5e5cbc, 0x8acf, 0x4fa6, { 0x98, 0xe4, 0xc, 0x63, 0xa0, 0x75, 0x32, 0x3b } };
 
-void Consumer::init(HWND hwnd, UINT umsg)
-{
-    _hwnd = hwnd;
-    _umsg = umsg;
-}
-
 bool Consumer::start(const wchar_t * session)
 {
     EVENT_TRACE_LOGFILE logfile {0};

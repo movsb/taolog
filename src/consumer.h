@@ -18,10 +18,7 @@ class Consumer
 {
 public:
     Consumer()
-        : _hwnd(nullptr)
-        , _umsg(0)
-        , _handle(0)
-        // , _thread(nullptr)
+        : _handle(0)
     {}
 
     ~Consumer()
@@ -30,7 +27,6 @@ public:
     }
 
 public:
-    void init(HWND hwnd, UINT umsg);
     bool start(const wchar_t* session);
     bool stop();
 
@@ -41,10 +37,7 @@ protected:
     static unsigned int __stdcall ConsumerThread(void* ud);
 
 protected:
-    // HANDLE _thread;
     TRACEHANDLE _handle;
-    HWND _hwnd;
-    UINT _umsg;
 };
 
 

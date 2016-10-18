@@ -180,22 +180,23 @@ bool MainWindow::filter_special_key(int vk)
 
 bool MainWindow::_start()
 {
-    /*auto session = g_config.ws(g_config[u8"session"].string_value());
-    if(session.empty()) {
+    std::wstring session;
+    auto& etwobj = _config.obj("etw").as_obj();
+    auto it= etwobj.find("session");
+    if(it == etwobj.cend() || it->second.string_value().empty()) {
         session = L"taoetw-session";
-        g_config(u8"session", session);
-    }*/
-
-    auto session = std::wstring(L"asdf");
+        // 默认值，可以不用写进去，如有必须手动加上
+        // etwobj["session"] = g_config.us(session);
+    }
+    else {
+        session = g_config.ws(it->second.string_value());
+    }
 
     if (!_controller.start(session.c_str())) {
         msgbox(taowin::last_error(), MB_ICONERROR);
         return false;
     }
 
-    // TODO 参数未使用
-    _consumer.init(_hwnd, kDoLog);
-    
     g_logger_hwnd = _hwnd;
     g_logger_message = kDoLog;
 
@@ -301,19 +302,22 @@ void MainWindow::_init_listview()
 
         auto& colors = config_listview.arr("colors").as_arr();
 
-        for(auto& pair : _colors) {
-            auto fgp = (unsigned char*)(&pair.second.fg + 1);
-            auto bgp = (unsigned char*)(&pair.second.bg + 1);
+        // 默认值，不写，需要就手动加
+        if(0) {
+            for(auto& pair : _colors) {
+                auto fgp = (unsigned char*)(&pair.second.fg + 1);
+                auto bgp = (unsigned char*)(&pair.second.bg + 1);
 
-            char buf[2][12];
-            sprintf(&buf[0][0], "%d,%d,%d", fgp[-4], fgp[-3], fgp[-2]);
-            sprintf(&buf[1][0], "%d,%d,%d", bgp[-4], bgp[-3], bgp[-2]);
+                char buf[2][12];
+                sprintf(&buf[0][0], "%d,%d,%d", fgp[-4], fgp[-3], fgp[-2]);
+                sprintf(&buf[1][0], "%d,%d,%d", bgp[-4], bgp[-3], bgp[-2]);
 
-            colors.push_back(json11::Json::object {
-                {"level",   pair.first},
-                {"fgc",     buf[0]},
-                {"bgc",     buf[1]},
-            });
+                colors.push_back(json11::Json::object {
+                    {"level",   pair.first},
+                    {"fgc",     buf[0]},
+                    {"bgc",     buf[1]},
+                });
+            }
         }
     }
 }

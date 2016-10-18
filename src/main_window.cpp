@@ -34,7 +34,7 @@ LPCTSTR MainWindow::get_skin_xml() const
     </res>
     <root>
         <vertical padding="5,5,5,5">
-            <horizontal name="toolbar" height="30" padding="0,4,0,4">
+            <horizontal name="toolbar" height="30" padding="0,1,0,4">
                 <button name="start-logging" text="开始记录" width="60" style="tabstop"/>
                 <control width="5" />
                 <button name="stop-logging" text="停止记录" width="60" style="disabled,tabstop"/>
@@ -46,12 +46,13 @@ LPCTSTR MainWindow::get_skin_xml() const
                 <button name="filter-result" text="结果过滤" width="60" style="tabstop"/>
                 <control width="5" />
                 <control />
-                <label text="查找：" width="42" style="centerimage"/>
+                <label text="查找：" width="38" style="centerimage"/>
+                <combobox name="s-filter" style="tabstop" height="400" width="64" padding="0,0,4,0"/>
                 <edit name="s" width="80" style="tabstop" exstyle="clientedge"/>
                 <control width="5" />
                 <button name="topmost" text="窗口置顶" width="60" style="tabstop"/>
             </horizontal>
-            <listview name="lv" style="showselalways,ownerdata,tabstop" exstyle="clientedge">  </listview>
+            <listview name="lv" style="showselalways,ownerdata,tabstop" exstyle="clientedge"/>
         </vertical>
     </root>
 </window>
@@ -117,7 +118,7 @@ LRESULT MainWindow::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR *
                 return 0;
             }
             else if (nmlv->wVKey == VK_F3) {
-                _do_search(_last_search_string, _last_search_index);
+                _do_search(_last_search_string, _last_search_line, -1);
             }
             else if (nmlv->wVKey == L'F') {
                 if (::GetAsyncKeyState(VK_CONTROL) & 0x8000) {
@@ -129,7 +130,8 @@ LRESULT MainWindow::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR *
         else if (code == LVN_ITEMCHANGED) {
             int i = _listview->get_next_item(-1, LVNI_SELECTED);
             if (i != -1) {
-                _last_search_index = i;
+                _listview->redraw_items(_last_search_line, _last_search_line);
+                _last_search_line = i;
             }
         }
     }
@@ -158,6 +160,12 @@ LRESULT MainWindow::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR *
     else if (pc == _btn_clear) {
         _clear_results();
     }
+    else if (pc == _cbo_filter) {
+        if (code == CBN_SELCHANGE) {
+            _edt_search->set_sel(0, -1);
+            _edt_search->focus();
+        }
+    }
 
     return 0;
 }
@@ -165,11 +173,12 @@ LRESULT MainWindow::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR *
 bool MainWindow::filter_special_key(int vk)
 {
     if (vk == VK_RETURN && ::GetFocus() == _edt_search->hwnd()) {
-        _last_search_index = -1;
+        _listview->redraw_items(_last_search_line, _last_search_line);
+        _last_search_line = -1;
         _last_search_string = _edt_search->get_text();
 
         if (!_last_search_string.empty()) {
-            if (!_do_search(_last_search_string, _last_search_index))
+            if (!_do_search(_last_search_string, _last_search_line, -1))
                 _edt_search->focus();
             return true;
         }
@@ -454,27 +463,67 @@ void MainWindow::_show_filters()
     dlg->show();
 }
 
-bool MainWindow::_do_search(const std::wstring& s, int start)
+bool MainWindow::_do_search(const std::wstring& s, int line, int)
 {
+    // 搜索行/列的判断在后面（因为有提示框）
     if (s.empty()) { return false; }
 
+    // 得到下一搜索行和列
     int dir = ::GetAsyncKeyState(VK_SHIFT) & 0x8000 ? -1 : 1;
-    int next = dir == 1 ? start + 1 : start - 1;
+    int next_line = dir == 1 ? line + 1 : line - 1;
+
+    // 此行是否有效
     bool valid = false;
 
-    for (; next >= 0 && next < (int)_current_filter->size();) {
-        // 敢不敢再麻烦点，艸。。。
-        std::wstring s1 = (*_current_filter)[next]->text;
-        std::wstring s2 = s;
-        std::transform(s1.begin(), s1.end(), s1.begin(), ::tolower);
-        std::transform(s2.begin(), s2.end(), s2.begin(), ::tolower);
+    // 搜索哪一列：-1：全部
+    int fltcol = (int)_cbo_filter->get_cur_data();
 
-        if (::wcsstr(s1.c_str(), s2.c_str()) != nullptr) {
-            valid = true;
-            break;
+    // 重置列匹配结果标记
+    for (auto& b : _last_search_matched_cols)
+        b = false;
+
+    // 均转换成小写来搜索
+    std::wstring needle = s;
+    std::transform(needle.begin(), needle.end(), needle.begin(), ::tolower);
+
+    // 搜索函数
+    auto search_text = [&](std::wstring /* 非引用 */heystack) {
+        // 同样转换成小写来被搜索
+        std::transform(heystack.begin(), heystack.end(), heystack.begin(), ::tolower);
+
+        return ::wcsstr(heystack.c_str(), needle.c_str()) != nullptr;
+    };
+
+    for (; next_line >= 0 && next_line < (int)_current_filter->size();) {
+        auto& evt = *(*_current_filter)[next_line];
+
+        // 搜索每一列
+        if (fltcol == -1) {
+            // 是否至少有一列已经能够匹配
+            bool has_col_match = false;
+
+            // 一次性匹配整行
+            for (int i = 0; i < LogDataUI::data_cols; i++) {
+                if(search_text(evt[i])) {
+                    _last_search_matched_cols[i] = true;
+                    has_col_match = true;
+                }
+            }
+
+            valid = has_col_match;
+        }
+        // 仅搜索指定列
+        else {
+            if (search_text(evt[fltcol])) {
+                _last_search_matched_cols[fltcol] = true;
+                valid = true;
+            }
         }
 
-        next += dir == 1 ? 1 : -1;
+        if (valid) break;
+
+        // 没找到，继续往下搜索
+        next_line += dir == 1 ? 1 : -1;
     }
 
     if (!valid) {
@@ -484,11 +533,11 @@ bool MainWindow::_do_search(const std::wstring& s, int start)
     }
 
     _listview->focus();
-    _listview->ensure_visible(next);
-    _listview->set_item_state(-1, LVIS_SELECTED|LVFIS_FOCUSED, 0);
-    _listview->set_item_state(next, LVIS_SELECTED|LVIS_FOCUSED, LVIS_SELECTED|LVIS_FOCUSED);
+    _listview->ensure_visible(next_line);
+    _listview->redraw_items(line, line);
+    _listview->redraw_items(next_line, next_line);
 
-    _last_search_index = next;
+    _last_search_line = next_line;
 
     return true;
 }
@@ -520,6 +569,39 @@ void MainWindow::_set_top_most(bool top)
     ::SetWindowPos(_hwnd, top ? HWND_TOPMOST : HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
 }
 
+// 主界面搜索栏
+void MainWindow::_update_main_filter()
+{
+    // 保留当前选中的项（如果有的话）
+    Column* cur = nullptr;
+    if (_cbo_filter->get_cur_sel() != -1) {
+        void* ud = _cbo_filter->get_cur_data();
+        if ((int)ud != -1) {
+            cur = &_columns[(int)ud];
+        }
+    }
+
+    // 重置内容
+    _cbo_filter->reset_content();
+    _cbo_filter->add_string(L"全部", (void*)-1);
+
+    // 只添加已经显示的列
+    int new_cur = 0;
+    for (size_t i = 0, j = 0; i < _columns.size(); i++) {
+        auto& col = _columns[i];
+        if (col.show) {
+            _cbo_filter->add_string(col.name.c_str(), (void*)i);
+            j++;
+            if (cur == &col) {
+                new_cur = j;
+            }
+        }
+    }
+
+    // 保持选中原来的项
+    _cbo_filter->set_cur_sel(new_cur);
+}
+
 LRESULT MainWindow::_on_create()
 {
     _btn_start      = _root->find<taowin::button>(L"start-logging");
@@ -529,6 +611,7 @@ LRESULT MainWindow::_on_create()
     _btn_filter     = _root->find<taowin::button>(L"filter-result");
     _btn_topmost    = _root->find<taowin::button>(L"topmost");
     _edt_search     = _root->find<taowin::edit>(L"s");
+    _cbo_filter     = _root->find<taowin::combobox>(L"s-filter");
 
     _init_config();
 
@@ -541,6 +624,8 @@ LRESULT MainWindow::_on_create()
     _level_maps.try_emplace(TRACE_LEVEL_WARNING,     L"Warning",      L"警告 - TRACE_LEVEL_WARNING" );
     _level_maps.try_emplace(TRACE_LEVEL_ERROR,       L"Error",        L"错误 - TRACE_LEVEL_ERROR" );
     _level_maps.try_emplace(TRACE_LEVEL_CRITICAL,    L"Critical",     L"严重 - TRACE_LEVEL_CRITICAL" );
+
+    _update_main_filter();
 
     return 0;
 }
@@ -570,7 +655,7 @@ LRESULT MainWindow::_on_log(LogDataUI* item)
         item->offset_of_file = 0;
     }
 
-    item->strLevel = &_level_maps[item->level];
+    item->strLevel = &_level_maps[item->level].cmt1;
 
     // 全部事件容器
     _events.add(item);
@@ -600,12 +685,36 @@ LRESULT MainWindow::_on_custom_draw_listview(NMHDR * hdr)
         lr = CDRF_NOTIFYITEMDRAW;
         break;
 
-    case CDDS_ITEMPREPAINT:
-        log = (*_current_filter)[lvcd->nmcd.dwItemSpec];
-        lvcd->clrText = _colors[log->level].fg;
-        lvcd->clrTextBk = _colors[log->level].bg;
+    case CDDS_ITEM | CDDS_PREPAINT:
+        if (_last_search_line != -1 && lvcd->nmcd.dwItemSpec == _last_search_line) {
+            lr = CDRF_NOTIFYSUBITEMDRAW;
+            break;
+        }
+        else {
+            log = (*_current_filter)[lvcd->nmcd.dwItemSpec];
+            lvcd->clrText = _colors[log->level].fg;
+            lvcd->clrTextBk = _colors[log->level].bg;
+            lr = CDRF_NEWFONT;
+        }
+        break;
+
+    case CDDS_ITEM|CDDS_SUBITEM|CDDS_PREPAINT:
+    {
+        bool hl = _last_search_matched_cols[lvcd->iSubItem];
+
+        if(hl) {
+            lvcd->clrTextBk = RGB(0, 0, 255);
+            lvcd->clrText = RGB(255, 255, 255);
+        }
+        else {
+            log = (*_current_filter)[lvcd->nmcd.dwItemSpec];
+            lvcd->clrText = _colors[log->level].fg;
+            lvcd->clrTextBk = _colors[log->level].bg;
+        }
+
         lr = CDRF_NEWFONT;
         break;
+    }
     }
 
     return lr;
@@ -614,26 +723,10 @@ LRESULT MainWindow::_on_custom_draw_listview(NMHDR * hdr)
 LRESULT MainWindow::_on_get_dispinfo(NMHDR * hdr)
 {
     auto pdi = reinterpret_cast<NMLVDISPINFO*>(hdr);
-    auto evt = (*_current_filter)[pdi->item.iItem];
+    auto& evt = *(*_current_filter)[pdi->item.iItem];
     auto lit = &pdi->item;
 
-    const TCHAR* value = _T("");
-
-    switch (lit->iSubItem)
-    {
-    case 0: value = evt->id;                            break;
-    case 1: value = evt->strTime.c_str();               break;
-    case 2: value = evt->strPid.c_str();                break;
-    case 3: value = evt->strTid.c_str();                break;
-    case 4: value = evt->strProject.c_str();            break;
-    case 5: value = evt->file + evt->offset_of_file;    break;
-    case 6: value = evt->func;                          break;
-    case 7: value = evt->strLine.c_str();               break;
-    case 8: value = ((ModuleLevel*)evt->strLevel)->cmt1.c_str(); break;
-    case 9: value = evt->text;                          break;
-    }
-
-    lit->pszText = const_cast<TCHAR*>(value);
+    lit->pszText = const_cast<LPWSTR>(evt[lit->iSubItem]);
 
     return 0;
 }
@@ -652,6 +745,8 @@ LRESULT MainWindow::_on_select_column()
 
     colsel->domodal(this);
 
+    _update_main_filter();
+
     return 0;
 }
 
@@ -668,6 +763,8 @@ LRESULT MainWindow::_on_drag_column(NMHDR* hdr)
     auto& colobj = JsonWrapper(columns[nmhdr->iItem]).as_obj();
     colobj["show"] = col.show;
     colobj["width"] = col.width;
+
+    _update_main_filter();
 
     return 0;
 }

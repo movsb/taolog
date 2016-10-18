@@ -18,7 +18,7 @@ struct LogData
     GUID guid;              // 生成者 GUID
     SYSTEMTIME time;        // 时间戳
     unsigned int line;      // 行号
-    unsigned int size;      // 字符数（包含null）
+    unsigned int cch;      // 字符数（包含null）
     wchar_t file[1024];     // 文件
     wchar_t func[1024];     // 函数
     wchar_t text[ETW_LOGGER_MAX_LOG_SIZE];      // 日志
@@ -29,6 +29,8 @@ struct LogData
 struct LogDataUI : LogData
 {
     typedef std::basic_string<TCHAR> string;
+
+    static constexpr int data_cols = 10;
 
     string to_string() const
     {
@@ -55,6 +57,38 @@ struct LogDataUI : LogData
         return std::move(str);
     }
 
+    // 返回列数
+    int size() const
+    {
+        return data_cols;
+    }
+
+    inline const wchar_t* operator[](int i)
+    {
+        // 返回 "" 而不是 null，以防错误
+        if (i<0 || i > data_cols - 1)
+            return L"";
+
+        const wchar_t* value = L"";
+        const LogDataUI* evt = this;
+
+        switch(i)
+        {
+        case 0: value = evt->id;                            break;
+        case 1: value = evt->strTime.c_str();               break;
+        case 2: value = evt->strPid.c_str();                break;
+        case 3: value = evt->strTid.c_str();                break;
+        case 4: value = evt->strProject.c_str();            break;
+        case 5: value = evt->file + evt->offset_of_file;    break;
+        case 6: value = evt->func;                          break;
+        case 7: value = evt->strLine.c_str();               break;
+        case 8: value = evt->strLevel->c_str();             break;
+        case 9: value = evt->text;                          break;
+        }
+
+        return value;
+    }
+    
     unsigned int pid;       // 进程标识
     unsigned int tid;       // 线程标识
     unsigned char level;    // 日志等级
@@ -69,7 +103,7 @@ struct LogDataUI : LogData
 
     int offset_of_file;
 
-    void* strLevel;
+    string* strLevel;
 };
 
 

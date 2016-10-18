@@ -17,11 +17,11 @@ LPCTSTR ModuleManager::get_skin_xml() const
         <horizontal padding="5,5,5,5">
             <listview name="list" style="showselalways,ownerdata,tabstop" exstyle="clientedge" />
             <vertical padding="5,5,5,5" width="50">
-                <button name="add" text="添加" height="24" style="tabstop" />
-                <control height="20" />
-                <button name="modify" text="修改" style="disabled,tabstop" height="24"/>
-                <control height="5" />
                 <button name="enable" text="启用" style="disabled,tabstop" height="24" />
+                <control height="20" />
+                <button name="add" text="添加" height="24" style="tabstop" />
+                <control height="5" />
+                <button name="modify" text="修改" style="disabled,tabstop" height="24"/>
                 <control height="5" />
                 <button name="delete" text="删除" style="disabled,tabstop" height="24"/>
                 <control height="5" />

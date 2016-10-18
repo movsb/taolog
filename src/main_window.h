@@ -45,7 +45,7 @@ public:
         , _btn_stop(nullptr)
         , _btn_clear(nullptr)
         , _btn_modules(nullptr)
-        , _last_search_index(-1)
+        , _last_search_line(-1)
     {
 
     }
@@ -61,6 +61,7 @@ protected:
     taowin::button*     _btn_filter;
     taowin::button*     _btn_topmost;
     taowin::edit*       _edt_search;
+    taowin::combobox*   _cbo_filter;
 
     MapColors           _colors;
     ColumnContainer     _columns;
@@ -71,8 +72,9 @@ protected:
     EventContainer*     _current_filter;
     ModuleLevelMap      _level_maps;
 
-    int                 _last_search_index;
+    int                 _last_search_line;
     std::wstring        _last_search_string;
+    bool                _last_search_matched_cols[LogDataUI::data_cols];
 
     Controller          _controller;
     Consumer            _consumer;
@@ -95,9 +97,10 @@ protected:
     void _view_detail(int i);
     void _manage_modules();
     void _show_filters();
-    bool _do_search(const std::wstring& s, int start);
+    bool _do_search(const std::wstring& s, int line, int col);
     void _clear_results();
     void _set_top_most(bool top);
+    void _update_main_filter();
 
     LRESULT _on_create();
     LRESULT _on_close();

@@ -60,7 +60,7 @@ void Consumer::ProcessEvents(EVENT_TRACE * pEvent)
     auto log_ui = new LogDataUI;
 
     ::memcpy(log_ui, &log_data, pEvent->MofLength);
-    assert(log_ui->text[log_ui->size - 1] == 0);
+    assert(log_ui->text[log_ui->cch - 1] == 0);
 
     log_ui->pid = pEvent->Header.ProcessId;
     log_ui->tid = pEvent->Header.ThreadId;

@@ -259,7 +259,7 @@ public:
         // the header
         EVENT_TRACE_HEADER& hdr = m_log.hdr;
         memset(&hdr, 0, sizeof(hdr));
-        hdr.Size            = sizeof(hdr) + offsetof(LogData, text) + data.size * sizeof(data.text[0]);
+        hdr.Size            = (USHORT)(sizeof(hdr) + offsetof(LogData, text) + data.size * sizeof(data.text[0]));
         hdr.Flags           = WNODE_FLAG_TRACED_GUID;
         hdr.Guid            = m_clsGuid;
         hdr.Class.Level     = level;

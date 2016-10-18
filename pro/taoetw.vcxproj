@@ -93,7 +93,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_CRT_SECURE_NO_WARNINGS;ETW_LOGGER;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>../3rd</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../3rd;../inc</AdditionalIncludeDirectories>
       <AssemblerOutput>NoListing</AssemblerOutput>
     </ClCompile>
     <Link>
@@ -125,8 +125,9 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;_CRT_SECURE_NO_WARNINGS;ETW_LOGGER;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>../3rd</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../3rd;../inc</AdditionalIncludeDirectories>
       <AssemblerOutput>NoListing</AssemblerOutput>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -176,7 +177,6 @@
     <ClCompile Include="..\src\result_filter.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="../src/etwlogger.h" />
     <ClInclude Include="..\3rd\json11\json11.hpp" />
     <ClInclude Include="..\3rd\taowin\src\tw_control.h" />
     <ClInclude Include="..\3rd\taowin\src\tw_parser.h" />
@@ -185,6 +185,7 @@
     <ClInclude Include="..\3rd\taowin\src\tw_taowin.h" />
     <ClInclude Include="..\3rd\taowin\src\tw_util.h" />
     <ClInclude Include="..\3rd\taowin\src\tw_window.h" />
+    <ClInclude Include="..\inc\etwlogger.h" />
     <ClInclude Include="..\src\column_selection.h" />
     <ClInclude Include="..\src\config.h" />
     <ClInclude Include="..\src\consumer.h" />

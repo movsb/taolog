@@ -116,9 +116,6 @@
     <ClInclude Include="..\src\controller.h">
       <Filter>Source Files\etw</Filter>
     </ClInclude>
-    <ClInclude Include="../src/etwlogger.h">
-      <Filter>Source Files\etw</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\column_selection.h">
       <Filter>Source Files\gui</Filter>
     </ClInclude>
@@ -148,6 +145,9 @@
     </ClInclude>
     <ClInclude Include="..\src\config.h">
       <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\etwlogger.h">
+      <Filter>Source Files\etw</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

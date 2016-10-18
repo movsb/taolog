@@ -302,22 +302,19 @@ void MainWindow::_init_listview()
 
         auto& colors = config_listview.arr("colors").as_arr();
 
-        // 默认值，不写，需要就手动加
-        if(0) {
-            for(auto& pair : _colors) {
-                auto fgp = (unsigned char*)(&pair.second.fg + 1);
-                auto bgp = (unsigned char*)(&pair.second.bg + 1);
+        for(auto& pair : _colors) {
+            auto fgp = (unsigned char*)(&pair.second.fg + 1);
+            auto bgp = (unsigned char*)(&pair.second.bg + 1);
 
-                char buf[2][12];
-                sprintf(&buf[0][0], "%d,%d,%d", fgp[-4], fgp[-3], fgp[-2]);
-                sprintf(&buf[1][0], "%d,%d,%d", bgp[-4], bgp[-3], bgp[-2]);
+            char buf[2][12];
+            sprintf(&buf[0][0], "%d,%d,%d", fgp[-4], fgp[-3], fgp[-2]);
+            sprintf(&buf[1][0], "%d,%d,%d", bgp[-4], bgp[-3], bgp[-2]);
 
-                colors.push_back(json11::Json::object {
-                    {"level",   pair.first},
-                    {"fgc",     buf[0]},
-                    {"bgc",     buf[1]},
-                });
-            }
+            colors.push_back(json11::Json::object {
+                {"level",   pair.first},
+                {"fgc",     buf[0]},
+                {"bgc",     buf[1]},
+            });
         }
     }
 }

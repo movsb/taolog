@@ -239,16 +239,25 @@ void MainWindow::_init_listview()
 {
     _listview = _root->find<taowin::listview>(L"lv");
 
-    _columns.emplace_back(L"编号", false,  50);
-    _columns.emplace_back(L"时间", true,   86);
-    _columns.emplace_back(L"进程", false,  50);
-    _columns.emplace_back(L"线程", false,  50);
-    _columns.emplace_back(L"项目", true,  100);
-    _columns.emplace_back(L"文件", true,  140);
-    _columns.emplace_back(L"函数", true,  100);
-    _columns.emplace_back(L"行号", true,   50);
-    _columns.emplace_back(L"等级", false, 100);
-    _columns.emplace_back(L"日志", true,  300);
+    if(_config.has_arr("columns")) {
+        for(auto& jsoncol : _config.arr("columns").as_arr()) {
+            auto& c = JsonWrapper(jsoncol).as_obj();
+            _columns.emplace_back(g_config.ws(c["name"].string_value()).c_str(),
+                c["show"].bool_value(), c["width"].int_value());
+        }
+    }
+    else {
+        _columns.emplace_back(L"编号", false, 50);
+        _columns.emplace_back(L"时间", true, 86);
+        _columns.emplace_back(L"进程", false, 50);
+        _columns.emplace_back(L"线程", false, 50);
+        _columns.emplace_back(L"项目", true, 100);
+        _columns.emplace_back(L"文件", true, 140);
+        _columns.emplace_back(L"函数", true, 100);
+        _columns.emplace_back(L"行号", true, 50);
+        _columns.emplace_back(L"等级", false, 100);
+        _columns.emplace_back(L"日志", true, 300);
+    }
 
     for (int i = 0; i < (int)_columns.size(); i++) {
         auto& col = _columns[i];
@@ -605,11 +614,23 @@ LRESULT MainWindow::_on_get_dispinfo(NMHDR * hdr)
 
 LRESULT MainWindow::_on_select_column()
 {
+    // 初次使用时初始化配置文件
+    if(g_config.is_fresh() || !_config.has_arr("columns")) {
+        auto& columns = _config.arr("columns").as_arr();
+
+        for(auto& col : _columns) {
+            columns.push_back(col);
+        }
+    }
+
     auto colsel = new ColumnSelection(_columns);
 
     colsel->OnToggle([&](int i) {
         auto& col = _columns[i];
         _listview->set_column_width(i, col.show ? col.width : 0);
+
+        auto& columns = _config.arr("columns").as_arr();
+        JsonWrapper(columns[i]).as_obj()["show"] = col.show;
     });
 
     colsel->domodal(this);
@@ -625,6 +646,11 @@ LRESULT MainWindow::_on_drag_column(NMHDR* hdr)
 
     col.show = item->cxy != 0;
     if (item->cxy) col.width = item->cxy;
+
+    auto& columns = _config.arr("columns").as_arr();
+    auto& colobj = JsonWrapper(columns[nmhdr->iItem]).as_obj();
+    colobj["show"] = col.show;
+    colobj["width"] = col.width;
 
     return 0;
 }

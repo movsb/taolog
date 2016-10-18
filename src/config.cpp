@@ -26,6 +26,7 @@ bool Config::load(const std::wstring& file_)
         _obj = json11::Json::parse(jsonstr.get(), errmsg);
         if(!_obj->is_object()) {
             _obj.attach(json11::Json::object {});
+            _new = true;
         };
     }
 

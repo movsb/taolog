@@ -2,10 +2,12 @@
 
 #include <taowin/src/tw_taowin.h>
 
+#include "config.h"
+
 namespace taoetw {
 
 struct Column {
-    taowin::string name;
+    std::wstring name;
     bool show;
     int width;
 
@@ -15,6 +17,15 @@ struct Column {
         , width(width_)
     {
 
+    }
+
+    json11::Json to_json() const
+    {
+        return json11::Json::object {
+            {"name", g_config.us(name)},
+            {"show", show},
+            {"width", width},
+        };
     }
 };
 

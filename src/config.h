@@ -85,12 +85,26 @@ public:
     }
 
 public:
-    // 获取 [k] 为数组（确保）
-    JsonWrapper arr(const char* k)
+    // 判断当前对象是否有名为 k 的数组
+    bool has_arr(const char* k)
     {
         assert(_json.is_object());
 
-        if(!_json.has_shape({{k,Json::Type::ARRAY}}, _err))
+        return _json.has_shape({{k,Json::Type::ARRAY}}, _err);
+    }
+
+    // 判断当前对象是否有名为 k 的对象
+    bool has_obj(const char* k)
+    {
+        assert(_json.is_object());
+
+        return _json.has_shape({{k,Json::Type::OBJECT}}, _err);
+    }
+
+    // 获取 [k] 为数组（确保）
+    JsonWrapper arr(const char* k)
+    {
+        if(!has_arr(k))
             as_obj()[k] = Json::array{};
 
         return _json[k];
@@ -99,9 +113,7 @@ public:
     // 获取 [k]  为对象（确保）
     JsonWrapper obj(const char* k)
     {
-        assert(_json.is_object());
-
-        if(!_json.has_shape({{k,Json::Type::OBJECT}}, _err))
+        if(!has_obj(k))
             as_obj()[k] = Json::object {};
 
         return _json[k];
@@ -119,22 +131,27 @@ public:
 
 public:
     Config()
+        : _new (false)
     {}
 
     bool load(const std::wstring& file);
     bool save();
+    bool is_fresh() { return _new; }
 
     JsonWrapper* operator->() { return &_obj; }
     operator json11::Json() { return _obj; }
     JsonWrapper operator[](size_t i) { return _obj[i]; }
     JsonWrapper operator[](const char* k) { return _obj[k]; }
 
+    // 转换 std::string 到 std::wstring
     static std::wstring ws(const std::string& s);
+    // 转换 std::wstring 到 std::string
     static std::string us(const std::wstring& s);
 
 protected:
-    std::wstring _file;
-    JsonWrapper  _obj;
+    std::wstring _file;     // 当前配置路径
+    JsonWrapper  _obj;      // 配置文件根对象元素
+    bool         _new;      // 是否是新创建的配置文件
 
 };
 

@@ -258,6 +258,15 @@ void MainWindow::_init_listview()
         _columns.emplace_back(L"行号", true, 50);
         _columns.emplace_back(L"等级", false, 100);
         _columns.emplace_back(L"日志", true, 300);
+
+        // 初次使用时初始化配置文件
+        if(!_config.has_arr("columns")) {
+            auto& columns = _config.arr("columns").as_arr();
+
+            for(auto& col : _columns) {
+                columns.push_back(col);
+            }
+        }
     }
 
     for (int i = 0; i < (int)_columns.size(); i++) {
@@ -630,15 +639,6 @@ LRESULT MainWindow::_on_get_dispinfo(NMHDR * hdr)
 
 LRESULT MainWindow::_on_select_column()
 {
-    // 初次使用时初始化配置文件
-    if(g_config.is_fresh() || !_config.has_arr("columns")) {
-        auto& columns = _config.arr("columns").as_arr();
-
-        for(auto& col : _columns) {
-            columns.push_back(col);
-        }
-    }
-
     auto colsel = new ColumnSelection(_columns);
 
     colsel->OnToggle([&](int i) {

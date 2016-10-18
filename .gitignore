@@ -1,4 +1,6 @@
 *.swp
+*.user
+*.tmp
 
 *.VC.*
 

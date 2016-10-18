@@ -51,7 +51,7 @@ public:
     }
     
 protected:
-    json11::Json        _config;
+    JsonWrapper         _config;
 
     taowin::listview*   _listview;
     taowin::button*     _btn_start;

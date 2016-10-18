@@ -153,7 +153,7 @@ LRESULT MainWindow::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR *
     else if (pc == _btn_topmost) {
         bool totop = !(::GetWindowLongPtr(_hwnd, GWL_EXSTYLE) & WS_EX_TOPMOST);
         _set_top_most(totop);
-        g_config.obj(_config)["topmost"] = totop;
+        _config["topmost"] = totop;
     }
     else if (pc == _btn_clear) {
         _clear_results();
@@ -267,48 +267,43 @@ void MainWindow::_init_config()
     std::string err;
 
     // the gui main
-    auto& windows = g_config.ensure_object(g_config.root(), "windows");
+    auto windows = g_config->obj("windows");
 
     // main window config
-    _config = g_config.ensure_object(windows, "main");
+    _config = windows.obj("main");
 
     _set_top_most(_config["topmost"].bool_value());
 
     // the modules
-    auto modules = g_config["modules"];
-    if(modules.is_array()) {
-        for(auto& mod : modules.array_items()) {
-            if(mod.is_object()) {
-                auto name = mod["name"];
-                auto root = mod["root"];
-                auto enable = mod["enable"];
-                auto level = mod["level"];
-                auto guidstr = mod["guid"];
-                GUID guid;
+    auto modules = g_config->arr("modules");
+    for(auto& mod : modules.as_arr()) {
+        if(mod.is_object()) {
+            auto name = mod["name"];
+            auto root = mod["root"];
+            auto enable = mod["enable"];
+            auto level = mod["level"];
+            auto guidstr = mod["guid"];
+            GUID guid;
 
-                if((name.is_string() && root.is_string() && enable.is_bool() && level.is_number() && guidstr.is_string())
-                    && (level >= TRACE_LEVEL_CRITICAL && level <= TRACE_LEVEL_VERBOSE)
-                    && (!FAILED(::CLSIDFromString(g_config.ws(guidstr.string_value()).c_str(), &guid)))
-                )
-                {
-                    auto m = new ModuleEntry;
-                    m->name = g_config.ws(name.string_value());
-                    m->root = g_config.ws(root.string_value());
-                    m->enable = enable.bool_value();
-                    m->level = level.int_value();
-                    m->guid = guid;
-                    m->guid_str = g_config.ws(guidstr.string_value());
+            if((name.is_string() && root.is_string() && enable.is_bool() && level.is_number() && guidstr.is_string())
+                && (level >= TRACE_LEVEL_CRITICAL && level <= TRACE_LEVEL_VERBOSE)
+                && (!FAILED(::CLSIDFromString(g_config.ws(guidstr.string_value()).c_str(), &guid)))
+            )
+            {
+                auto m = new ModuleEntry;
+                m->name = g_config.ws(name.string_value());
+                m->root = g_config.ws(root.string_value());
+                m->enable = enable.bool_value();
+                m->level = level.int_value();
+                m->guid = guid;
+                m->guid_str = g_config.ws(guidstr.string_value());
 
-                    _modules.push_back(m);
-                }
-                else {
-                    msgbox(L"无效模块配置。", MB_ICONERROR);
-                }
+                _modules.push_back(m);
+            }
+            else {
+                msgbox(L"无效模块配置。", MB_ICONERROR);
             }
         }
-    }
-    else {
-        g_config("modules", json11::Json::array {});
     }
 }
 
@@ -443,7 +438,7 @@ bool MainWindow::_do_search(const std::wstring& s, int start)
 
 void MainWindow::_save_modules()
 {
-    auto& module_array = const_cast<json11::Json::array&>(g_config["modules"].array_items());
+    auto& module_array = g_config->arr("modules").as_arr();
 
     module_array.clear();
 

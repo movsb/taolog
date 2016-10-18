@@ -156,8 +156,7 @@ LRESULT ModuleManager::on_notify(HWND hwnd, taowin::control * pc, int code, NMHD
         // 在全部为禁用状态的时候进行提示（不全部为禁用时后边会提示哪些处于启用状态，此提示就不必要了）
         const wchar_t* title = items.size()==1 ? _modules[items[0]]->name.c_str() : L"确认";
         int state = _get_enable_state_for_items(items);
-        if ((!_get_is_open() || (_get_is_open() && state == 0)) 
-            && msgbox((L"确定要删除选中的 " + std::to_wstring(items.size()) + L" 项？").c_str(), MB_OKCANCEL | MB_ICONQUESTION, title) != IDOK)
+        if ((!_get_is_open() || state == 0) && msgbox((L"确定要删除选中的 " + std::to_wstring(items.size()) + L" 项？").c_str(), MB_OKCANCEL | MB_ICONQUESTION, title) != IDOK)
             return 0;
 
         if (_get_is_open()) {

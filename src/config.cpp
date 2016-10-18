@@ -9,7 +9,7 @@ namespace taoetw {
 bool Config::load(const std::wstring& file_)
 {
     _file = file_;
-    _obj = json11::Json::object {};
+    _obj.attach(json11::Json::object {});
 
     std::ifstream file(file_, std::ios::in | std::ios::binary | std::ios::ate);
 
@@ -24,8 +24,8 @@ bool Config::load(const std::wstring& file_)
 
         std::string errmsg;
         _obj = json11::Json::parse(jsonstr.get(), errmsg);
-        if(!_obj.is_object()) {
-            _obj = json11::Json::object {};
+        if(!_obj->is_object()) {
+            _obj.attach(json11::Json::object {});
         };
     }
 
@@ -37,22 +37,12 @@ bool Config::save()
     std::ofstream file(_file, std::ios::out | std::ios::binary);
 
     if(file.is_open()) {
-        auto str = _obj.dump();
+        auto str = _obj->dump();
         file.write(str.c_str(), str.size());
         file.close();
     }
 
     return true;
-}
-
-const json11::Json& Config::operator[](size_t i)
-{
-    return _obj[i];
-}
-
-const json11::Json& Config::operator[](const char* k)
-{
-    return _obj[k];
 }
 
 std::wstring Config::ws(const std::string& s)

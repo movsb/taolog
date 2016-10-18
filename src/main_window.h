@@ -96,7 +96,6 @@ protected:
     void _manage_modules();
     void _show_filters();
     bool _do_search(const std::wstring& s, int start);
-    void _save_modules();
     void _clear_results();
     void _set_top_most(bool top);
 

@@ -49,6 +49,7 @@ protected:
     bool _has_guid(const GUID& guid);
     int _get_enable_state_for_items(const std::vector<int>& items);
     void _on_item_state_change();
+    void _save_modules();
 };
 
 

@@ -445,26 +445,6 @@ bool MainWindow::_do_search(const std::wstring& s, int start)
     return true;
 }
 
-void MainWindow::_save_modules()
-{
-    auto& module_array = g_config->arr("modules").as_arr();
-
-    module_array.clear();
-
-    for(int i = 0; i < (int)_modules.size(); i++) {
-        auto& mod = _modules[i];
-        json11::Json::object m;
-
-        m["name"]   = g_config.us(mod->name);
-        m["root"]   = g_config.us(mod->root);
-        m["enable"] = mod->enable;
-        m["level"]  = mod->level;
-        m["guid"]   = g_config.us(mod->guid_str);
-
-        module_array.push_back(std::move(m));
-    }
-}
-
 void MainWindow::_clear_results()
 {
     // 需要先关闭引用了日志记录的某某些（因为当前的日志记录没有引用计数功能）
@@ -519,8 +499,6 @@ LRESULT MainWindow::_on_create()
 
 LRESULT MainWindow::_on_close()
 {
-    _save_modules();
-
     DestroyWindow(_hwnd);
 
     return 0;

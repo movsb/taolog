@@ -52,6 +52,12 @@ LRESULT ModuleManager::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
         return 0;
     }
 
+    case WM_CLOSE:
+    {
+        _save_modules();
+        break;
+    }
+
     }
     return __super::handle_message(umsg, wparam, lparam);
 }
@@ -324,6 +330,17 @@ void ModuleManager::_on_item_state_change()
     if (!items.empty()) {
         int state = _get_enable_state_for_items(items);
         _btn_enable->set_text(state != -1 ? (state == 1 ? L"½ûÓÃ" : L"ÆôÓÃ") : L"Æô/½û");
+    }
+}
+
+void ModuleManager::_save_modules()
+{
+    auto& modules = g_config->arr("modules").as_arr();
+
+    modules.clear();
+
+    for(auto& m : _modules) {
+        modules.push_back(*m);
     }
 }
 

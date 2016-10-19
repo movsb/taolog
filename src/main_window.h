@@ -110,6 +110,7 @@ protected:
     LRESULT _on_get_dispinfo(NMHDR* hdr);
     LRESULT _on_select_column();
     LRESULT _on_drag_column(NMHDR* hdr);
+	void	_on_drop_column();
 
 protected:
     void _module_from_guid(const GUID& guid, std::wstring* name, const std::wstring** root);

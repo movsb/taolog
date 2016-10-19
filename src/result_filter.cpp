@@ -228,7 +228,9 @@ LRESULT AddNewFilter::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
             _base->add_string(base.c_str());
         }
 
-        _base->set_cur_sel((int)_bases.size() - 1);
+        _base->set_cur_sel(0);
+        // TODO
+        on_notify(_base->hwnd(), _base, CBN_SELCHANGE, nullptr);
 
         _rule->focus();
         _rule->set_sel(0, -1);

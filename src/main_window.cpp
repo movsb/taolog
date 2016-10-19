@@ -349,7 +349,7 @@ void MainWindow::_init_config()
             auto enable = mod["enable"];
             auto level = mod["level"];
             auto guidstr = mod["guid"];
-            GUID guid;
+            GUID guid = {};
 
             if((name.is_string() && root.is_string() && enable.is_bool() && level.is_number() && guidstr.is_string())
                 && (level >= TRACE_LEVEL_CRITICAL && level <= TRACE_LEVEL_VERBOSE)
@@ -360,7 +360,7 @@ void MainWindow::_init_config()
                 m->name = g_config.ws(name.string_value());
                 m->root = g_config.ws(root.string_value());
                 m->enable = enable.bool_value();
-                m->level = level.int_value();
+                m->level = (unsigned char)level.int_value();
                 m->guid = guid;
                 m->guid_str = g_config.ws(guidstr.string_value());
 
@@ -686,7 +686,7 @@ LRESULT MainWindow::_on_custom_draw_listview(NMHDR * hdr)
         break;
 
     case CDDS_ITEM | CDDS_PREPAINT:
-        if (_last_search_line != -1 && lvcd->nmcd.dwItemSpec == _last_search_line) {
+        if (_last_search_line != -1 && (int)lvcd->nmcd.dwItemSpec == _last_search_line) {
             lr = CDRF_NOTIFYSUBITEMDRAW;
             break;
         }

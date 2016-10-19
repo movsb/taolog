@@ -95,6 +95,8 @@
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>../3rd</AdditionalIncludeDirectories>
       <AssemblerOutput>NoListing</AssemblerOutput>
+      <TreatSpecificWarningsAsErrors>4701</TreatSpecificWarningsAsErrors>
+      <DisableSpecificWarnings>4100</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -128,6 +130,8 @@
       <AdditionalIncludeDirectories>../3rd</AdditionalIncludeDirectories>
       <AssemblerOutput>NoListing</AssemblerOutput>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <TreatSpecificWarningsAsErrors>4701</TreatSpecificWarningsAsErrors>
+      <DisableSpecificWarnings>4100</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

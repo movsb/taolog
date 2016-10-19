@@ -8,7 +8,6 @@
 #include <stdio.h>
 #include <tchar.h>
 #include <stdlib.h>
-#include <assert.h>
 #include <Windows.h>
 #include <wmistr.h>
 #include <guiddef.h>
@@ -26,6 +25,10 @@
 #else
 #define __TFILE__ __FILE__
 #define __TFUNCTION__ __FUNCTION__
+#endif
+
+#ifndef min
+#define min(a,b) (((a) < (b)) ? (a) : (b))
 #endif
 
 #define ETW_LOGGER_MAX_LOG_SIZE (60*1024)
@@ -279,37 +282,36 @@ private:
 extern ETWLogger g_etwLogger;
 
 
-// 大部分应用场景采用栈空间打印日志，当遇到比较大的日志信息时会使用堆空间打印日志
-#define LogMessage (g_etwLogger.WriteEvent)
+#define EtwLogMessage (g_etwLogger.WriteEvent)
 
 // Abnormal exit or termination events
 #define ETW_LEVEL_CRITICAL(x, ...) \
 { \
- LogMessage(TRACE_LEVEL_CRITICAL, __TFILE__, __TFUNCTION__, __LINE__, x, __VA_ARGS__); \
+     EtwLogMessage(TRACE_LEVEL_CRITICAL, __TFILE__, __TFUNCTION__, __LINE__, x, __VA_ARGS__); \
 }
 
 // Severe error events
 #define ETW_LEVEL_ERROR(x, ...) \
 { \
-LogMessage(TRACE_LEVEL_ERROR, __TFILE__, __TFUNCTION__, __LINE__, x, __VA_ARGS__); \
+    EtwLogMessage(TRACE_LEVEL_ERROR, __TFILE__, __TFUNCTION__, __LINE__, x, __VA_ARGS__); \
 }
 
 // Warning events such as allocation failures
 #define ETW_LEVEL_WARNING(x, ...) \
 { \
-LogMessage(TRACE_LEVEL_WARNING, __TFILE__, __TFUNCTION__, __LINE__, x, __VA_ARGS__); \
+    EtwLogMessage(TRACE_LEVEL_WARNING, __TFILE__, __TFUNCTION__, __LINE__, x, __VA_ARGS__); \
 }
 
 // Non-error events such as entry or exit events
 #define ETW_LEVEL_INFORMATION(x, ...) \
 { \
-	LogMessage(TRACE_LEVEL_INFORMATION, __TFILE__, __TFUNCTION__, __LINE__, x, __VA_ARGS__); \
+	EtwLogMessage(TRACE_LEVEL_INFORMATION, __TFILE__, __TFUNCTION__, __LINE__, x, __VA_ARGS__); \
 }
 
 // Detailed trace events
 #define ETW_LEVEL_VERBOSE(x, ...) \
 { \
-	LogMessage(TRACE_LEVEL_VERBOSE, __TFILE__, __TFUNCTION__, __LINE__, x, __VA_ARGS__); \
+	EtwLogMessage(TRACE_LEVEL_VERBOSE, __TFILE__, __TFUNCTION__, __LINE__, x, __VA_ARGS__); \
 }
 
 // winapi last error, level TRACE_LEVEL_WARNING
@@ -321,6 +323,7 @@ LogMessage(TRACE_LEVEL_WARNING, __TFILE__, __TFUNCTION__, __LINE__, x, __VA_ARGS
 	ETW_LEVEL_WARNING(erridBuf); 													\
 }
 
+#pragma warning(pop)
 
 #else 
 
@@ -331,7 +334,5 @@ LogMessage(TRACE_LEVEL_WARNING, __TFILE__, __TFUNCTION__, __LINE__, x, __VA_ARGS
 #define ETW_LEVEL_VERBOSE(x, ...)
 
 #define ETW_LAST_ERROR()
-
-#pragma warning(pop)
 
 #endif

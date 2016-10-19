@@ -137,7 +137,7 @@ int ModuleEntryEditor::_on_ok()
     auto entry = _mod ? _mod : new ModuleEntry;
     entry->name = _name->get_text();
     entry->root = _path->get_text();
-    entry->level = (int)_level->get_item_data(_level->get_cur_sel());
+    entry->level = (unsigned char)(int)_level->get_item_data(_level->get_cur_sel());
     entry->guid_str = _guid->get_text();
     ::CLSIDFromString(entry->guid_str.c_str(), &entry->guid);
 

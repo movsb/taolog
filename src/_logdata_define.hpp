@@ -3,6 +3,7 @@
 #include <tchar.h>
 
 #include <string>
+#include <memory>
 
 #include <Windows.h>
 #include <guiddef.h>
@@ -18,7 +19,7 @@ struct LogData
     GUID guid;              // 生成者 GUID
     SYSTEMTIME time;        // 时间戳
     unsigned int line;      // 行号
-    unsigned int cch;      // 字符数（包含null）
+    unsigned int cch;       // 字符数（包含null）
     wchar_t file[1024];     // 文件
     wchar_t func[1024];     // 函数
     wchar_t text[ETW_LOGGER_MAX_LOG_SIZE];      // 日志
@@ -70,20 +71,19 @@ struct LogDataUI : LogData
             return L"";
 
         const wchar_t* value = L"";
-        const LogDataUI* evt = this;
 
         switch(i)
         {
-        case 0: value = evt->id;                            break;
-        case 1: value = evt->strTime.c_str();               break;
-        case 2: value = evt->strPid.c_str();                break;
-        case 3: value = evt->strTid.c_str();                break;
-        case 4: value = evt->strProject.c_str();            break;
-        case 5: value = evt->file + evt->offset_of_file;    break;
-        case 6: value = evt->func;                          break;
-        case 7: value = evt->strLine.c_str();               break;
-        case 8: value = evt->strLevel->c_str();             break;
-        case 9: value = evt->text;                          break;
+        case 0: value = id;                            break;
+        case 1: value = strTime.c_str();               break;
+        case 2: value = strPid.c_str();                break;
+        case 3: value = strTid.c_str();                break;
+        case 4: value = strProject.c_str();            break;
+        case 5: value = file + offset_of_file;         break;
+        case 6: value = func;                          break;
+        case 7: value = strLine.c_str();               break;
+        case 8: value = strLevel->c_str();             break;
+        case 9: value = text;                          break;
         }
 
         return value;
@@ -106,6 +106,6 @@ struct LogDataUI : LogData
     string* strLevel;
 };
 
-
+typedef std::shared_ptr<LogDataUI> LogDataUIPtr;
 
 }

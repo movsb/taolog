@@ -6,7 +6,7 @@
 
 namespace taoetw {
 
-bool EventContainer::add(EVENT * evt)
+bool EventContainer::add(EVENT evt)
 {
     if (!_filter || !_filter(evt)) {
         _events.push_back(evt);
@@ -30,7 +30,7 @@ bool EventContainer::filter_results(EventContainer* container)
 void EventContainer::_init()
 {
     _reobj = std::wregex(rule, std::regex_constants::icase);
-    _filter = [&](const EVENT* evt) {
+    _filter = [&](const EVENT evt) {
         // 这里我不知道怎么根据base_int拿字段，所以特殊处理（为了效率）
         const wchar_t* p = nullptr;
 

@@ -9,13 +9,13 @@ namespace taoetw {
 class EventDetail : public taowin::window_creator
 {
 private:
-    const LogDataUI* _log;
+    LogDataUIPtr _log;
     COLORREF _fg, _bg;
     HBRUSH _hbrBk;
     HWND _hText;
 
 public:
-    EventDetail(const LogDataUI* log, COLORREF fg = RGB(0, 0, 0), COLORREF bg = RGB(255, 255, 255))
+    EventDetail(LogDataUIPtr log, COLORREF fg = RGB(0, 0, 0), COLORREF bg = RGB(255, 255, 255))
         : _log(log)
         , _fg(fg)
         , _bg(bg)

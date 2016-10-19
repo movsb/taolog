@@ -12,9 +12,9 @@ namespace taoetw {
 class EventContainer
 {
 protected:
-    typedef LogDataUI EVENT;
-    typedef std::function<bool(const EVENT*)> FILTER;
-    typedef std::vector<EVENT*> EVENTS;
+    typedef LogDataUIPtr EVENT;
+    typedef std::function<bool(const EVENT event)> FILTER;
+    typedef std::vector<EVENT> EVENTS;
 
 public:
     EventContainer()
@@ -34,9 +34,9 @@ public:
     }
 
 public:
-    bool add(EVENT* evt);
+    bool add(EVENT evt);
     bool filter_results(EventContainer* container);
-    EVENT* operator[](int index) { return _events[index]; }
+    EVENT operator[](int index) { return _events[index]; }
     size_t size() const { return _events.size(); }
     void clear() { return _events.clear(); }
     EVENTS& events() { return _events; }

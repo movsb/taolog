@@ -554,8 +554,8 @@ void MainWindow::_clear_results()
         f->clear();
 
     // 主事件拥有日志事件，由它删除
-    for (auto& evt : _events.events())
-        delete evt;
+    // for (auto& evt : _events.events())
+    //    delete evt;
 
     _events.clear();
 
@@ -637,8 +637,10 @@ LRESULT MainWindow::_on_close()
     return 0;
 }
 
-LRESULT MainWindow::_on_log(LogDataUI* item)
+LRESULT MainWindow::_on_log(LogDataUI* pItem)
 {
+    LogDataUIPtr item(pItem);
+
     const std::wstring* root = nullptr;
 
     _snwprintf(item->id, _countof(item->id), L"%llu", (unsigned long long)_events.size()+1);
@@ -675,7 +677,6 @@ LRESULT MainWindow::_on_log(LogDataUI* item)
 LRESULT MainWindow::_on_custom_draw_listview(NMHDR * hdr)
 {
     LRESULT lr = CDRF_DODEFAULT;
-    LogDataUI* log;
 
     auto lvcd = (LPNMLVCUSTOMDRAW)hdr;
 
@@ -691,9 +692,9 @@ LRESULT MainWindow::_on_custom_draw_listview(NMHDR * hdr)
             break;
         }
         else {
-            log = (*_current_filter)[lvcd->nmcd.dwItemSpec];
-            lvcd->clrText = _colors[log->level].fg;
-            lvcd->clrTextBk = _colors[log->level].bg;
+            LogDataUI& log = *(*_current_filter)[lvcd->nmcd.dwItemSpec];
+            lvcd->clrText = _colors[log.level].fg;
+            lvcd->clrTextBk = _colors[log.level].bg;
             lr = CDRF_NEWFONT;
         }
         break;
@@ -707,9 +708,9 @@ LRESULT MainWindow::_on_custom_draw_listview(NMHDR * hdr)
             lvcd->clrText = RGB(255, 255, 255);
         }
         else {
-            log = (*_current_filter)[lvcd->nmcd.dwItemSpec];
-            lvcd->clrText = _colors[log->level].fg;
-            lvcd->clrTextBk = _colors[log->level].bg;
+            LogDataUI& log = *(*_current_filter)[lvcd->nmcd.dwItemSpec];
+            lvcd->clrText = _colors[log.level].fg;
+            lvcd->clrTextBk = _colors[log.level].bg;
         }
 
         lr = CDRF_NEWFONT;

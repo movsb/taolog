@@ -87,6 +87,7 @@ protected:
     virtual LRESULT on_menu(int id, bool is_accel = false);
     virtual LRESULT on_notify(HWND hwnd, taowin::control* pc, int code, NMHDR* hdr) override;
     virtual bool filter_special_key(int vk) override;
+    virtual void on_final_message() override { __super::on_final_message(); delete this; }
 
 protected:
     bool _start();

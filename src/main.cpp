@@ -14,10 +14,10 @@ int __stdcall wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR lpCmdline, int nSh
 
     taoetw::config.load(L"taoetw.json");
 
-    taoetw::MainWindow main;
+    auto main = new taoetw::MainWindow;
 
-    main.create();
-    main.show();
+    main->create();
+    main->show();
 
     taowin::loop_message();
 

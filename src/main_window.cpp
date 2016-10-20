@@ -52,7 +52,7 @@ LPCTSTR MainWindow::get_skin_xml() const
                 <control width="5" />
                 <button name="topmost" text="´°¿ÚÖÃ¶¥" width="60" style="tabstop"/>
             </horizontal>
-            <listview name="lv" style="showselalways,ownerdata,tabstop" exstyle="clientedge,doublebuffer,headerdragdrop"/>
+            <listview name="lv" style="showselalways,ownerdata,tabstop" exstyle="clientedge,doublebuffer,headerdragdrop,infotip"/>
         </vertical>
     </root>
 </window>
@@ -71,13 +71,13 @@ LRESULT MainWindow::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
     return __super::handle_message(umsg, wparam, lparam);
 }
 
+LRESULT MainWindow::control_message(taowin::syscontrol* ctl, UINT umsg, WPARAM wparam, LPARAM lparam)
+{
+    return __super::control_message(ctl, umsg, wparam, lparam);
+}
+
 LRESULT MainWindow::on_menu(int id, bool is_accel)
 {
-    /*
-    if (id < (int)_menus.subs.size()) {
-        _menus.subs[id].onclick();
-    }
-    */
     return 0;
 }
 
@@ -355,6 +355,9 @@ void MainWindow::_init_listview()
             });
         }
     }
+
+    // subclass it
+    // subclass_control(_listview);
 }
 
 void MainWindow::_init_config()

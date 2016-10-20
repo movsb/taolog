@@ -54,7 +54,11 @@ LPCTSTR MainWindow::get_skin_xml() const
                 <control width="5" />
                 <button name="topmost" text="´°¿ÚÖÃ¶¥" width="60" style="tabstop"/>
             </horizontal>
+<<<<<<< HEAD
             <listview name="lv" style="showselalways,ownerdata,tabstop" exstyle="clientedge,doublebuffer,headerdragdrop,infotip"/>
+=======
+            <listview name="lv" style="showselalways,ownerdata,tabstop" exstyle="clientedge,doublebuffer,headerdragdrop"/>
+>>>>>>> f15038af38c607444369bcab54fa9b8c13938a32
         </vertical>
     </root>
 </window>

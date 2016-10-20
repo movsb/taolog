@@ -677,13 +677,11 @@ LRESULT MainWindow::_on_log(LogDataUI* pItem)
     _module_from_guid(item->guid, &item->strProject, &root);
 
     // Ïà¶ÔÂ·¾¶
+    item->offset_of_file = 0;
     if (*item->file && root) {
         if (::_wcsnicmp(item->file, root->c_str(), root->size()) == 0) {
             item->offset_of_file = (int)root->size();
         }
-    }
-    else {
-        item->offset_of_file = 0;
     }
 
     item->strLevel = &_level_maps[item->level].cmt1;

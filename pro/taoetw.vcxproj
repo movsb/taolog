@@ -163,6 +163,7 @@
     <ClCompile Include="..\3rd\json11\json11.cpp" />
     <ClCompile Include="..\src\config.cpp" />
     <ClCompile Include="..\src\event_container.cpp" />
+    <ClCompile Include="..\src\listview_color.cpp" />
     <ClCompile Include="..\src\main.cpp" />
     <ClCompile Include="..\src\main_window.cpp" />
     <ClCompile Include="..\3rd\taowin\src\tw_control.cpp" />
@@ -195,6 +196,7 @@
     <ClInclude Include="..\src\consumer.h" />
     <ClInclude Include="..\src\controller.h" />
     <ClInclude Include="..\src\event_detail.h" />
+    <ClInclude Include="..\src\listview_color.h" />
     <ClInclude Include="..\src\main_window.h" />
     <ClInclude Include="..\src\module_editor.h" />
     <ClInclude Include="..\src\result_filter.h" />

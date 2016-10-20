@@ -49,6 +49,8 @@ LPCTSTR MainWindow::get_skin_xml() const
                 <label text="²éÕÒ£º" width="38" style="centerimage"/>
                 <combobox name="s-filter" style="tabstop" height="400" width="64" padding="0,0,4,0"/>
                 <edit name="s" width="80" style="tabstop" exstyle="clientedge"/>
+                <control width="10" />
+                <button name="color-settings" text="ÑÕÉ«ÅäÖÃ" width="60" style="tabstop"/>
                 <control width="5" />
                 <button name="topmost" text="´°¿ÚÖÃ¶¥" width="60" style="tabstop"/>
             </horizontal>
@@ -173,6 +175,25 @@ LRESULT MainWindow::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR *
             _edt_search->set_sel(0, -1);
             _edt_search->focus();
         }
+    }
+    else if(pc == _btn_colors) {
+        auto set = [&](int i, bool fg) {
+            auto& colors = _config.obj("listview").arr("colors").as_arr();
+            for(auto& jc : colors) {
+                auto& c = JsonWrapper(jc).as_obj();
+                if(c["level"] == i) {
+                    char buf[12];
+                    unsigned char* p = fg ? (unsigned char*)&_colors[i].fg : (unsigned char*)&_colors[i].bg;
+                    sprintf(&buf[0], "%d,%d,%d", p[0], p[1], p[2]);
+                    if(fg) c["fgc"] = buf;
+                    else c["bgc"] = buf;
+                    _listview->redraw_items(0, _listview->get_item_count());
+                    break;
+                }
+            }
+        };
+
+        (new ListviewColor(&_colors, &_level_maps, set))->domodal(this);
     }
 
     return 0;
@@ -383,7 +404,11 @@ void MainWindow::_init_config()
             auto guidstr = mod["guid"];
             GUID guid = {};
 
-            if((name.is_string() && root.is_string() && enable.is_bool() && level.is_number() && guidstr.is_string())
+            if((name.is_string() 
+                && root.is_string() 
+                && enable.is_bool() 
+                && level.is_number() 
+                && guidstr.is_string())
                 && (level >= TRACE_LEVEL_CRITICAL && level <= TRACE_LEVEL_VERBOSE)
                 && (!FAILED(::CLSIDFromString(g_config.ws(guidstr.string_value()).c_str(), &guid)))
             )
@@ -641,6 +666,7 @@ LRESULT MainWindow::_on_create()
     _btn_topmost    = _root->find<taowin::button>(L"topmost");
     _edt_search     = _root->find<taowin::edit>(L"s");
     _cbo_filter     = _root->find<taowin::combobox>(L"s-filter");
+    _btn_colors     = _root->find<taowin::button>(L"color-settings");
 
     _init_config();
 

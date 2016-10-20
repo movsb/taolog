@@ -90,6 +90,9 @@
     <ClCompile Include="..\src\config.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\listview_color.cpp">
+      <Filter>Source Files\gui</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\3rd\taowin\src\tw_control.h">
@@ -154,6 +157,9 @@
     </ClInclude>
     <ClInclude Include="..\inc\etwlogger.h">
       <Filter>Source Files\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\listview_color.h">
+      <Filter>Source Files\gui</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -11,6 +11,7 @@
 #include "module_manager.h"
 #include "event_detail.h"
 #include "result_filter.h"
+#include "listview_color.h"
 
 #include "controller.h"
 #include "consumer.h"
@@ -22,18 +23,6 @@ namespace taoetw {
 class MainWindow : public taowin::window_creator
 {
 public:
-    struct ItemColor
-    { 
-        COLORREF fg;
-        COLORREF bg;
-
-        ItemColor(COLORREF fg_ = RGB(0,0,0), COLORREF bg_=RGB(255,255,255))
-            : fg(fg_)
-            , bg(bg_)
-        { }
-    };
-
-    typedef std::map<int /* level */, ItemColor> MapColors;
 
 private:
     static const UINT kDoLog = WM_USER + 1;
@@ -62,6 +51,7 @@ protected:
     taowin::button*     _btn_topmost;
     taowin::edit*       _edt_search;
     taowin::combobox*   _cbo_filter;
+    taowin::button*     _btn_colors;
 
     MapColors           _colors;
     ColumnContainer     _columns;

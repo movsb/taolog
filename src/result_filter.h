@@ -28,12 +28,6 @@ public:
         , _current_filter(curflt)
         , _get_value_list(getvalues)
     {
-        _this_instance = this;
-    }
-
-    ~ResultFilter()
-    {
-        _this_instance = nullptr;
     }
 
 protected:

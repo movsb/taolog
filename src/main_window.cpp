@@ -437,14 +437,6 @@ void MainWindow::_manage_modules()
 
 void MainWindow::_show_filters()
 {
-    if (ResultFilter::_this_instance) {
-        auto that = ResultFilter::_this_instance;
-        if (::IsIconic(*that)) ::ShowWindow(*that, SW_RESTORE);
-        ::SetActiveWindow(*that);
-        ::SetFocus(*that);
-        return;
-    }
-
     auto get_base = [&](std::vector<std::wstring>* bases) {
         for (auto& col : _columns) {
             bases->push_back(col.name);
@@ -488,8 +480,7 @@ void MainWindow::_show_filters()
     };
 
     auto dlg = new ResultFilter(_filters, get_base, ondelete, onsetfilter, onaddnew, _current_filter, ongetvalues);
-    dlg->create();
-    dlg->show();
+    dlg->domodal(this);
 }
 
 bool MainWindow::_do_search(const std::wstring& s, int line, int)

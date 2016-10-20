@@ -2,8 +2,6 @@
 
 namespace taoetw {
 
-ResultFilter* ResultFilter::_this_instance;
-
 LPCTSTR ResultFilter::get_skin_xml() const
 {
     LPCTSTR json = LR"tw(
@@ -96,8 +94,7 @@ LRESULT ResultFilter::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR
             if (nmlv->iItem != -1) {
                 _on_set_filter(_filters[nmlv->iItem]);
 
-                if(!(::GetAsyncKeyState(VK_LCONTROL) & 0x8000))
-                    close(0);
+                close(0);
             }
         }
         else if (code == NM_CUSTOMDRAW) {
@@ -153,8 +150,7 @@ LRESULT ResultFilter::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR
     else if (pc == _btn_all) {
         _on_set_filter(nullptr);
 
-        if(!(::GetAsyncKeyState(VK_LCONTROL) & 0x8000))
-            close(0);
+        close(0);
     }
 
     return 0;

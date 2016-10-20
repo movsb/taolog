@@ -13,12 +13,14 @@ private:
     COLORREF _fg, _bg;
     HBRUSH _hbrBk;
     HWND _hText;
+    LogDataUI::fnGetColumnName _gc;
 
 public:
-    EventDetail(LogDataUIPtr log, COLORREF fg = RGB(0, 0, 0), COLORREF bg = RGB(255, 255, 255))
+    EventDetail(LogDataUIPtr log, LogDataUI::fnGetColumnName gc, COLORREF fg = RGB(0, 0, 0), COLORREF bg = RGB(255, 255, 255))
         : _log(log)
         , _fg(fg)
         , _bg(bg)
+        , _gc(gc)
     {
         _hbrBk = ::CreateSolidBrush(_bg);
     }

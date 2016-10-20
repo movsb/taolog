@@ -3,7 +3,9 @@
 #include <tchar.h>
 
 #include <string>
+#include <sstream>
 #include <memory>
+#include <functional>
 
 #include <Windows.h>
 #include <guiddef.h>
@@ -30,32 +32,40 @@ struct LogData
 struct LogDataUI : LogData
 {
     typedef std::basic_string<TCHAR> string;
+    typedef std::basic_stringstream<TCHAR> stringstream;
+    typedef std::function<const wchar_t*(int i)> fnGetColumnName;
 
     static constexpr int data_cols = 10;
 
-    string to_string() const
+    string to_string(fnGetColumnName get_column_name) const
     {
         TCHAR tmp[128];
-        string str = text;
+        stringstream ss;
 
-        str += L"\r\n\r\n" + string(80, L'-') + L"\r\n\r\n";
-        _swprintf(tmp, L"编号：%s\r\n进程：%d\r\n线程：%d\r\n", id, pid, tid);
-        str += tmp;
+        auto gc = get_column_name;
+
+        ss << text;
+        ss << L"\r\n\r\n" << string(50, L'-') << L"\r\n\r\n";
+        ss << gc(0) << L"：" << id << L"\r\n";
+        ss << gc(2) << L"：" << pid << L"\r\n";
+        ss << gc(3) << L"：" << tid << L"\r\n";
 
         auto& t = time;
-        _swprintf(tmp, L"时间：%d-%02d-%02d %02d:%02d:%02d:%03d\r\n",
+        _snwprintf(tmp, _countof(tmp), L"%s：%d-%02d-%02d %02d:%02d:%02d:%03d\r\n",
+            gc(1),
             t.wYear, t.wMonth, t.wDay,
             t.wHour, t.wMinute, t.wSecond, t.wMilliseconds
         );
-        str += tmp;
 
-        str += L"项目：" + strProject + L"\r\n";
-        str += string(L"文件：") + file + L"\r\n";
-        str += string(L"函数：") + func + L"\r\n";
-        str += L"行号：" + strLine + L"\r\n";
-        str += L"等级：" + std::to_wstring(level) + L"\r\n";
+        ss << tmp;
 
-        return std::move(str);
+        ss << gc(4) << L"：" << strProject   << L"\r\n";
+        ss << gc(5) << L"：" << file         << L"\r\n";
+        ss << gc(6) << L"：" << func         << L"\r\n";
+        ss << gc(7) << L"：" << strLine      << L"\r\n";
+        ss << gc(8) << L"：" << level        << L"\r\n";
+
+        return std::move(ss.str());
     }
 
     // 返回列数

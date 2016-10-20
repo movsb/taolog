@@ -404,9 +404,15 @@ void MainWindow::_init_config()
 
 void MainWindow::_view_detail(int i)
 {
+    auto get_column_name = [&](int i) {
+        return i >= 0 && i <= (int)_columns.size()
+            ? _columns[i].name.c_str()
+            : L"";
+    };
+
     auto evt = (*_current_filter)[i];
     auto& cr = _colors[evt->level];
-    auto detail_window = new EventDetail(evt, cr.fg, cr.bg);
+    auto detail_window = new EventDetail(evt, get_column_name, cr.fg, cr.bg);
     detail_window->create();
     detail_window->show();
 }

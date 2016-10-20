@@ -29,7 +29,7 @@ LRESULT EventDetail::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
     {
         auto edit = _root->find<taowin::edit>(L"text");
         _hText = edit->hwnd();
-        edit->set_text(_log->to_string().c_str());
+        edit->set_text(_log->to_string(_gc).c_str());
         return 0;
     }
     case WM_CTLCOLORSTATIC:

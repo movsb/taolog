@@ -7,14 +7,18 @@
 namespace taoetw {
 
 struct Column {
+	std::string id;		// 用于内部识别列
+    int log_index;      // 对应日志的哪个字段
     std::wstring name;
     bool show;
     int width;
 
-    Column(const wchar_t* name_, bool show_, int width_)
+    Column(const wchar_t* name_, bool show_, int width_, const char* id_, int log_index_)
         : name(name_)
         , show(show_)
         , width(width_)
+		, id(id_)
+        , log_index(log_index_)
     {
 
     }
@@ -25,6 +29,8 @@ struct Column {
             {"name", g_config.us(name)},
             {"show", show},
             {"width", width},
+			{"id", id},
+            {"li", log_index},
         };
     }
 };

@@ -52,7 +52,7 @@ LPCTSTR MainWindow::get_skin_xml() const
                 <control width="5" />
                 <button name="topmost" text="窗口置顶" width="60" style="tabstop"/>
             </horizontal>
-            <listview name="lv" style="showselalways,ownerdata,tabstop" exstyle="clientedge"/>
+            <listview name="lv" style="showselalways,ownerdata,tabstop" exstyle="clientedge,doublebuffer,headerdragdrop"/>
         </vertical>
     </root>
 </window>
@@ -90,6 +90,14 @@ LRESULT MainWindow::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR *
             }
             else if (code == HDN_ENDTRACK) {
                 return _on_drag_column(hdr);
+            }
+            else if(code == HDN_ENDDRAG) {
+                // 真正的结果要等到此函数返回之后才能
+                // 拿得到，所以异步调用
+                async_call([&] {
+                    _on_drop_column();
+                });
+                return FALSE; // allow drop
             }
         }
 
@@ -251,23 +259,34 @@ void MainWindow::_init_listview()
 
     // 表头栏
     if(_config.has_arr("columns")) {
-        for(auto& jsoncol : _config.arr("columns").as_arr()) {
+        auto add_col = [&](json11::Json jsoncol) {
             auto& c = JsonWrapper(jsoncol).as_obj();
-            _columns.emplace_back(g_config.ws(c["name"].string_value()).c_str(),
-                c["show"].bool_value(), c["width"].int_value());
+            _columns.emplace_back(
+                g_config.ws(c["name"].string_value()).c_str(),
+                c["show"].bool_value(),
+                c["width"].int_value(), 
+                c["id"].string_value().c_str(),
+                c["li"].int_value()
+            );
+        };
+
+        auto cols = _config.arr("columns");
+
+        for(auto& jsoncol : cols.as_arr()) {
+            add_col(jsoncol);
         }
     }
     else {
-        _columns.emplace_back(L"编号", false, 50);
-        _columns.emplace_back(L"时间", true, 86);
-        _columns.emplace_back(L"进程", false, 50);
-        _columns.emplace_back(L"线程", false, 50);
-        _columns.emplace_back(L"项目", true, 100);
-        _columns.emplace_back(L"文件", true, 140);
-        _columns.emplace_back(L"函数", true, 100);
-        _columns.emplace_back(L"行号", true, 50);
-        _columns.emplace_back(L"等级", false, 100);
-        _columns.emplace_back(L"日志", true, 300);
+        _columns.emplace_back(L"编号", false,  50, "id"   ,0);
+        _columns.emplace_back(L"时间", true,   86, "time" ,1);
+        _columns.emplace_back(L"进程", false,  50, "pid"  ,2);
+        _columns.emplace_back(L"线程", false,  50, "tid"  ,3);
+        _columns.emplace_back(L"项目", true,  100, "proj" ,4);
+        _columns.emplace_back(L"文件", true,  140, "file" ,5);
+        _columns.emplace_back(L"函数", true,  100, "func" ,6);
+        _columns.emplace_back(L"行号", true,   50, "line" ,7);
+        _columns.emplace_back(L"等级", false, 100, "level",8);
+        _columns.emplace_back(L"日志", true,  300, "log"  ,9);
 
         // 初次使用时初始化配置文件
         if(!_config.has_arr("columns")) {
@@ -282,6 +301,16 @@ void MainWindow::_init_listview()
     for (int i = 0; i < (int)_columns.size(); i++) {
         auto& col = _columns[i];
         _listview->insert_column(col.name.c_str(), col.show ? col.width : 0, i);
+    }
+
+    if(_config.obj("listview").has_arr("column-order")) {
+        auto& orders = _config.obj("listview").arr("column-order").as_arr();
+        auto o = std::make_unique<int[]>(orders.size());
+        for(int i = 0; i < (int)orders.size(); i++) {
+            o.get()[i] = orders[i].int_value();
+        }
+
+        _listview->set_column_order((int)orders.size(), o.get());
     }
 
     // 列表颜色栏
@@ -450,7 +479,7 @@ void MainWindow::_show_filters()
         values->clear();
 
         // TODO: 警告：修改列的时候注意这里
-        if (baseindex == 8) {
+        if (_columns[baseindex].id == "level") {
 
             for (auto& pair : _level_maps) {
                 (*values)[pair.first] = pair.second.cmt2.c_str();
@@ -727,7 +756,11 @@ LRESULT MainWindow::_on_get_dispinfo(NMHDR * hdr)
     auto& evt = *(*_current_filter)[pdi->item.iItem];
     auto lit = &pdi->item;
 
-    lit->pszText = const_cast<LPWSTR>(evt[lit->iSubItem]);
+    int listview_col = lit->iSubItem;
+    int event_col = _columns[listview_col].log_index;
+    auto field = evt[event_col];
+
+    lit->pszText = const_cast<LPWSTR>(field);
 
     return 0;
 }
@@ -768,6 +801,27 @@ LRESULT MainWindow::_on_drag_column(NMHDR* hdr)
     _update_main_filter();
 
     return 0;
+}
+
+// 拖动列表头后记住表头列的顺序
+void MainWindow::_on_drop_column()
+{
+    // 只是当前真正的列数（因为有些可能已经删除）
+    // 这个列数必然与 columns 中 show(visible) 的数量一致
+    auto n = _listview->get_column_count();
+    auto orders = std::make_unique<int[]>(n);
+    if(_listview->get_column_order(n, orders.get())) {
+        json11::Json::array order;
+
+        order.reserve(n);
+
+        for(int i = 0; i < n; i++) {
+            order.push_back(orders.get()[i]);
+        }
+
+        auto& order_config = _config.obj("listview").arr("column-order").as_arr();
+        order_config = std::move(order);
+    }
 }
 
 void MainWindow::_module_from_guid(const GUID & guid, std::wstring * name, const std::wstring ** root)

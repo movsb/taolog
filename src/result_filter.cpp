@@ -126,37 +126,43 @@ LRESULT ResultFilter::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR
         }
     }
     else if (pc == _btn_add) {
-        AddNewFilter dlg(_on_get_bases, _get_value_list);
-        if (dlg.domodal(this) == IDOK) {
-            _on_add_new(new EventContainer(dlg.name, dlg.base, dlg.rule, dlg.base_int, dlg.rule2, dlg.str_base_value));
-            _listview->set_item_count(_filters.size(), LVSICF_NOINVALIDATEALL);
+        if(code == BN_CLICKED) {
+            AddNewFilter dlg(_on_get_bases, _get_value_list);
+            if(dlg.domodal(this) == IDOK) {
+                _on_add_new(new EventContainer(dlg.name, dlg.base, dlg.rule, dlg.base_int, dlg.rule2, dlg.str_base_value));
+                _listview->set_item_count(_filters.size(), LVSICF_NOINVALIDATEALL);
 
-            int index = _listview->get_item_count() - 1;
-            _listview->ensure_visible(index);   // 确保可见
-            _listview->set_item_state(-1, LVIS_SELECTED, 0); //取消选中其它的
-            _listview->set_item_state(index, LVIS_SELECTED, LVIS_SELECTED); //选中当前新增的
-            _listview->focus();
+                int index = _listview->get_item_count() - 1;
+                _listview->ensure_visible(index);   // 确保可见
+                _listview->set_item_state(-1, LVIS_SELECTED, 0); //取消选中其它的
+                _listview->set_item_state(index, LVIS_SELECTED, LVIS_SELECTED); //选中当前新增的
+                _listview->focus();
+            }
         }
     }
     else if (pc == _btn_delete) {
-        std::vector<int> items;
-        _listview->get_selected_items(&items);
+        if(code == BN_CLICKED) {
+            std::vector<int> items;
+            _listview->get_selected_items(&items);
 
-        for (auto it = items.crbegin(); it != items.crend(); ++it) {
-            _on_delete(*it);
+            for(auto it = items.crbegin(); it != items.crend(); ++it) {
+                _on_delete(*it);
+            }
+
+            _listview->set_item_count((int)_filters.size(), 0);
+            _listview->redraw_items(0, _listview->get_item_count());
+
+            items.clear();
+            _listview->get_selected_items(&items);
+            _btn_delete->set_enabled(!items.empty());
         }
-
-        _listview->set_item_count((int)_filters.size(), 0);
-        _listview->redraw_items(0, _listview->get_item_count());
-
-        items.clear();
-        _listview->get_selected_items(&items);
-        _btn_delete->set_enabled(!items.empty());
     }
     else if (pc == _btn_all) {
-        _on_set_filter(nullptr);
+        if(code == BN_CLICKED) {
+            _on_set_filter(nullptr);
 
-        close(0);
+            close(0);
+        }
     }
 
     return 0;
@@ -249,10 +255,14 @@ LRESULT AddNewFilter::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR
     if (!pc) return 0;
 
     if (pc == _save) {
-        _on_save();
+        if(code == BN_CLICKED) {
+            _on_save();
+        }
     }
     else if (pc == _cancel) {
-        close(IDCANCEL);
+        if(code == BN_CLICKED) {
+            close(IDCANCEL);
+        }
     }
     else if (pc == _base) {
         if (code == CBN_SELCHANGE) {

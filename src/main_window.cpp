@@ -136,29 +136,41 @@ LRESULT MainWindow::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR *
         }
     }
     else if (pc == _btn_start) {
-        if (_start()) {
-            _btn_start->set_enabled(false);
-            _btn_stop->set_enabled(true);
+        if(code == BN_CLICKED) {
+            if(_start()) {
+                _btn_start->set_enabled(false);
+                _btn_stop->set_enabled(true);
+            }
         }
     }
     else if (pc == _btn_stop) {
-        _stop();
-        _btn_start->set_enabled(true);
-        _btn_stop->set_enabled(false);
+        if(code == BN_CLICKED) {
+            _stop();
+            _btn_start->set_enabled(true);
+            _btn_stop->set_enabled(false);
+        }
     }
     else if (pc == _btn_modules) {
-        _manage_modules();
+        if(code == BN_CLICKED) {
+            _manage_modules();
+        }
     }
     else if (pc == _btn_filter) {
-        _show_filters();
+        if(code == BN_CLICKED) {
+            _show_filters();
+        }
     }
     else if (pc == _btn_topmost) {
-        bool totop = !(::GetWindowLongPtr(_hwnd, GWL_EXSTYLE) & WS_EX_TOPMOST);
-        _set_top_most(totop);
-        _config["topmost"] = totop;
+        if(code == BN_CLICKED) {
+            bool totop = !(::GetWindowLongPtr(_hwnd, GWL_EXSTYLE) & WS_EX_TOPMOST);
+            _set_top_most(totop);
+            _config["topmost"] = totop;
+        }
     }
     else if (pc == _btn_clear) {
-        _clear_results();
+        if(code == BN_CLICKED) {
+            _clear_results();
+        }
     }
     else if (pc == _cbo_filter) {
         if (code == CBN_SELCHANGE) {
@@ -167,23 +179,25 @@ LRESULT MainWindow::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR *
         }
     }
     else if(pc == _btn_colors) {
-        auto set = [&](int i, bool fg) {
-            auto& colors = _config.obj("listview").arr("colors").as_arr();
-            for(auto& jc : colors) {
-                auto& c = JsonWrapper(jc).as_obj();
-                if(c["level"] == i) {
-                    char buf[12];
-                    unsigned char* p = fg ? (unsigned char*)&_colors[i].fg : (unsigned char*)&_colors[i].bg;
-                    sprintf(&buf[0], "%d,%d,%d", p[0], p[1], p[2]);
-                    if(fg) c["fgc"] = buf;
-                    else c["bgc"] = buf;
-                    _listview->redraw_items(0, _listview->get_item_count());
-                    break;
+        if(code == BN_CLICKED) {
+            auto set = [&](int i, bool fg) {
+                auto& colors = _config.obj("listview").arr("colors").as_arr();
+                for(auto& jc : colors) {
+                    auto& c = JsonWrapper(jc).as_obj();
+                    if(c["level"] == i) {
+                        char buf[12];
+                        unsigned char* p = fg ? (unsigned char*)&_colors[i].fg : (unsigned char*)&_colors[i].bg;
+                        sprintf(&buf[0], "%d,%d,%d", p[0], p[1], p[2]);
+                        if(fg) c["fgc"] = buf;
+                        else c["bgc"] = buf;
+                        _listview->redraw_items(0, _listview->get_item_count());
+                        break;
+                    }
                 }
-            }
-        };
+            };
 
-        (new ListviewColor(&_colors, &_level_maps, set))->domodal(this);
+            (new ListviewColor(&_colors, &_level_maps, set))->domodal(this);
+        }
     }
 
     return 0;

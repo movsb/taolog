@@ -128,83 +128,91 @@ LRESULT ModuleManager::on_notify(HWND hwnd, taowin::control * pc, int code, NMHD
         }
     }
     else if (pc->name() == L"enable") {
-        std::vector<int> items;
+        if(code == BN_CLICKED) {
+            std::vector<int> items;
 
-        if (_listview->get_selected_items(&items)) {
-            int state = _get_enable_state_for_items(items);
+            if(_listview->get_selected_items(&items)) {
+                int state = _get_enable_state_for_items(items);
 
-            // 说明选中了多个不同状态的项
-            if (state == -1) {
-                int choice = msgbox(L"【是】启用这些模块；\n【否】禁用这些模块。", MB_ICONQUESTION | MB_YESNOCANCEL);
-                if (choice == IDCANCEL) return 0;
-                state = choice == IDYES;
-            }
-            else {
-                state = state == 1 ? 0 : 1;
-            }
-
-            _enable_items(items, state);
-        }
-
-        return 0;
-    }
-    else if (pc->name() == L"add") {
-        _add_item();
-        return 0;
-    }
-    else if (pc->name() == L"modify") {
-        int index = _listview->get_next_item(-1, LVNI_SELECTED);
-        if (index != -1)
-            _modify_item(index);
-        return 0;
-    }
-    else if (pc->name() == L"delete") {
-        std::vector<int> items;
-
-        if (!_listview->get_selected_items(&items))
-            return 0;
-
-        // 在全部为禁用状态的时候进行提示（不全部为禁用时后边会提示哪些处于启用状态，此提示就不必要了）
-        const wchar_t* title = items.size()==1 ? _modules[items[0]]->name.c_str() : L"确认";
-        int state = _get_enable_state_for_items(items);
-        if ((!_get_is_open() || state == 0) && msgbox((L"确定要删除选中的 " + std::to_wstring(items.size()) + L" 项？").c_str(), MB_OKCANCEL | MB_ICONQUESTION, title) != IDOK)
-            return 0;
-
-        if (_get_is_open()) {
-            // 计算哪些模块已经启用，已经启用的模块不能被删除
-            std::wstring modules_enabled;
-
-            for (auto i = items.begin(); i != items.end();) {
-                auto mod = _modules[*i];
-
-                if (mod->enable) {
-                    wchar_t guid[128];
-
-                    if (::StringFromGUID2(mod->guid, &guid[0], _countof(guid))) {
-                        modules_enabled += L"    " + mod->name + L"\n";
-                    }
-                    i = items.erase(i);
+                // 说明选中了多个不同状态的项
+                if(state == -1) {
+                    int choice = msgbox(L"【是】启用这些模块；\n【否】禁用这些模块。", MB_ICONQUESTION | MB_YESNOCANCEL);
+                    if(choice == IDCANCEL) return 0;
+                    state = choice == IDYES;
                 }
                 else {
-                    ++i;
+                    state = state == 1 ? 0 : 1;
+                }
+
+                _enable_items(items, state);
+            }
+
+            return 0;
+        }
+    }
+    else if (pc->name() == L"add") {
+        if(code == BN_CLICKED) {
+            _add_item();
+            return 0;
+        }
+    }
+    else if (pc->name() == L"modify") {
+        if(code == BN_CLICKED) {
+            int index = _listview->get_next_item(-1, LVNI_SELECTED);
+            if(index != -1)
+                _modify_item(index);
+            return 0;
+        }
+    }
+    else if (pc->name() == L"delete") {
+        if(code == BN_CLICKED) {
+            std::vector<int> items;
+
+            if(!_listview->get_selected_items(&items))
+                return 0;
+
+            // 在全部为禁用状态的时候进行提示（不全部为禁用时后边会提示哪些处于启用状态，此提示就不必要了）
+            const wchar_t* title = items.size() == 1 ? _modules[items[0]]->name.c_str() : L"确认";
+            int state = _get_enable_state_for_items(items);
+            if((!_get_is_open() || state == 0) && msgbox((L"确定要删除选中的 " + std::to_wstring(items.size()) + L" 项？").c_str(), MB_OKCANCEL | MB_ICONQUESTION, title) != IDOK)
+                return 0;
+
+            if(_get_is_open()) {
+                // 计算哪些模块已经启用，已经启用的模块不能被删除
+                std::wstring modules_enabled;
+
+                for(auto i = items.begin(); i != items.end();) {
+                    auto mod = _modules[*i];
+
+                    if(mod->enable) {
+                        wchar_t guid[128];
+
+                        if(::StringFromGUID2(mod->guid, &guid[0], _countof(guid))) {
+                            modules_enabled += L"    " + mod->name + L"\n";
+                        }
+                        i = items.erase(i);
+                    }
+                    else {
+                        ++i;
+                    }
+                }
+
+                if(!modules_enabled.empty()) {
+                    std::wstring msg;
+
+                    msg += L"以下模块由于已经启用而不能删除：\n\n";
+                    msg += modules_enabled;
+                    msg += L"\n是否仅删除被禁用的模块？";
+
+                    if(msgbox(msg, MB_ICONQUESTION | MB_OKCANCEL) == IDCANCEL)
+                        return 0;
                 }
             }
 
-            if (!modules_enabled.empty()) {
-                std::wstring msg;
+            _delete_items(items);
 
-                msg += L"以下模块由于已经启用而不能删除：\n\n";
-                msg += modules_enabled;
-                msg += L"\n是否仅删除被禁用的模块？";
-
-                if (msgbox(msg, MB_ICONQUESTION | MB_OKCANCEL) == IDCANCEL)
-                    return 0;
-            }
+            return 0;
         }
-
-        _delete_items(items);
-
-        return 0;
     }
 
     return 0;

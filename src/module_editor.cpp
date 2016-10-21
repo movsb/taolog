@@ -111,11 +111,15 @@ LRESULT ModuleEntryEditor::on_notify(HWND hwnd, taowin::control * pc, int code, 
     if (!pc) return 0;
 
     if (pc->name() == L"ok") {
-        _on_ok();
+        if(code == BN_CLICKED) {
+            _on_ok();
+        }
     }
     else if (pc->name() == L"cancel") {
-        close();
-        return 0;
+        if(code == BN_CLICKED) {
+            close();
+            return 0;
+        }
     }
 
     return 0;

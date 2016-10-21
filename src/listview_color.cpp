@@ -125,7 +125,9 @@ LRESULT ListviewColor::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
 LRESULT ListviewColor::on_notify(HWND hwnd, taowin::control* pc, int code, NMHDR* hdr)
 {
     if(pc) {
-        choose_color_for(pc->name()[2]-'0', pc->name()[0] == 'f');
+        if(code == BN_CLICKED) {
+            choose_color_for(pc->name()[2] - '0', pc->name()[0] == 'f');
+        }
     }
 
     return 0;

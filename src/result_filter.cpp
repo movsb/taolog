@@ -1,3 +1,9 @@
+#include "stdafx.h"
+
+#include "_logdata_define.hpp"
+
+#include "event_container.h"
+
 #include "result_filter.h"
 
 namespace taoetw {

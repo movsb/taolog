@@ -1,9 +1,5 @@
 #pragma once
 
-#include <taowin/src/tw_taowin.h>
-
-#include "_module_entry.hpp"
-
 namespace taoetw {
 
 class ModuleEntryEditor : public taowin::window_creator

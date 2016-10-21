@@ -1,12 +1,5 @@
 #pragma once
 
-#include <regex>
-#include <unordered_map>
-
-#include <taowin/src/tw_taowin.h>
-
-#include "event_container.h"
-
 namespace taoetw {
 
 class ResultFilter : public taowin::window_creator

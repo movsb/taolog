@@ -1,12 +1,5 @@
 #pragma once
 
-#include <string>
-#include <vector>
-#include <functional>
-#include <regex>
-
-#include "_logdata_define.hpp"
-
 namespace taoetw {
 
 class EventContainer

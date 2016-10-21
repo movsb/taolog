@@ -1,18 +1,8 @@
+#include "stdafx.h"
 
-#include <cassert>
-
-#include <string>
-#include <unordered_map>
-#include <algorithm>
-
-#include <windows.h>
-
-#include "_logdata_define.hpp"
-
-#include <taowin/src/tw_taowin.h>
+#include "config.h"
 
 #include "main_window.h"
-#include "config.h"
 
 namespace taoetw {
 
@@ -54,11 +44,7 @@ LPCTSTR MainWindow::get_skin_xml() const
                 <control width="5" />
                 <button name="topmost" text="´°¿ÚÖÃ¶¥" width="60" style="tabstop"/>
             </horizontal>
-<<<<<<< HEAD
             <listview name="lv" style="showselalways,ownerdata,tabstop" exstyle="clientedge,doublebuffer,headerdragdrop,infotip"/>
-=======
-            <listview name="lv" style="showselalways,ownerdata,tabstop" exstyle="clientedge,doublebuffer,headerdragdrop"/>
->>>>>>> f15038af38c607444369bcab54fa9b8c13938a32
         </vertical>
     </root>
 </window>

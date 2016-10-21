@@ -1,6 +1,8 @@
-#include <unordered_map>
+#include "stdafx.h"
 
-#include <windows.h>
+#include "config.h"
+
+#include "_module_entry.hpp"
 
 #include "module_editor.h"
 

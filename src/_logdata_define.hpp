@@ -1,15 +1,5 @@
 #pragma once
 
-#include <tchar.h>
-
-#include <string>
-#include <sstream>
-#include <memory>
-#include <functional>
-
-#include <Windows.h>
-#include <guiddef.h>
-
 namespace taoetw {
 
 #define ETW_LOGGER_MAX_LOG_SIZE (60*1024)

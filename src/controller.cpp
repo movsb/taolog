@@ -1,3 +1,9 @@
+#include <string>
+
+#include <windows.h>
+#include <wmistr.h>
+#include <Evntrace.h>
+
 #include "controller.h"
 
 namespace taoetw {

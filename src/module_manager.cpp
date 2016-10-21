@@ -1,5 +1,10 @@
-#include "module_manager.h"
+#include "stdafx.h"
 
+#include "config.h"
+
+#include "_module_entry.hpp"
+
+#include "module_manager.h"
 #include "module_editor.h"
 
 namespace taoetw {

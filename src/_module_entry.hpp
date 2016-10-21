@@ -1,13 +1,5 @@
 #pragma once
 
-#include <map>
-#include <unordered_map>
-#include <string>
-#include <guiddef.h>
-#include <vector>
-
-#include "config.h"
-
 namespace taoetw {
 
 struct ModuleEntry

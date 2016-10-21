@@ -1,9 +1,5 @@
 #pragma once
 
-#include <taowin/src/tw_taowin.h>
-
-#include "_logdata_define.hpp"
-
 namespace taoetw {
 
 class EventDetail : public taowin::window_creator

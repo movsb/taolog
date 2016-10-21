@@ -1,15 +1,5 @@
 #pragma once
 
-#include <functional>
-#include <unordered_map>
-#include <map>
-
-#include <taowin/src/tw_taowin.h>
-
-#include "_logdata_define.hpp"
-
-#include "_module_entry.hpp"
-
 namespace taoetw {
 
 struct ItemColor

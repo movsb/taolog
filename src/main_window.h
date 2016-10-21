@@ -1,22 +1,18 @@
 #pragma once
 
-#include <taowin/src/tw_taowin.h>
-
+#include "_module_entry.hpp"
 #include "_logdata_define.hpp"
 
-#include "_module_entry.hpp"
-#include "event_container.h"
-
-#include "column_selection.h"
-#include "module_manager.h"
-#include "event_detail.h"
-#include "result_filter.h"
 #include "listview_color.h"
+#include "column_selection.h"
+#include "event_container.h"
+#include "event_detail.h"
+#include "module_manager.h"
+#include "result_filter.h"
 
 #include "controller.h"
 #include "consumer.h"
 
-#include "config.h"
 
 namespace taoetw {
 

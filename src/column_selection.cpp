@@ -1,3 +1,7 @@
+#include "stdafx.h"
+
+#include "config.h"
+
 #include "column_selection.h"
 
 namespace taoetw {

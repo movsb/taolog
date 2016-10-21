@@ -1,3 +1,9 @@
+#include "stdafx.h"
+
+#include "config.h"
+
+#include "_module_entry.hpp"
+
 #include "listview_color.h"
 
 namespace taoetw {

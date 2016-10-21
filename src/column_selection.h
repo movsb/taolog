@@ -1,9 +1,5 @@
 #pragma once
 
-#include <taowin/src/tw_taowin.h>
-
-#include "config.h"
-
 namespace taoetw {
 
 struct Column {

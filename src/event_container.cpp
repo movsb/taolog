@@ -1,6 +1,6 @@
-#pragma once
+#include "stdafx.h"
 
-#include <cassert>
+#include "_logdata_define.hpp"
 
 #include "event_container.h"
 

@@ -1,8 +1,17 @@
-#include "consumer.h"
-
-#include <process.h>
 #include <cassert>
 
+#include <string>
+#include <sstream>
+#include <functional>
+#include <memory>
+
+#include <tchar.h>
+#include <windows.h>
+#include <process.h>
+#include <wmistr.h>
+#include <Evntrace.h>
+
+#include "consumer.h"
 
 namespace taoetw {
 

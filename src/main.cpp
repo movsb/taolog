@@ -1,5 +1,8 @@
-#include "main_window.h"
+#include "stdafx.h"
+
 #include "config.h"
+
+#include "main_window.h"
 
 namespace taoetw {
 

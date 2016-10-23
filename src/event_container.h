@@ -27,7 +27,7 @@ public:
     }
 
 public:
-    bool add(EVENT evt);
+    bool add(EVENT& evt);
     bool filter_results(EventContainer* container);
     EVENT operator[](int index) { return _events[index]; }
     size_t size() const { return _events.size(); }

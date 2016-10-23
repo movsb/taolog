@@ -44,7 +44,7 @@ LPCTSTR MainWindow::get_skin_xml() const
                 <control width="5" />
                 <button name="topmost" text="窗口置顶" width="60" style="tabstop"/>
             </horizontal>
-            <listview name="lv" style="showselalways,ownerdata,tabstop" exstyle="clientedge,doublebuffer,headerdragdrop,infotip"/>
+            <listview name="lv" style="showselalways,ownerdata,tabstop" exstyle="clientedge,doublebuffer,headerdragdrop"/>
         </vertical>
     </root>
 </window>
@@ -227,8 +227,7 @@ bool MainWindow::_start()
     auto it= etwobj.find("session");
     if(it == etwobj.cend() || it->second.string_value().empty()) {
         session = L"taoetw-session";
-        // 默认值，可以不用写进去，如有必须手动加上
-        // etwobj["session"] = g_config.us(session);
+        etwobj["session"] = g_config.us(session);
     }
     else {
         session = g_config.ws(it->second.string_value());

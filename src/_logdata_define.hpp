@@ -2,19 +2,22 @@
 
 namespace taoetw {
 
-#define ETW_LOGGER_MAX_LOG_SIZE (60*1024)
+// #define ETW_LOGGER_MAX_LOG_SIZE (60*1024)
 
 // 一定要跟 etwlogger.h 中的定义一样
+// 除最后一个元素以外
+// 因为 ETW 最大允许 64KB 的日志，所以原来日志那边定义的大小是 60KB
+// 使得此结构体的大小太大，而实际上日志是远小于这个尺寸的
+// 因而最后一个元素不同，复制内存的时候记得别复制错了
 #pragma pack(push,1)
 struct LogData
 {
-    GUID guid;              // 生成者 GUID
-    SYSTEMTIME time;        // 时间戳
-    unsigned int line;      // 行号
-    unsigned int cch;       // 字符数（包含null）
-    wchar_t file[1024];     // 文件
-    wchar_t func[1024];     // 函数
-    wchar_t text[ETW_LOGGER_MAX_LOG_SIZE];      // 日志
+    GUID            guid;           // 生成者 GUID
+    SYSTEMTIME      time;           // 时间戳
+    unsigned int    line;           // 行号
+    unsigned int    cch;            // 字符数（包含null）
+    wchar_t         file[1024];     // 文件
+    wchar_t         func[1024];     // 函数
 };
 #pragma pack(pop)
 
@@ -34,7 +37,7 @@ struct LogDataUI : LogData
 
         auto gc = get_column_name;
 
-        ss << text;
+        ss << strText;
         ss << L"\r\n\r\n" << string(50, L'-') << L"\r\n\r\n";
         ss << gc(0) << L"：" << id << L"\r\n";
         ss << gc(2) << L"：" << pid << L"\r\n";
@@ -53,7 +56,7 @@ struct LogDataUI : LogData
         ss << gc(5) << L"：" << file         << L"\r\n";
         ss << gc(6) << L"：" << func         << L"\r\n";
         ss << gc(7) << L"：" << strLine      << L"\r\n";
-        ss << gc(8) << L"：" << level        << L"\r\n";
+        ss << gc(8) << L"：" << *strLevel    << L"\r\n";
 
         return std::move(ss.str());
     }
@@ -83,15 +86,17 @@ struct LogDataUI : LogData
         case 6: value = func;                          break;
         case 7: value = strLine.c_str();               break;
         case 8: value = strLevel->c_str();             break;
-        case 9: value = text;                          break;
+        case 9: value = strText.c_str();               break;
         }
 
         return value;
     }
+
+    string          strText;    // 日志，这个比较特殊，和原结构体并不同
     
-    unsigned int pid;       // 进程标识
-    unsigned int tid;       // 线程标识
-    unsigned char level;    // 日志等级
+    unsigned int    pid;        // 进程标识
+    unsigned int    tid;        // 线程标识
+    unsigned char   level;      // 日志等级
 
     TCHAR id[22];
     string strTime;

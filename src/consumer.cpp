@@ -68,8 +68,14 @@ void Consumer::ProcessEvents(EVENT_TRACE * pEvent)
     const auto& log_data = *(LogData*)pEvent->MofData;
     auto log_ui = new LogDataUI;
 
-    ::memcpy(log_ui, &log_data, pEvent->MofLength);
-    assert(log_ui->text[log_ui->cch - 1] == 0);
+    // 日志正文前面的部分都是一样的
+    // 除了日志输出方长度固定，接收方长度不固定
+    ::memcpy(log_ui, &log_data, sizeof(LogData));
+
+    // 拷贝日志正文（cch包括 '\0'，因而始终大于零
+    const wchar_t* pText = (const wchar_t*)((char*)&log_data + sizeof(LogData));
+    assert(pText[log_ui->cch - 1] == 0);
+    log_ui->strText.assign(pText, log_ui->cch - 1);
 
     log_ui->pid = pEvent->Header.ProcessId;
     log_ui->tid = pEvent->Header.ThreadId;

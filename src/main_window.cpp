@@ -2,6 +2,8 @@
 
 #include "config.h"
 
+#include "../res/resource.h"
+
 #include "main_window.h"
 
 namespace taoetw {
@@ -70,6 +72,15 @@ LRESULT MainWindow::control_message(taowin::syscontrol* ctl, UINT umsg, WPARAM w
 
 LRESULT MainWindow::on_menu(int id, bool is_accel)
 {
+    if(is_accel) {
+        switch(id)
+        {
+        case IDR_ACCEL_MAINWINDOW_SEARCH:
+            _edt_search->focus();
+            _edt_search->set_sel(0, -1);
+            break;
+        }
+    }
     return 0;
 }
 
@@ -119,12 +130,6 @@ LRESULT MainWindow::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR *
             }
             else if (nmlv->wVKey == VK_F3) {
                 _do_search(_last_search_string, _last_search_line, -1);
-            }
-            else if (nmlv->wVKey == L'F') {
-                if (::GetAsyncKeyState(VK_CONTROL) & 0x8000) {
-                    _edt_search->focus();
-                    _edt_search->set_sel(0, -1);
-                }
             }
         }
         else if (code == LVN_ITEMCHANGED) {
@@ -218,6 +223,11 @@ bool MainWindow::filter_special_key(int vk)
     }
 
     return __super::filter_special_key(vk);
+}
+
+bool MainWindow::filter_message(MSG* msg)
+{
+    return (_accels && ::TranslateAccelerator(_hwnd, _accels, msg)) || __super::filter_message(msg);
 }
 
 bool MainWindow::_start()
@@ -611,6 +621,9 @@ void MainWindow::_clear_results()
         f->clear();
 
     // 主事件拥有日志事件，由它删除
+    // 依据 LogDataUIPtr 的具体实现来决定是否执行 delete
+    // 如果是 raw pointer 则需要手动删除
+    // 如果是 smart pointer 则不必要
     // for (auto& evt : _events.events())
     //    delete evt;
 
@@ -670,6 +683,8 @@ LRESULT MainWindow::_on_create()
     _edt_search     = _root->find<taowin::edit>(L"s");
     _cbo_filter     = _root->find<taowin::combobox>(L"s-filter");
     _btn_colors     = _root->find<taowin::button>(L"color-settings");
+
+    _accels = ::LoadAccelerators(nullptr, MAKEINTRESOURCE(IDR_ACCELERATOR_MAINWINDOW));
 
     _init_config();
 

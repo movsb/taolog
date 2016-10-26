@@ -245,8 +245,17 @@
     <ClInclude Include="..\src\_logdata_define.hpp" />
     <ClInclude Include="..\src\_module_entry.hpp" />
     <ClInclude Include="..\src\module_manager.h" />
+    <ClInclude Include="../res/resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+      <ResourceCompile Include="../res/taoetw.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
+  <ProjectExtensions>
+    <VisualStudio>
+        <UserProperties RESOURCE_FILE="../res/taoetw.rc" />
+    </VisualStudio>
+  </ProjectExtensions>
 </Project>

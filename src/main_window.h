@@ -18,8 +18,6 @@ namespace taoetw {
 
 class MainWindow : public taowin::window_creator
 {
-public:
-
 private:
     static const UINT kDoLog = WM_USER + 1;
 
@@ -49,6 +47,8 @@ protected:
     taowin::combobox*   _cbo_filter;
     taowin::button*     _btn_colors;
 
+    HACCEL              _accels;
+
     MapColors           _colors;
     ColumnContainer     _columns;
 
@@ -75,6 +75,7 @@ protected:
     virtual LRESULT on_notify(HWND hwnd, taowin::control* pc, int code, NMHDR* hdr) override;
     virtual bool filter_special_key(int vk) override;
     virtual void on_final_message() override { __super::on_final_message(); delete this; }
+    virtual bool filter_message(MSG* msg) override;
 
 protected:
     bool _start();

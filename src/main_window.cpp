@@ -779,7 +779,23 @@ LRESULT MainWindow::_on_log(LogDataUI* pItem)
         }
     }
 
-    _listview->set_item_count(_current_filter->size(), LVSICF_NOINVALIDATEALL|LVSICF_NOSCROLL);
+    // 默认是非自动滚屏到最后一行的
+    // 但如果当前焦点行是最后一行，则自动滚屏
+    int count = (int)_current_filter->size();
+    int sic_flag = LVSICF_NOINVALIDATEALL | LVSICF_NOSCROLL;
+    bool is_last_focused = count > 1 && (_listview->get_item_state(count - 2, LVIS_FOCUSED) & LVIS_FOCUSED);
+
+    if(is_last_focused) {
+        sic_flag &= ~LVSICF_NOSCROLL;
+    }
+
+    _listview->set_item_count(count, sic_flag);
+
+    if(is_last_focused) {
+        _listview->set_item_state(-1, LVIS_FOCUSED | LVIS_SELECTED, 0);
+        _listview->ensure_visible(count - 1);
+        _listview->set_item_state(count - 1, LVIS_FOCUSED|LVIS_SELECTED, LVIS_FOCUSED|LVIS_SELECTED);
+    }
 
     if(_miniview) {
         _miniview->update();

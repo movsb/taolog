@@ -31,6 +31,9 @@
     <Filter Include="Source Files\inc">
       <UniqueIdentifier>{da573099-c8e2-43fe-95e1-bc29ca0239a2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\misc">
+      <UniqueIdentifier>{59c04a97-b7a3-496f-a169-749c66b58f14}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\3rd\taowin\src\tw_control.cpp">
@@ -95,6 +98,9 @@
     </ClCompile>
     <ClCompile Include="..\src\stdafx.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\utils.cpp">
+      <Filter>Source Files\misc</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -170,9 +176,12 @@
     <ClInclude Include="../res/resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\utils.h">
+      <Filter>Source Files\misc</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-      <ResourceCompile Include="../res/taoetw.rc">
+    <ResourceCompile Include="../res/taoetw.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
   </ItemGroup>

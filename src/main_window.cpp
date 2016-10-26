@@ -1,6 +1,7 @@
 #include "stdafx.h"
 
 #include "config.h"
+#include "utils.h"
 
 #include "../res/resource.h"
 
@@ -130,6 +131,12 @@ LRESULT MainWindow::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR *
             }
             else if (nmlv->wVKey == VK_F3) {
                 _do_search(_last_search_string, _last_search_line, -1);
+            }
+            else if(nmlv->wVKey == 'C') {
+                if(::GetAsyncKeyState(VK_CONTROL) & 0x8000) {
+                    _copy_selected_item();
+                    return 0;
+                }
             }
         }
         else if (code == LVN_ITEMCHANGED) {
@@ -670,6 +677,24 @@ void MainWindow::_update_main_filter()
 
     // 保持选中原来的项
     _cbo_filter->set_cur_sel(new_cur);
+}
+
+void MainWindow::_copy_selected_item()
+{
+    int i = _listview->get_next_item(-1, LVNI_SELECTED);
+    if(i != -1) {
+        // TODO 这个代码与查看详细时的代码是重复的
+        auto get_column_name = [&](int i) {
+            return i >= 0 && i <= (int)_columns.size()
+                ? _columns[i].name.c_str()
+                : L"";
+        };
+
+        auto& log = (*_current_filter)[i];
+        auto strlog = log->to_string(get_column_name);
+
+        utils::set_clipboard_text(strlog);
+    }
 }
 
 LRESULT MainWindow::_on_create()

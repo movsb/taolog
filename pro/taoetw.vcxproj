@@ -220,6 +220,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="..\src\utils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\3rd\json11\json11.hpp" />
@@ -242,20 +243,21 @@
     <ClInclude Include="..\src\result_filter.h" />
     <ClInclude Include="..\src\event_container.h" />
     <ClInclude Include="..\src\stdafx.h" />
+    <ClInclude Include="..\src\utils.h" />
     <ClInclude Include="..\src\_logdata_define.hpp" />
     <ClInclude Include="..\src\_module_entry.hpp" />
     <ClInclude Include="..\src\module_manager.h" />
     <ClInclude Include="../res/resource.h" />
   </ItemGroup>
   <ItemGroup>
-      <ResourceCompile Include="../res/taoetw.rc" />
+    <ResourceCompile Include="../res/taoetw.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
   <ProjectExtensions>
     <VisualStudio>
-        <UserProperties RESOURCE_FILE="../res/taoetw.rc" />
+      <UserProperties RESOURCE_FILE="../res/taoetw.rc" />
     </VisualStudio>
   </ProjectExtensions>
 </Project>

@@ -91,6 +91,11 @@ protected:
     void _set_top_most(bool top);
     void _update_main_filter();
 
+    // 复制当前选中的行内容到剪贴板
+    // 只复制第 1 个选中的行
+    void _copy_selected_item();
+
+protected:
     LRESULT _on_create();
     LRESULT _on_close();
     LRESULT _on_log(LogDataUI* log);

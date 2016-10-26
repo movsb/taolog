@@ -30,8 +30,6 @@ LPCTSTR MainWindow::get_skin_xml() const
             <horizontal name="toolbar" height="30" padding="0,1,0,4">
                 <button name="start-logging" text="开始记录" width="60" style="tabstop"/>
                 <control width="5" />
-                <button name="stop-logging" text="停止记录" width="60" style="disabled,tabstop"/>
-                <control width="5" />
                 <button name="clear-logging" text="清空记录" width="60" style="tabstop"/>
                 <control width="5" />
                 <button name="module-manager" text="模块管理" width="60" style="tabstop"/>
@@ -149,17 +147,15 @@ LRESULT MainWindow::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR *
     }
     else if (pc == _btn_start) {
         if(code == BN_CLICKED) {
-            if(_start()) {
-                _btn_start->set_enabled(false);
-                _btn_stop->set_enabled(true);
+            if(!_controller.started()) {
+                if(_start()) {
+                    _btn_start->set_text(L"停止记录");
+                }
             }
-        }
-    }
-    else if (pc == _btn_stop) {
-        if(code == BN_CLICKED) {
-            _stop();
-            _btn_start->set_enabled(true);
-            _btn_stop->set_enabled(false);
+            else {
+                _stop();
+                _btn_start->set_text(L"开启记录");
+            }
         }
     }
     else if (pc == _btn_modules) {
@@ -700,7 +696,6 @@ void MainWindow::_copy_selected_item()
 LRESULT MainWindow::_on_create()
 {
     _btn_start      = _root->find<taowin::button>(L"start-logging");
-    _btn_stop       = _root->find<taowin::button>(L"stop-logging");
     _btn_clear      = _root->find<taowin::button>(L"clear-logging");
     _btn_modules    = _root->find<taowin::button>(L"module-manager");
     _btn_filter     = _root->find<taowin::button>(L"filter-result");

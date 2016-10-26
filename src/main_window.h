@@ -25,7 +25,6 @@ public:
     MainWindow()
         : _listview(nullptr)
         , _btn_start(nullptr)
-        , _btn_stop(nullptr)
         , _btn_clear(nullptr)
         , _btn_modules(nullptr)
         , _last_search_line(-1)
@@ -38,7 +37,6 @@ protected:
 
     taowin::listview*   _listview;
     taowin::button*     _btn_start;
-    taowin::button*     _btn_stop;
     taowin::button*     _btn_clear;
     taowin::button*     _btn_modules;
     taowin::button*     _btn_filter;

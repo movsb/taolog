@@ -36,6 +36,8 @@ LPCTSTR MainWindow::get_skin_xml() const
                 <control width="5" />
                 <button name="filter-result" text="结果过滤" width="60" style="tabstop"/>
                 <control width="5" />
+                <button name="mini-view" text="精简视图" width="60" style="tabstop"/>
+                <control width="5" />
                 <control />
                 <label text="查找：" width="38" style="centerimage"/>
                 <combobox name="s-filter" style="tabstop" height="400" width="64" padding="0,0,4,0"/>
@@ -205,6 +207,21 @@ LRESULT MainWindow::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR *
             };
 
             (new ListviewColor(&_colors, &_level_maps, set))->domodal(this);
+        }
+    }
+    else if(pc == _btn_miniview) {
+        if(code == BN_CLICKED) {
+            auto mini = new MiniView(*_current_filter);
+            mini->on_close([&]() {
+                show();
+                _miniview = nullptr;
+            });
+            mini->create();
+            mini->update();
+            mini->show();
+            this->show(false);
+            _miniview = mini;
+            return 0;
         }
     }
 
@@ -703,6 +720,8 @@ LRESULT MainWindow::_on_create()
     _edt_search     = _root->find<taowin::edit>(L"s");
     _cbo_filter     = _root->find<taowin::combobox>(L"s-filter");
     _btn_colors     = _root->find<taowin::button>(L"color-settings");
+    _btn_miniview   = _root->find<taowin::button>(L"mini-view");
+
 
     _accels = ::LoadAccelerators(nullptr, MAKEINTRESOURCE(IDR_ACCELERATOR_MAINWINDOW));
 
@@ -761,6 +780,10 @@ LRESULT MainWindow::_on_log(LogDataUI* pItem)
     }
 
     _listview->set_item_count(_current_filter->size(), LVSICF_NOINVALIDATEALL|LVSICF_NOSCROLL);
+
+    if(_miniview) {
+        _miniview->update();
+    }
 
     return 0;
 }

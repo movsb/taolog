@@ -9,6 +9,7 @@
 #include "event_detail.h"
 #include "module_manager.h"
 #include "result_filter.h"
+#include "mini_view.h"
 
 #include "controller.h"
 #include "consumer.h"
@@ -28,6 +29,7 @@ public:
         , _btn_clear(nullptr)
         , _btn_modules(nullptr)
         , _last_search_line(-1)
+        , _miniview(nullptr)
     {
 
     }
@@ -44,6 +46,9 @@ protected:
     taowin::edit*       _edt_search;
     taowin::combobox*   _cbo_filter;
     taowin::button*     _btn_colors;
+    taowin::button*     _btn_miniview;
+
+    MiniView*           _miniview;
 
     HACCEL              _accels;
 

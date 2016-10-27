@@ -565,7 +565,7 @@ void MainWindow::_view_detail(int i)
     auto evt = (*_current_filter)[i];
     auto& cr = _colors[evt->level];
     auto detail_window = new EventDetail(evt, get_column_name, cr.fg, cr.bg);
-    detail_window->create();
+    detail_window->create(this);
     detail_window->show();
 }
 

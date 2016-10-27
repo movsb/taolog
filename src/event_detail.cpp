@@ -35,7 +35,14 @@ LRESULT EventDetail::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
     {
         auto edit = _root->find<taowin::edit>(L"text");
         _hText = edit->hwnd();
-        edit->set_text(_log->to_string(_gc).c_str());
+
+        auto logstr = _log->to_string(_gc);
+
+        // �滻 \n Ϊ \r\n
+        std::wregex re(LR"(\r?\n)");
+        auto rs = std::regex_replace(logstr, re, L"\r\n");
+
+        edit->set_text(rs.c_str());
         return 0;
     }
     case WM_CTLCOLORSTATIC:

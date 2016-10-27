@@ -10,6 +10,7 @@
 #include "module_manager.h"
 #include "result_filter.h"
 #include "mini_view.h"
+#include "tooltip_window.h"
 
 #include "controller.h"
 #include "consumer.h"
@@ -49,6 +50,7 @@ protected:
     taowin::button*     _btn_miniview;
 
     MiniView*           _miniview;
+    TooltipWindow*      _tipwnd;
 
     HACCEL              _accels;
 

@@ -221,6 +221,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="..\src\tooltip_window.cpp" />
     <ClCompile Include="..\src\utils.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -245,6 +246,7 @@
     <ClInclude Include="..\src\result_filter.h" />
     <ClInclude Include="..\src\event_container.h" />
     <ClInclude Include="..\src\stdafx.h" />
+    <ClInclude Include="..\src\tooltip_window.h" />
     <ClInclude Include="..\src\utils.h" />
     <ClInclude Include="..\src\_logdata_define.hpp" />
     <ClInclude Include="..\src\_module_entry.hpp" />

@@ -105,6 +105,9 @@
     <ClCompile Include="..\src\mini_view.cpp">
       <Filter>Source Files\gui</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\tooltip_window.cpp">
+      <Filter>Source Files\gui</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\3rd\taowin\src\tw_control.h">
@@ -183,6 +186,9 @@
       <Filter>Source Files\misc</Filter>
     </ClInclude>
     <ClInclude Include="..\src\mini_view.h">
+      <Filter>Source Files\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\tooltip_window.h">
       <Filter>Source Files\gui</Filter>
     </ClInclude>
   </ItemGroup>

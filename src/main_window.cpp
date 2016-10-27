@@ -62,12 +62,102 @@ LRESULT MainWindow::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
     case WM_CREATE: return _on_create();
     case WM_CLOSE:  return _on_close();
     case kDoLog:    return _on_log((LogDataUI*)lparam);
+    case WM_NCACTIVATE:
+    {
+        if(wparam == FALSE && _tipwnd) {
+            return FALSE;
+        }
+        break;
+    }
     }
     return __super::handle_message(umsg, wparam, lparam);
 }
 
 LRESULT MainWindow::control_message(taowin::syscontrol* ctl, UINT umsg, WPARAM wparam, LPARAM lparam)
 {
+    if(ctl == _listview) {
+        static bool mi = false;
+
+        if(umsg == WM_MOUSEMOVE) {
+            if(!mi) {
+                TRACKMOUSEEVENT tme = {0};
+                tme.cbSize = sizeof(tme);
+                tme.hwndTrack = _listview->hwnd();
+                tme.dwFlags = TME_HOVER | TME_LEAVE;
+                tme.dwHoverTime = HOVER_DEFAULT;
+                _TrackMouseEvent(&tme);
+                mi = true;
+            }
+        }
+        else if(umsg == WM_MOUSELEAVE) {
+            TRACKMOUSEEVENT tme = {0};
+            tme.cbSize = sizeof(tme);
+            tme.hwndTrack = _listview->hwnd();
+            tme.dwFlags = TME_CANCEL;
+            _TrackMouseEvent(&tme);
+
+            mi = false;
+        }
+        if(umsg == WM_MOUSEHOVER) {
+            mi = false;
+
+            LVHITTESTINFO hti;
+            hti.pt = {GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam)};
+
+            if(_listview->subitem_hittest(&hti) != -1/* && hti.iSubItem == 9*/) {
+                // TODO 界面与逻辑应该是要分离的啊！！
+                NMLVDISPINFO info;
+                info.item.iItem = hti.iItem;
+                info.item.iSubItem = hti.iSubItem;
+                _on_get_dispinfo((NMHDR*)&info);
+
+                bool need_tip = false;
+                auto text = info.item.pszText;
+
+                if(!need_tip) {
+                    if(wcschr(text, L'\n')) {
+                        need_tip = true;
+                    }
+                }
+
+                // 不初始化会报潜在使用了未初始化的变量（但实际上不可能）
+                SIZE szText = {0};
+                if(!need_tip) {
+                    HDC hdc = ::GetDC(_listview->hwnd());
+
+                    if(::GetTextExtentPoint32(hdc, text, wcslen(text), &szText)) {
+                        int col_width = _columns[hti.iSubItem].width;
+
+                        if(szText.cx > col_width) {
+                            need_tip = true;
+                        }
+                    }
+
+                    ::ReleaseDC(_listview->hwnd(), hdc);
+                }
+
+                if(!need_tip) {
+                    taowin::Rect rcSubItem, rcListView;
+                    ::GetClientRect(_listview->hwnd(), &rcListView);
+
+                    if(_listview->get_subitem_rect(0, hti.iSubItem, &rcSubItem)) {
+                        if(rcSubItem.left < rcListView.left || rcSubItem.left + szText.cx > rcListView.right) {
+                            need_tip = true;
+                        }
+                    }
+                }
+
+                if(need_tip && !_tipwnd) {
+                    _tipwnd = new TooltipWindow(text, _mgr.get_font(L"default"));
+                    _tipwnd->on_destroy([&]() { _tipwnd = nullptr; });
+                    _tipwnd->create();
+                    _tipwnd->show(true, false);
+                }
+            }
+
+            return 0;
+        }
+    }
     return __super::control_message(ctl, umsg, wparam, lparam);
 }
 
@@ -415,7 +505,7 @@ void MainWindow::_init_listview()
     ::SetWindowPos(hTooltip, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
 
     // subclass it
-    // subclass_control(_listview);
+    subclass_control(_listview);
 }
 
 void MainWindow::_init_config()

@@ -23,6 +23,7 @@ start:
     ETW_LEVEL_WARNING(L"Warning");
     ETW_LEVEL_ERROR(L"Error");
     ETW_LEVEL_CRITICAL(L"Critical");
+    ETW_LEVEL_VERBOSE(L"Long string jasl;alkdjfklasfjdklajsfeaskdlfjsakdfjasklfj asalalfas asdfaslfk");
 
     Sleep(3000);
 

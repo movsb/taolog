@@ -15,7 +15,7 @@ void MiniView::update()
 LPCTSTR MiniView::get_skin_xml() const
 {
     LPCTSTR json = LR"tw(
-<window title="精简视图" size="512,480">
+<window title="精简视图" size="300,300">
     <res>
         <font name="default" face="微软雅黑" size="12"/>
     </res>
@@ -37,6 +37,13 @@ LRESULT MiniView::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
     {
         _listview = _root->find<taowin::listview>(L"lv");
 
+        // 默认置顶
+        ::SetWindowPos(_hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+
+        // 有 BUG 啊，竟然不自动置顶
+        HWND hTooltip = ListView_GetToolTips(_listview->hwnd());
+        ::SetWindowPos(hTooltip, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
+
         _listview->show_header(0);
         _listview->insert_column(L"内容", 0, 0);
 
@@ -46,7 +53,7 @@ LRESULT MiniView::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
     {
         RECT rc;
         ::GetClientRect(_listview->hwnd(), &rc);
-        _listview->set_column_width(0, rc.right - rc.left - 8);
+        _listview->set_column_width(0, rc.right - rc.left - 5);
         break;
     }
     case WM_CLOSE:

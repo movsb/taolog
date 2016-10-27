@@ -410,6 +410,10 @@ void MainWindow::_init_listview()
         }
     }
 
+    // 有 BUG 啊，竟然不自动置顶
+    HWND hTooltip = ListView_GetToolTips(_listview->hwnd());
+    ::SetWindowPos(hTooltip, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
+
     // subclass it
     // subclass_control(_listview);
 }

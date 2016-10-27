@@ -511,6 +511,17 @@ void MainWindow::_init_config()
     // main window config
     _config = windows.obj("main");
 
+    // 窗口标题
+    {
+        std::wstring tt(L"ETW Log Viewer");
+        if(_config.has_str("title")) {
+            tt = g_config.ws(_config.str("title").as_str());
+        }
+
+        ::SetWindowText(_hwnd, tt.c_str());
+    }
+
+    // 窗口置顶与否
     _set_top_most(_config["topmost"].bool_value());
 
     // the modules

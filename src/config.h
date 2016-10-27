@@ -84,6 +84,13 @@ public:
         return const_cast<Json::object&>(_json.object_items());
     }
 
+    // 作为非 const 字符串使用（需要手动确保为字符串）
+    std::string& as_str()
+    {
+        assert(_json.is_string());
+        return const_cast<std::string&>(_json.string_value());
+    }
+
 public:
     // 判断当前对象是否有名为 k 的数组
     bool has_arr(const char* k)
@@ -101,6 +108,14 @@ public:
         return _json.has_shape({{k,Json::Type::OBJECT}}, _err);
     }
 
+    // 判断当前对象是否有名为 k 的字符串
+    bool has_str(const char* k)
+    {
+        assert(_json.is_object());
+
+        return _json.has_shape({{k, Json::Type::STRING}}, _err);
+    }
+
     // 获取 [k] 为数组（确保）
     JsonWrapper arr(const char* k)
     {
@@ -115,6 +130,15 @@ public:
     {
         if(!has_obj(k))
             as_obj()[k] = Json::object {};
+
+        return _json[k];
+    }
+
+    // 获取 [k] 为字符串（确保）
+    JsonWrapper str(const char* k)
+    {
+        if(!has_str(k))
+            as_obj()[k] = "";
 
         return _json[k];
     }

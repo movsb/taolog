@@ -211,7 +211,7 @@ LRESULT MainWindow::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR *
     }
     else if(pc == _btn_miniview) {
         if(code == BN_CLICKED) {
-            auto mini = new MiniView(*_current_filter);
+            auto mini = new MiniView(*_current_filter, _colors);
             mini->on_close([&]() {
                 show();
                 _miniview = nullptr;

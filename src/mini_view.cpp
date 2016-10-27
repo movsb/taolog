@@ -12,6 +12,8 @@
 
 namespace taoetw {
 
+RECT MiniView::winpos = {-1,-1};
+
 // TODO 这段代码也是直接从 main 中搬过来的
 void MiniView::update()
 {
@@ -62,6 +64,12 @@ LRESULT MiniView::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
         // 默认置顶
         ::SetWindowPos(_hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
 
+        // 恢复窗口位置
+        if(winpos.left != -1 && winpos.top != -1) {
+            taowin::Rect rc = winpos;
+            ::SetWindowPos(_hwnd, nullptr, rc.left, rc.top, rc.width(), rc.height(), SWP_NOZORDER);
+        }
+
         // 有 BUG 啊，竟然不自动置顶
         HWND hTooltip = ListView_GetToolTips(_listview->hwnd());
         ::SetWindowPos(hTooltip, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
@@ -80,6 +88,8 @@ LRESULT MiniView::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
     }
     case WM_CLOSE:
     {
+        ::GetWindowRect(_hwnd, &winpos);
+
         _on_close();
         DestroyWindow(_hwnd);
     }

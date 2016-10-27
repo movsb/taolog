@@ -5,6 +5,9 @@ namespace taoetw {
 class MiniView : public taowin::window_creator
 {
 private:
+    static RECT winpos;
+
+private:
     EventContainer&     _events;
     MapColors&          _colors;
     taowin::listview*   _listview;

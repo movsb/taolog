@@ -64,7 +64,7 @@ LRESULT MainWindow::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
     case kDoLog:    return _on_log((LogDataUI*)lparam);
     case WM_NCACTIVATE:
     {
-        if(wparam == FALSE && _tipwnd) {
+        if(wparam == FALSE && _tipwnd->showing()) {
             return FALSE;
         }
         break;
@@ -147,11 +147,8 @@ LRESULT MainWindow::control_message(taowin::syscontrol* ctl, UINT umsg, WPARAM w
                     }
                 }
 
-                if(need_tip && !_tipwnd) {
-                    _tipwnd = new TooltipWindow(text, _mgr.get_font(L"default"));
-                    _tipwnd->on_destroy([&]() { _tipwnd = nullptr; });
-                    _tipwnd->create();
-                    _tipwnd->show(true, false);
+                if(need_tip && !_tipwnd->showing()) {
+                    _tipwnd->popup(text, _mgr.get_font(L"default"));
                 }
             }
 

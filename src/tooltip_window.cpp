@@ -4,6 +4,26 @@
 
 namespace taoetw {
 
+void TooltipWindow::popup(const wchar_t* str, HFONT font)
+{
+    _text = str;
+    _font = font;
+
+    RECT rc {0,0,500,0};
+    HDC hdc = ::GetDC(_hwnd);
+    HFONT hOldFont = (HFONT)::SelectObject(hdc, _font);
+    ::DrawText(hdc, _text, -1, &rc, DT_CALCRECT);
+    ::SelectObject(hdc, hOldFont);
+    ::ReleaseDC(_hwnd, hdc);
+
+    ::GetCursorPos(&_pt);
+    ::SetWindowPos(_hwnd, nullptr, _pt.x + 10, _pt.y+10, rc.right - rc.left + 10, rc.bottom - rc.top + 10, SWP_NOZORDER | SWP_NOACTIVATE);
+
+    ::ShowWindow(_hwnd, SW_SHOWNOACTIVATE);
+
+    ::SetTimer(_hwnd, 1, 250, 0);
+}
+
 void TooltipWindow::get_metas(WindowMeta* metas)
 {
     __super::get_metas(metas);
@@ -17,20 +37,8 @@ LRESULT TooltipWindow::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
     {
     case WM_CREATE:
     {
-        RECT rc {0,0,500,0};
-        HDC hdc = ::GetDC(_hwnd);
-        HFONT hOldFont = (HFONT)::SelectObject(hdc, _font);
-        ::DrawText(hdc, _text, -1, &rc, DT_CALCRECT);
-        ::SelectObject(hdc, hOldFont);
-        ::ReleaseDC(_hwnd, hdc);
-
-        ::GetCursorPos(&_pt);
-
-        ::SetWindowPos(_hwnd, nullptr, _pt.x + 10, _pt.y+10, rc.right - rc.left + 10, rc.bottom - rc.top + 10, SWP_NOZORDER | SWP_NOACTIVATE);
-
         ::SetLayeredWindowAttributes(_hwnd, 0, 245, LWA_ALPHA);
 
-        ::SetTimer(_hwnd, 1, 250, 0);
         break;
     }
     case WM_TIMER:
@@ -46,8 +54,13 @@ LRESULT TooltipWindow::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
             )
             {
                 ::KillTimer(_hwnd, 1);
-                _on_destroy();
-                ::DestroyWindow(_hwnd);
+
+                taowin::Rect rcClient;
+                ::GetClientRect(_hwnd, &rcClient);
+                HDC hdc = ::GetDC(_hwnd);
+                ::FillRect(hdc, &rcClient, GetStockBrush(WHITE_BRUSH));
+                ::ReleaseDC(_hwnd, hdc);
+                ::ShowWindow(_hwnd, SW_HIDE);
             }
             return 0;
         }

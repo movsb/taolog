@@ -32,7 +32,14 @@ public:
         , _last_search_line(-1)
         , _miniview(nullptr)
     {
+        _tipwnd = new TooltipWindow;
+        _tipwnd->create();
+    }
 
+    ~MainWindow()
+    {
+        ::DestroyWindow(_tipwnd->hwnd());
+        _tipwnd = nullptr;
     }
     
 protected:

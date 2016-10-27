@@ -17,7 +17,7 @@ void TooltipWindow::popup(const wchar_t* str, HFONT font)
     ::ReleaseDC(_hwnd, hdc);
 
     ::GetCursorPos(&_pt);
-    ::SetWindowPos(_hwnd, nullptr, _pt.x + 10, _pt.y+10, rc.right - rc.left + 10, rc.bottom - rc.top + 10, SWP_NOZORDER | SWP_NOACTIVATE);
+    ::SetWindowPos(_hwnd, HWND_TOPMOST, _pt.x + 10, _pt.y+10, rc.right - rc.left + 10, rc.bottom - rc.top + 10, SWP_NOACTIVATE);
 
     ::ShowWindow(_hwnd, SW_SHOWNOACTIVATE);
 

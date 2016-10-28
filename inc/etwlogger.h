@@ -31,7 +31,7 @@
 #define min(a,b) (((a) < (b)) ? (a) : (b))
 #endif
 
-#define ETW_LOGGER_MAX_LOG_SIZE (60*1024)
+#define ETW_LOGGER_MAX_LOG_SIZE (50*1024)
 
 class ETWLogger
 {
@@ -42,13 +42,13 @@ public:
     #pragma pack(push,1)
     struct LogData
     {
-        GUID guid;              // 生成者 GUID
-        SYSTEMTIME time;        // 时间戳
-        unsigned int line;      // 行号
-        unsigned int size;      // 字符数（包含null）
-        wchar_t file[1024];     // 文件
-        wchar_t func[1024];     // 函数
-        wchar_t text[ETW_LOGGER_MAX_LOG_SIZE];      // 日志
+        GUID            guid;                               // 生成者 GUID
+        SYSTEMTIME      time;                               // 时间戳
+        unsigned int    line;                               // 行号
+        unsigned int    cch;                                // 字符数（包含null）
+        wchar_t         file[1024];                         // 文件
+        wchar_t         func[1024];                         // 函数
+        wchar_t         text[ETW_LOGGER_MAX_LOG_SIZE];      // 日志
     };
     #pragma pack(pop)
 
@@ -75,6 +75,8 @@ public:
 		{ 0x6e5e5cbc, 0x8acf, 0x4fa6, { 0x98, 0xe4, 0xc, 0x63, 0xa0, 0x75, 0x32, 0x3b } };
 
 		m_clsGuid = clsGuid;
+
+        m_version = 0x0000;
 
 		RegisterProvider();
 	}
@@ -234,9 +236,9 @@ public:
 
         // the text length, in characters, including the null
         if (0 <= cch && cch < _countof(data.text)) {
-            data.size = cch + 1;
+            data.cch = cch + 1;
         } else {
-            data.size = 1;
+            data.cch = 1;
             data.text[0] = 0;
         }
 
@@ -246,10 +248,15 @@ public:
         // the header
         EVENT_TRACE_HEADER& hdr = m_log.hdr;
         memset(&hdr, 0, sizeof(hdr));
-        hdr.Size            = (USHORT)(sizeof(hdr) + offsetof(LogData, text) + data.size * sizeof(data.text[0]));
-        hdr.Flags           = WNODE_FLAG_TRACED_GUID;
-        hdr.Guid            = m_clsGuid;
+
+        // 还没搞懂 MSDN 上下面这句话的意思
+        // On input, the size must be less than the size of the event tracing session's buffer minus 72 (0x48)
+        hdr.Size            = (USHORT)(sizeof(hdr) + offsetof(LogData, text) + data.cch * sizeof(data.text[0]));
+        hdr.Class.Type      = EVENT_TRACE_TYPE_INFO;
         hdr.Class.Level     = level;
+        hdr.Class.Version   = m_version;
+        hdr.Guid            = m_clsGuid;
+        hdr.Flags           = WNODE_FLAG_TRACED_GUID;
 
         // Trace it!
         ULONG status = ::TraceEvent(m_sessionHandle, &hdr);
@@ -266,6 +273,7 @@ public:
 
 private:
 	
+    USHORT m_version;
 	UCHAR m_enableLevel; 
 	BOOL m_traceOn; 
 	BOOL m_reg;

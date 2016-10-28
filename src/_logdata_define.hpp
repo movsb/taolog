@@ -92,6 +92,7 @@ struct LogDataUI : LogData
         return value;
     }
 
+    USHORT          version;    // 日志版本
     string          strText;    // 日志，这个比较特殊，和原结构体并不同
     
     unsigned int    pid;        // 进程标识

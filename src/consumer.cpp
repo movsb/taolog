@@ -77,12 +77,13 @@ void Consumer::ProcessEvents(EVENT_TRACE * pEvent)
     assert(pText[log_ui->cch - 1] == 0);
     log_ui->strText.assign(pText, log_ui->cch - 1);
 
-    log_ui->pid = pEvent->Header.ProcessId;
-    log_ui->tid = pEvent->Header.ThreadId;
-    log_ui->level = pEvent->Header.Class.Level;
+    log_ui->version = pEvent->Header.Class.Version;
+    log_ui->pid     = pEvent->Header.ProcessId;
+    log_ui->tid     = pEvent->Header.ThreadId;
+    log_ui->level   = pEvent->Header.Class.Level;
 
-    log_ui->strPid = std::to_wstring(log_ui->pid);
-    log_ui->strTid = std::to_wstring(log_ui->tid);
+    log_ui->strPid  = std::to_wstring(log_ui->pid);
+    log_ui->strTid  = std::to_wstring(log_ui->tid);
     log_ui->strLine = std::to_wstring(log_ui->line);
 
     {

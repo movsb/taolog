@@ -20,6 +20,12 @@ namespace taoetw {
 static const GUID g_clsGuid = 
 { 0x6e5e5cbc, 0x8acf, 0x4fa6, { 0x98, 0xe4, 0xc, 0x63, 0xa0, 0x75, 0x32, 0x3b } };
 
+namespace {
+    void a2u(const char* a, wchar_t* u, int c) {
+        ::MultiByteToWideChar(CP_ACP, 0, a, -1, u, c);
+    }
+}
+
 bool Consumer::start(const wchar_t * session)
 {
     EVENT_TRACE_LOGFILE logfile {0};
@@ -72,10 +78,43 @@ void Consumer::ProcessEvents(EVENT_TRACE * pEvent)
     // 除了日志输出方长度固定，接收方长度不固定
     ::memcpy(log_ui, &log_data, sizeof(LogData));
 
+    bool bIsUnicode = log_ui->flags & (int)ETW_LOGGER_FLAG::ETW_LOGGER_FLAG_UNICODE;
+
+    // 如果是非 Unicode 则需要转换
+    // 包含 file, func, text
+    if(!bIsUnicode) {
+        char filebuf[_countof(log_ui->file)];
+        ::strcpy(filebuf, (char*)log_ui->file);
+        a2u(filebuf, log_ui->file, _countof(log_ui->file));
+
+        char funcbuf[_countof(log_ui->func)];
+        ::strcpy(funcbuf, (char*)log_ui->func);
+        a2u(funcbuf, log_ui->func, _countof(log_ui->func));
+    }
+
     // 拷贝日志正文（cch包括 '\0'，因而始终大于零
-    const wchar_t* pText = (const wchar_t*)((char*)&log_data + sizeof(LogData));
-    assert(pText[log_ui->cch - 1] == 0);
-    log_ui->strText.assign(pText, log_ui->cch - 1);
+    if(bIsUnicode) {
+        const wchar_t* pText = (const wchar_t*)((char*)&log_data + sizeof(LogData));
+        assert(pText[log_ui->cch - 1] == 0);
+        log_ui->strText.assign(pText, log_ui->cch - 1);
+    }
+    else {
+        const char* pText = (const char*)((char*)&log_data + sizeof(LogData));
+        assert(pText[log_ui->cch - 1] == 0);
+
+        if(log_ui->cch > 4096) {
+            auto p = std::make_unique<char[]>(log_ui->cch);
+            memcpy(p.get(), pText, log_ui->cch);
+            ::MultiByteToWideChar(CP_ACP, 0, p.get(), -1, (wchar_t*)pText, log_ui->cch);
+            log_ui->strText.assign((wchar_t*)pText);
+        }
+        else {
+            char buf[4096];
+            memcpy(buf, pText, log_ui->cch);
+            ::MultiByteToWideChar(CP_ACP, 0, buf, -1, (wchar_t*)pText, log_ui->cch);
+            log_ui->strText.assign((wchar_t*)pText);
+        }
+    }
 
     log_ui->version = pEvent->Header.Class.Version;
     log_ui->pid     = pEvent->Header.ProcessId;

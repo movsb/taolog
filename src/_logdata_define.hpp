@@ -2,22 +2,27 @@
 
 namespace taoetw {
 
-// #define ETW_LOGGER_MAX_LOG_SIZE (60*1024)
+// #define ETW_LOGGER_MAX_LOG_SIZE (50*1024)
 
-// 一定要跟 etwlogger.h 中的定义一样
-// 除最后一个元素以外
-// 因为 ETW 最大允许 64KB 的日志，所以原来日志那边定义的大小是 60KB
-// 使得此结构体的大小太大，而实际上日志是远小于这个尺寸的
-// 因而最后一个元素不同，复制内存的时候记得别复制错了
+enum class ETW_LOGGER_FLAG {
+    ETW_LOGGER_FLAG_UNICODE = 1,
+};
+
+
+// 一定要跟 etwlogger.h 中的定义整体一致
+// 除：
+//      没有最后一个元素
+//      字符集可能不一样
 #pragma pack(push,1)
 struct LogData
 {
+    UINT            flags;          // 日志相关的标记位
     GUID            guid;           // 生成者 GUID
     SYSTEMTIME      time;           // 时间戳
     unsigned int    line;           // 行号
     unsigned int    cch;            // 字符数（包含null）
-    wchar_t         file[1024];     // 文件
-    wchar_t         func[1024];     // 函数
+    wchar_t         file[260];     // 文件
+    wchar_t         func[260];     // 函数
 };
 #pragma pack(pop)
 

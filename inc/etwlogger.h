@@ -12,7 +12,6 @@
 #include <wmistr.h>
 #include <guiddef.h>
 #include <Evntrace.h>
-#include <string>
 
 #define WIDEN2(x) L ## x
 #define WIDEN(x) WIDEN2(x)
@@ -35,19 +34,22 @@
 
 class ETWLogger
 {
-    typedef std::basic_string<TCHAR> string;
-
 public:
+
+    enum ETW_LOGGER_FLAG {
+        ETW_LOGGER_FLAG_UNICODE = 1,
+    };
 
     #pragma pack(push,1)
     struct LogData
     {
-        GUID            guid;                               // 生成者 GUID
+        UINT            flags;                              // 标记位
+        GUID            guid;                               // 生成者
         SYSTEMTIME      time;                               // 时间戳
         unsigned int    line;                               // 行号
         unsigned int    cch;                                // 字符数（包含null）
-        wchar_t         file[1024];                         // 文件
-        wchar_t         func[1024];                         // 函数
+        wchar_t         file[260];                          // 文件
+        wchar_t         func[260];                          // 函数
         wchar_t         text[ETW_LOGGER_MAX_LOG_SIZE];      // 日志
     };
     #pragma pack(pop)
@@ -212,18 +214,25 @@ public:
 
         LogData& data = m_log.data;
 
+        // the flags
+        data.flags = 0;
+        data.flags |= sizeof(TCHAR) == sizeof(wchar_t) ? ETW_LOGGER_FLAG_UNICODE : 0;
+
         // the guid
         data.guid = m_providerGuid;
+
+        // time timestamp
+        ::GetLocalTime(&data.time);
         
         // the file
         cch = min(_countof(data.file) - 1, _tcslen(file));
-        _tcsncpy(&data.file[0], file, cch);
-        data.file[cch] = 0;
+        _tcsncpy((TCHAR*)&data.file[0], file, cch);
+        ((TCHAR*)(data.file))[cch] = 0;
 
         // the function
         cch = min(_countof(data.func) - 1, _tcslen(function));
-        _tcsncpy(&data.func[0], function, cch);
-        data.func[cch] = 0;
+        _tcsncpy((TCHAR*)&data.func[0], function, cch);
+        ((TCHAR*)(data.func))[cch] = 0;
 
         // the line number
         data.line = line;
@@ -231,7 +240,7 @@ public:
         // the text
         va_list va;
         va_start(va, format);
-        cch = _vsntprintf(&data.text[0], _countof(data.text), format, va);
+        cch = _vsntprintf((TCHAR*)&data.text[0], _countof(data.text), format, va);
         va_end(va);
 
         // the text length, in characters, including the null
@@ -241,9 +250,6 @@ public:
             data.cch = 1;
             data.text[0] = 0;
         }
-
-        // time timestamp
-        ::GetLocalTime(&data.time);
 
         // the header
         EVENT_TRACE_HEADER& hdr = m_log.hdr;

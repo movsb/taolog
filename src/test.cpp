@@ -18,12 +18,12 @@ int main()
 {
 start:
 
-    ETW_LEVEL_VERBOSE(L"Verbose\n123333333333333333333333333333333\n555555555555555\nafasdfasfasfd\n\n4028402394");
-    ETW_LEVEL_INFORMATION(L"Information");
-    ETW_LEVEL_WARNING(L"Warning");
-    ETW_LEVEL_ERROR(L"Error");
-    ETW_LEVEL_CRITICAL(L"Critical");
-    ETW_LEVEL_VERBOSE(L"Long string jasl;alkdjfklasfjdklajsfeaskdlfjsakdfjasklfj asalalfas asdfaslfk");
+    ETW_LEVEL_VERBOSE(_T("Verbose\n123333333333333333333333333333333\n555555555555555\nafasdfasfasfd\n\n4028402394"));
+    ETW_LEVEL_INFORMATION(_T("Information"));
+    ETW_LEVEL_WARNING(_T("Warning"));
+    ETW_LEVEL_ERROR(_T("Error"));
+    ETW_LEVEL_CRITICAL(_T("Critical"));
+    ETW_LEVEL_VERBOSE(_T("Long string jasl;alkdjfklasfjdklajsfeaskdlfjsakdfjasklfj asalalfas asdfaslfk"));
 
     Sleep(3000);
 

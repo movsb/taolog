@@ -337,6 +337,12 @@ extern ETWLogger g_etwLogger;
 	ETW_LEVEL_WARNING(erridBuf); 													\
 }
 
+#define EtwVbs(x, ...) ETW_LEVEL_VERBOSE(x, __VA_ARGS__)
+#define EtwLog(x, ...) ETW_LEVEL_INFORMATION(x, __VA_ARGS__)
+#define EtwWrn(x, ...) ETW_LEVEL_WARNING(x, __VA_ARGS__)
+#define EtwErr(x, ...) ETW_LEVEL_ERROR(x, __VA_ARGS__)
+#define EtwFat(x, ...) ETW_LEVEL_CRITICAL(x, __VA_ARGS__)
+
 #pragma warning(pop)
 
 #else 
@@ -346,6 +352,12 @@ extern ETWLogger g_etwLogger;
 #define ETW_LEVEL_WARNING(x, ...)
 #define ETW_LEVEL_INFORMATION(x, ...)
 #define ETW_LEVEL_VERBOSE(x, ...)
+
+#define EtwVbs(x, ...)
+#define EtwLog(x, ...)
+#define EtwWrn(x, ...)
+#define EtwErr(x, ...)
+#define EtwFat(x, ...)
 
 #define ETW_LAST_ERROR()
 

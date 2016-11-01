@@ -38,6 +38,8 @@ LPCTSTR MainWindow::get_skin_xml() const
                 <control width="5" />
                 <button name="mini-view" text="精简视图" width="60" style="tabstop"/>
                 <control width="5" />
+                <button name="export-to-file" text="导出日志" width="60" style="tabstop"/>
+                <control width="5" />
                 <control />
                 <label text="查找：" width="38" style="centerimage"/>
                 <combobox name="s-filter" style="tabstop" height="400" width="64" padding="0,0,4,0"/>
@@ -308,6 +310,12 @@ LRESULT MainWindow::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR *
             mini->show();
             this->show(false);
             _miniview = mini;
+            return 0;
+        }
+    }
+    else if(pc == _btn_export2file) {
+        if(code == BN_CLICKED) {
+            _export2file();
             return 0;
         }
     }
@@ -790,6 +798,73 @@ void MainWindow::_update_main_filter()
     _cbo_filter->set_cur_sel(new_cur);
 }
 
+void MainWindow::_export2file()
+{
+    auto escape = [](const wchar_t* s) {
+        std::wstring r;
+
+        r = std::regex_replace(s, std::wregex(L"&"), L"&amp;");
+        r = std::regex_replace(s, std::wregex(L"<"), L"&lt;");
+        r = std::regex_replace(s, std::wregex(L">"), L"&gt;");
+
+        return r;
+    };
+
+    std::wstringstream s;
+
+    s << LR"(<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<style>
+table, td {
+    border: 1px solid gray;
+    border-collapse: collapse;
+}
+
+td {
+    padding: 4px;
+}
+
+td:nth-child(10) {
+    white-space: pre;
+}
+</style>
+</head>
+<body>
+<table>
+)";
+
+    for(const auto& log : _current_filter->events()) {
+        s << L"<tr>";
+
+        for(int i = 0; i < log->data_cols; i++) {
+            auto p = (*log)[i];
+            auto h = escape(p);
+            s << L"<td>" << h << L"</td>";
+        }
+
+        s << L"</tr>\n";
+    }
+
+    s << LR"(
+</table>
+</body>
+</html>
+)";
+
+    std::ofstream file(L"export.html", std::ios::binary|std::ios::trunc);
+    if(file.is_open()) {
+        auto us = g_config.us(s.str());
+        file << us;
+        file.close();
+        msgbox(L"已保存到 export.html。");
+    }
+    else {
+        msgbox(L"没能正确导出。");
+    }
+}
+
 void MainWindow::_copy_selected_item()
 {
     int i = _listview->get_next_item(-1, LVNI_SELECTED);
@@ -810,16 +885,16 @@ void MainWindow::_copy_selected_item()
 
 LRESULT MainWindow::_on_create()
 {
-    _btn_start      = _root->find<taowin::button>(L"start-logging");
-    _btn_clear      = _root->find<taowin::button>(L"clear-logging");
-    _btn_modules    = _root->find<taowin::button>(L"module-manager");
-    _btn_filter     = _root->find<taowin::button>(L"filter-result");
-    _btn_topmost    = _root->find<taowin::button>(L"topmost");
-    _edt_search     = _root->find<taowin::edit>(L"s");
-    _cbo_filter     = _root->find<taowin::combobox>(L"s-filter");
-    _btn_colors     = _root->find<taowin::button>(L"color-settings");
-    _btn_miniview   = _root->find<taowin::button>(L"mini-view");
-
+    _btn_start          = _root->find<taowin::button>(L"start-logging");
+    _btn_clear          = _root->find<taowin::button>(L"clear-logging");
+    _btn_modules        = _root->find<taowin::button>(L"module-manager");
+    _btn_filter         = _root->find<taowin::button>(L"filter-result");
+    _btn_topmost        = _root->find<taowin::button>(L"topmost");
+    _edt_search         = _root->find<taowin::edit>(L"s");
+    _cbo_filter         = _root->find<taowin::combobox>(L"s-filter");
+    _btn_colors         = _root->find<taowin::button>(L"color-settings");
+    _btn_miniview       = _root->find<taowin::button>(L"mini-view");
+    _btn_export2file    = _root->find<taowin::button>(L"export-to-file");
 
     _accels = ::LoadAccelerators(nullptr, MAKEINTRESOURCE(IDR_ACCELERATOR_MAINWINDOW));
 

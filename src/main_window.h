@@ -55,6 +55,7 @@ protected:
     taowin::combobox*   _cbo_filter;
     taowin::button*     _btn_colors;
     taowin::button*     _btn_miniview;
+    taowin::button*     _btn_export2file;
 
     MiniView*           _miniview;
     TooltipWindow*      _tipwnd;
@@ -102,6 +103,7 @@ protected:
     void _clear_results();
     void _set_top_most(bool top);
     void _update_main_filter();
+    void _export2file();
 
     // 复制当前选中的行内容到剪贴板
     // 只复制第 1 个选中的行

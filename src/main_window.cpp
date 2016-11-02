@@ -126,6 +126,8 @@ LRESULT MainWindow::control_message(taowin::syscontrol* ctl, UINT umsg, WPARAM w
                 SIZE szText = {0};
                 if(!need_tip) {
                     HDC hdc = ::GetDC(_listview->hwnd());
+                    HFONT hFont = (HFONT)::SendMessage(_listview->hwnd(), WM_GETFONT, 0, 0);
+                    HFONT hOldFont = SelectFont(hdc, hFont);
 
                     if(::GetTextExtentPoint32(hdc, text, wcslen(text), &szText)) {
                         int col_width = _columns[hti.iSubItem].width;
@@ -134,6 +136,8 @@ LRESULT MainWindow::control_message(taowin::syscontrol* ctl, UINT umsg, WPARAM w
                             need_tip = true;
                         }
                     }
+
+                    SelectFont(hdc, hOldFont);
 
                     ::ReleaseDC(_listview->hwnd(), hdc);
                 }

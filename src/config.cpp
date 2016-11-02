@@ -38,7 +38,7 @@ bool Config::save()
     std::ofstream file(_file, std::ios::out | std::ios::binary);
 
     if(file.is_open()) {
-        auto str = _obj->dump();
+        auto str = _obj->dump(true, 2);
         file.write(str.c_str(), str.size());
         file.close();
     }

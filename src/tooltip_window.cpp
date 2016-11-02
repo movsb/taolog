@@ -12,7 +12,7 @@ void TooltipWindow::popup(const wchar_t* str, HFONT font)
     RECT rc {0,0,500,0};
     HDC hdc = ::GetDC(_hwnd);
     HFONT hOldFont = (HFONT)::SelectObject(hdc, _font);
-    ::DrawText(hdc, _text, -1, &rc, DT_CALCRECT);
+    ::DrawText(hdc, _text, -1, &rc, DT_CALCRECT|DT_NOPREFIX);
     ::SelectObject(hdc, hOldFont);
     ::ReleaseDC(_hwnd, hdc);
 
@@ -87,7 +87,7 @@ LRESULT TooltipWindow::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
         ::SetBkMode(hdc, TRANSPARENT);
 
         rc.deflate(5, 5);
-        ::DrawText(hdc, _text, -1, &rc, 0);
+        ::DrawText(hdc, _text, -1, &rc, DT_NOPREFIX);
 
         ::SelectObject(hdc, hOldFont);
 

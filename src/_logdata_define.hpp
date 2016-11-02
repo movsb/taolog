@@ -35,6 +35,8 @@ struct LogDataUI : LogData
 
     static constexpr int data_cols = 10;
 
+    static constexpr bool should_escape[data_cols] = {false,false,false,false,true,true,false,false,false,true};
+
     string to_string(fnGetColumnName get_column_name) const
     {
         TCHAR tmp[128];
@@ -64,12 +66,6 @@ struct LogDataUI : LogData
         ss << gc(8) << L"£º" << *strLevel    << L"\r\n";
 
         return std::move(ss.str());
-    }
-
-    // ·µ»ØÁÐÊý
-    int size() const
-    {
-        return data_cols;
     }
 
     inline const wchar_t* operator[](int i)

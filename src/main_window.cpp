@@ -805,11 +805,11 @@ void MainWindow::_update_main_filter()
 void MainWindow::_export2file()
 {
     auto escape = [](const wchar_t* s) {
-        std::wstring r;
+        std::wstring r(s);
 
-        r = std::regex_replace(s, std::wregex(L"&"), L"&amp;");
-        r = std::regex_replace(s, std::wregex(L"<"), L"&lt;");
-        r = std::regex_replace(s, std::wregex(L">"), L"&gt;");
+        r = std::regex_replace(r, std::wregex(L"&"), L"&amp;");
+        r = std::regex_replace(r, std::wregex(L"<"), L"&lt;");
+        r = std::regex_replace(r, std::wregex(L">"), L"&gt;");
 
         return r;
     };
@@ -844,8 +844,7 @@ td:nth-child(10) {
 
         for(int i = 0; i < log->data_cols; i++) {
             auto p = (*log)[i];
-            auto h = escape(p);
-            s << L"<td>" << h << L"</td>";
+            s << L"<td>" << (log->should_escape[i] ? escape(p).c_str() : p) << L"</td>";
         }
 
         s << L"</tr>\n";

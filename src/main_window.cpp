@@ -41,6 +41,8 @@ LPCTSTR MainWindow::get_skin_xml() const
                 <button name="export-to-file" text="导出日志" width="60" style="tabstop"/>
                 <control width="5" />
                 <control />
+                <label text="过滤：" width="38" style="centerimage"/>
+                <combobox name="select-filter" style="tabstop" height="400" width="64" padding="0,0,4,0"/>
                 <label text="查找：" width="38" style="centerimage"/>
                 <combobox name="s-filter" style="tabstop" height="400" width="64" padding="0,0,4,0"/>
                 <edit name="s" width="80" style="tabstop" exstyle="clientedge"/>
@@ -279,6 +281,12 @@ LRESULT MainWindow::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR *
         if (code == CBN_SELCHANGE) {
             _edt_search->set_sel(0, -1);
             _edt_search->focus();
+        }
+    }
+    else if(pc == _cbo_sel_flt) {
+        if(code == CBN_SELCHANGE) {
+            _set_current_filter((EventContainer*)_cbo_sel_flt->get_cur_data());
+            return 0;
         }
     }
     else if(pc == _btn_colors) {
@@ -631,22 +639,21 @@ void MainWindow::_show_filters()
 
         delete *it;
         _filters.erase(it);
+
+        _update_filter_list(nullptr);
     };
 
     auto onaddnew = [&](EventContainer* p) {
         _filters.push_back(p);
-        _events.filter_results(p);
+        _current_filter->filter_results(p);
+
+        _update_filter_list(nullptr);
     };
 
     auto onsetfilter = [&](EventContainer* p) {
-        bool eq = _current_filter == p;
-
-        _current_filter = p ? p : &_events;
-
-        if(!eq) {
-            _listview->set_item_count(_current_filter->size(), 0);
-            _listview->redraw_items(0, _listview->get_item_count() -1);
-        }
+        if(!p) p = &_events;
+        _set_current_filter(p);
+        _update_filter_list(p);
     };
 
     auto ongetvalues = [&](int baseindex, std::unordered_map<int, const wchar_t*>* values) {
@@ -798,12 +805,15 @@ void MainWindow::_update_main_filter()
     _cbo_filter->reset_content();
     _cbo_filter->add_string(L"全部", (void*)-1);
 
+    std::vector<const wchar_t*> strs {L"全部"};
+
     // 只添加已经显示的列
     int new_cur = 0;
     for (size_t i = 0, j = 0; i < _columns.size(); i++) {
         auto& col = _columns[i];
         if (col.show) {
             _cbo_filter->add_string(col.name.c_str(), (void*)i);
+            strs.push_back(col.name.c_str());
             j++;
             if (cur == &col) {
                 new_cur = j;
@@ -813,6 +823,38 @@ void MainWindow::_update_main_filter()
 
     // 保持选中原来的项
     _cbo_filter->set_cur_sel(new_cur);
+
+    _cbo_filter->adjust_droplist_width(strs);
+}
+
+void MainWindow::_update_filter_list(EventContainer* p)
+{
+    // 保留当前选中的项（如果有的话）
+    EventContainer* cur = p;
+    if(!p && _cbo_sel_flt->get_cur_sel() != -1) {
+        void* ud = _cbo_sel_flt->get_cur_data();
+        cur = (EventContainer*)ud;
+    }
+
+    // 重置内容
+    _cbo_sel_flt->reset_content();
+    _cbo_sel_flt->add_string(L"全部", &_events);
+
+    std::vector<const wchar_t*> strs {L"全部"};
+    int new_cur = 0;
+    for(size_t i = 0, j = 0; i < _filters.size(); i++) {
+        auto flt = _filters[i];
+        _cbo_sel_flt->add_string(flt->name.c_str(), (void*)flt);
+        strs.push_back(flt->name.c_str());
+        j++;
+        if(cur == flt) {
+            new_cur = j;
+        }
+    }
+
+    // 保持选中原来的项
+    _cbo_sel_flt->set_cur_sel(new_cur);
+    _cbo_sel_flt->adjust_droplist_width(strs);
 }
 
 void MainWindow::_export2file()
@@ -881,6 +923,18 @@ td:nth-child(10) {
     }
 }
 
+void MainWindow::_set_current_filter(EventContainer* p)
+{
+    bool eq = _current_filter == p;
+
+    _current_filter = p ? p : &_events;
+
+    if(!eq) {
+        _listview->set_item_count(_current_filter->size(), 0);
+        _listview->redraw_items(0, _listview->get_item_count() -1);
+    }
+}
+
 void MainWindow::_copy_selected_item()
 {
     int i = _listview->get_next_item(-1, LVNI_SELECTED);
@@ -911,6 +965,7 @@ LRESULT MainWindow::_on_create()
     _btn_colors         = _root->find<taowin::button>(L"color-settings");
     _btn_miniview       = _root->find<taowin::button>(L"mini-view");
     _btn_export2file    = _root->find<taowin::button>(L"export-to-file");
+    _cbo_sel_flt        = _root->find<taowin::combobox>(L"select-filter");
 
     _accels = ::LoadAccelerators(nullptr, MAKEINTRESOURCE(IDR_ACCELERATOR_MAINWINDOW));
 
@@ -927,6 +982,7 @@ LRESULT MainWindow::_on_create()
     _level_maps.try_emplace(TRACE_LEVEL_CRITICAL,    L"Critical",     L"严重 - TRACE_LEVEL_CRITICAL" );
 
     _update_main_filter();
+    _update_filter_list(nullptr);
 
     return 0;
 }

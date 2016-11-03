@@ -5,16 +5,16 @@ namespace taoetw {
 class ResultFilter : public taowin::window_creator
 {
 public:
-    typedef std::function<void(std::vector<std::wstring>*)> fnOnGetBases;
+    typedef std::function<void(std::vector<std::wstring>*)> fnOnGetFields;
     typedef std::function<void(int i)> fnOnDeleteFilter;
     typedef std::function<void(EventContainer* p)> fnOnSetFilter;
     typedef std::function<void(EventContainer* p)> fnOnAddNewFilter;
     typedef std::function<void(int, std::unordered_map<int, const wchar_t*>*)> fnGetValueList;
 
 public:
-    ResultFilter(EventContainerS& filters, fnOnGetBases getbases, fnOnDeleteFilter ondelete, fnOnSetFilter onsetfilter, fnOnAddNewFilter onaddnew, EventContainer* curflt, fnGetValueList getvalues)
+    ResultFilter(EventContainerS& filters, fnOnGetFields getfields, fnOnDeleteFilter ondelete, fnOnSetFilter onsetfilter, fnOnAddNewFilter onaddnew, EventContainer* curflt, fnGetValueList getvalues)
         : _filters(filters)
-        , _on_get_bases(getbases)
+        , _on_get_fields(getfields)
         , _on_delete(ondelete)
         , _on_set_filter(onsetfilter)
         , _on_add_new(onaddnew)
@@ -31,7 +31,7 @@ protected:
 
 protected:
     EventContainerS&    _filters;
-    fnOnGetBases        _on_get_bases;
+    fnOnGetFields       _on_get_fields;
     fnOnDeleteFilter    _on_delete;
     fnOnSetFilter       _on_set_filter;
     fnOnAddNewFilter    _on_add_new;
@@ -52,27 +52,27 @@ class AddNewFilter : public taowin::window_creator
 {
 public:
     std::wstring name;
-    std::wstring base;
-    int          base_int;
-    int          rule2;
-    std::wstring str_base_value;
-    std::wstring rule;
+    int          field_index;
+    std::wstring field_name;
+    int          value_index;
+    std::wstring value_name;
+    std::wstring value_input;
 
-    AddNewFilter(ResultFilter::fnOnGetBases getbases, ResultFilter::fnGetValueList getvalues)
-        : _on_get_bases(getbases)
+    AddNewFilter(ResultFilter::fnOnGetFields getfields, ResultFilter::fnGetValueList getvalues)
+        : _on_get_fields(getfields)
         , _get_values(getvalues)
     { }
 
 protected:
-    std::vector<std::wstring> _bases;
-    ResultFilter::fnOnGetBases _on_get_bases;
+    std::vector<std::wstring> _fields;
+    ResultFilter::fnOnGetFields _on_get_fields;
     std::unordered_map<int, const wchar_t*> _values;
     ResultFilter::fnGetValueList _get_values;
 
     taowin::edit*       _name;
-    taowin::combobox*   _base;
-    taowin::combobox*   _rule2;
-    taowin::edit*       _rule;
+    taowin::combobox*   _field_name;
+    taowin::combobox*   _value_name;
+    taowin::edit*       _value_input;
     taowin::button*     _save;
     taowin::button*     _cancel;
 

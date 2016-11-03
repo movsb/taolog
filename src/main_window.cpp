@@ -639,19 +639,32 @@ void MainWindow::_show_filters()
     };
 
     auto onsetfilter = [&](EventContainer* p) {
+        bool eq = _current_filter == p;
+
         _current_filter = p ? p : &_events;
-        _listview->set_item_count(_current_filter->size(), 0);
-        _listview->redraw_items(0, _listview->get_item_count() -1);
+
+        if(!eq) {
+            _listview->set_item_count(_current_filter->size(), 0);
+            _listview->redraw_items(0, _listview->get_item_count() -1);
+        }
     };
 
     auto ongetvalues = [&](int baseindex, std::unordered_map<int, const wchar_t*>* values) {
         values->clear();
 
-        // TODO: 警告：修改列的时候注意这里
-        if (_columns[baseindex].id == "level") {
+        const auto& id = _columns[baseindex].id;
 
+        if (id == "level") {
             for (auto& pair : _level_maps) {
                 (*values)[pair.first] = pair.second.cmt2.c_str();
+            }
+        }
+        else if(id == "proj") {
+            auto& v = *values;
+            for(auto& m : _modules) {
+                // if(m->enable) {
+                    v[(int)m] = m->name.c_str();
+                // }
             }
         }
     };

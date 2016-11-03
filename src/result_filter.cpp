@@ -54,8 +54,8 @@ LRESULT ResultFilter::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
         _btn_all    = _root->find<taowin::button>(L"all");
 
         _listview->insert_column(L"名字", 100, 0);
-        _listview->insert_column(L"基于", 60, 1);
-        _listview->insert_column(L"规则", 180, 2);
+        _listview->insert_column(L"字段", 60, 1);
+        _listview->insert_column(L"文本", 180, 2);
 
         _listview->set_item_count((int)_filters.size(), 0);
 
@@ -80,8 +80,8 @@ LRESULT ResultFilter::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR
 
             switch (lit->iSubItem) {
             case 0: value = flt.name.c_str();  break;
-            case 1: value = flt.base.c_str();  break;
-            case 2: value = *flt.rule.c_str() ? flt.rule.c_str() : flt.str_base_value.c_str(); break;
+            case 1: value = flt.field_name.c_str();  break;
+            case 2: value = !flt.value_input.empty() ? flt.value_input.c_str() : flt.value_name.c_str(); break;
             }
 
             lit->pszText = const_cast<TCHAR*>(value);
@@ -127,9 +127,9 @@ LRESULT ResultFilter::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR
     }
     else if (pc == _btn_add) {
         if(code == BN_CLICKED) {
-            AddNewFilter dlg(_on_get_bases, _get_value_list);
+            AddNewFilter dlg(_on_get_fields, _get_value_list);
             if(dlg.domodal(this) == IDOK) {
-                _on_add_new(new EventContainer(dlg.name, dlg.base, dlg.rule, dlg.base_int, dlg.rule2, dlg.str_base_value));
+                _on_add_new(new EventContainer(dlg.name, dlg.field_index, dlg.field_name, dlg.value_index, dlg.value_name, dlg.value_input));
                 _listview->set_item_count(_filters.size(), LVSICF_NOINVALIDATEALL);
 
                 int index = _listview->get_item_count() - 1;
@@ -187,15 +187,15 @@ LPCTSTR AddNewFilter::get_skin_xml() const
                     <edit name="name" text="(none)" style="tabstop" exstyle="clientedge"/>
                 </horizontal>
                 <horizontal height="30" padding="0,3,0,3">
-                    <label style="centerimage" text="基于" width="50"/>
-                    <combobox name="base" style="tabstop" height="200"/>
+                    <label style="centerimage" text="字段" width="50"/>
+                    <combobox name="field-name" style="tabstop" height="200"/>
                 </horizontal>
                 <horizontal height="30" padding="0,3,0,3">
-                    <label style="centerimage" text="规则" width="50"/>
+                    <label style="centerimage" text="文本" width="50"/>
                     <container>
-                        <edit name="rule" text="正则表达式（C++11 / Javascript）" style="tabstop" exstyle="clientedge" />
+                        <edit name="value-input" text="" style="tabstop" exstyle="clientedge" />
                         <vertical name="不加这个，下面的combobox显示不出来">
-                            <combobox name="rule2" style="tabstop" height="200" />
+                            <combobox name="value-name" style="tabstop" height="200" />
                         </vertical>
                     </container>
                 </horizontal>
@@ -219,29 +219,22 @@ LRESULT AddNewFilter::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
     {
     case WM_CREATE:
     {
-        _name = _root->find<taowin::edit>(L"name");
-        _base = _root->find<taowin::combobox>(L"base");
-        _rule = _root->find<taowin::edit>(L"rule");
-        _rule2 = _root->find<taowin::combobox>(L"rule2");
+        _name        = _root->find<taowin::edit>(L"name");
+        _field_name  = _root->find<taowin::combobox>(L"field-name");
+        _value_name  = _root->find<taowin::combobox>(L"value-name");
+        _value_input = _root->find<taowin::edit>(L"value-input");
 
-        _save = _root->find<taowin::button>(L"save");
-        _cancel = _root->find<taowin::button>(L"cancel");
+        _save        = _root->find<taowin::button>(L"save");
+        _cancel      = _root->find<taowin::button>(L"cancel");
 
-        // 界面库暂时不支持配置隐藏，所以先写在这里
-        _rule2->set_visible(false);
+        _on_get_fields(&_fields);
 
-        _on_get_bases(&_bases);
+        for (auto& field : _fields)
+            _field_name->add_string(field.c_str());
 
-        for (auto& base : _bases) {
-            _base->add_string(base.c_str());
-        }
-
-        _base->set_cur_sel(0);
+        _field_name->set_cur_sel(0);
         // TODO
-        on_notify(_base->hwnd(), _base, CBN_SELCHANGE, nullptr);
-
-        _rule->focus();
-        _rule->set_sel(0, -1);
+        on_notify(_field_name->hwnd(), _field_name, CBN_SELCHANGE, nullptr);
 
         return 0;
     }
@@ -264,29 +257,29 @@ LRESULT AddNewFilter::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR
             close(IDCANCEL);
         }
     }
-    else if (pc == _base) {
+    else if (pc == _field_name) {
         if (code == CBN_SELCHANGE) {
-            int sel = _base->get_cur_sel();
+            int sel = _field_name->get_cur_sel();
 
             _values.clear();
             _get_values(sel, &_values);
 
-            _rule2->set_visible(!_values.empty());
-            _rule->set_visible(_values.empty());
+            _value_input->set_visible(_values.empty());
+            _value_name->set_visible(!_values.empty());
 
             if (!_values.empty()) {
-                _rule2->reset_content();
+                _value_name->reset_content();
 
                 for (auto& pair : _values) {
-                    int i = _rule2->add_string(pair.second);
-                    _rule2->set_item_data(i, (void*)pair.first);
+                    int i = _value_name->add_string(pair.second);
+                    _value_name->set_item_data(i, (void*)pair.first);
                 }
 
-                _rule2->set_cur_sel(0);
-                _rule2->focus();
+                _value_name->set_cur_sel(0);
+                _value_name->focus();
             }
             else {
-                _rule->focus();
+                _value_input->focus();
             }
         }
     }
@@ -306,29 +299,26 @@ bool AddNewFilter::filter_special_key(int vk)
 
 int AddNewFilter::_on_save()
 {
-    bool iscbo = _rule2->is_visible();
+    bool iscbo = _value_name->is_visible();
 
     try {
         if (iscbo) {
-            rule = L"";
-            rule2 = (int)_rule2->get_item_data(_rule2->get_cur_sel());
-            str_base_value = _values[rule2];
+            value_input = L"";
+            value_index = (int)_value_name->get_cur_data();
+            value_name = _values[value_index];
         }
         else {
-            rule = _rule->get_text();
-            if (rule == L"") throw 0;
-            std::wregex re(rule, std::regex_constants::icase);
-            str_base_value = L"";
+            value_input = _value_input->get_text();
+            if (value_input == L"") throw 0;
         }
 
         name = _name->get_text();
-        base_int = _base->get_cur_sel();
-        base = _bases[base_int];
+        field_index = _field_name->get_cur_sel();
+        field_name = _fields[field_index];
         close(IDOK);
     }
     catch (...) {
-        msgbox(L"无效正则表达式。", MB_ICONERROR);
-        _rule->focus();
+        _value_input->focus();
     }
 
     return 0;

@@ -29,44 +29,46 @@ bool EventContainer::filter_results(EventContainer* container)
 
 void EventContainer::_init()
 {
-    _reobj = std::wregex(rule, std::regex_constants::icase);
     _filter = [&](const EVENT& evt) {
-        // 这里我不知道怎么根据base_int拿字段，所以特殊处理（为了效率）
-        const wchar_t* p = nullptr;
+        const auto p = (*evt)[field_index];
 
-        bool processed = true;
-
-        switch (base_int)
+        switch(field_index)
         {
-        case 0:
-        case 1:
-        case 2:
-        case 3:
+        // 编号，时间，进程，线程，行号
+        // 直接执行相等性比较（区分大小写）
+        case 0: case 1: case 2: case 3: case 7:
+        {
+            return p != value_input;
+        }
+        // 文件，函数，日志
+        // 执行不区分大小写的搜索
+        case 5: case 6: case 9:
+        {
+            auto tolower = [](std::wstring& s) {
+                std::transform(s.begin(), s.end(), s.begin(), ::tolower);
+                return s;
+            };
+
+            auto haystack = tolower(std::wstring(p));
+            auto needle = tolower(value_input);
+
+            return !::wcsstr(haystack.c_str(), needle.c_str());
+        }
+        // 项目
         case 4:
-        case 5:
-        case 6:
-        case 7:
-        case 9:
-            p = (*evt)[base_int];
-            break;
-
+        {
+            return value_name != p;
+        }
+        // 等级
+        case 8:
+        {
+            return value_index != evt->level;
+        }
         default:
-            processed = false;
-            break;
+            assert(0 && L"invalid index");
+            return true;
         }
-
-        if(processed) return !p || !std::regex_search(p, _reobj);
-        else {
-            switch(base_int)
-            {
-            case 8: return evt->level != base_value;
-            }
-        }
-
-        assert(0);
-        return false;
     };
 }
 
 }
-

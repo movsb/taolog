@@ -11,17 +11,20 @@ protected:
 
 public:
     EventContainer()
-        : base_int(0)
-        , base_value(0)
     {}
 
-    EventContainer(const std::wstring& name, std::wstring& base, const std::wstring regex, int base_int, int base_value, std::wstring sbv)
+    EventContainer(
+        const std::wstring& name,
+        int field_index, const std::wstring& field_name,
+        int value_index, const std::wstring& value_name,
+        const std::wstring& value_input
+        )
         : name(name)
-        , base(base)
-        , rule(regex)
-        , base_int(base_int)
-        , base_value(base_value)
-        , str_base_value(sbv)
+        , field_index(field_index)
+        , field_name(field_name)
+        , value_index(value_index)
+        , value_name(value_name)
+        , value_input(value_input)
     {
         _init();
     }
@@ -38,19 +41,17 @@ protected:
     void _init();
 
 public:
-    std::wstring name;
-    std::wstring base;
-    int          base_int;
-    int          base_value;
-    std::wstring str_base_value;
-    std::wstring rule;
+    std::wstring name;              // 容器的名字
+    std::wstring field_name;        // 基于哪个字段
+    int          field_index;       // 字段索引
+    std::wstring value_name;        // 所选的值的名字
+    int          value_index;       // 所选的值的索引
+    std::wstring value_input;       // 自定义输入
 
 protected:
 
     EVENTS          _events;
     FILTER          _filter;
-
-    std::wregex     _reobj;
 };
 
 typedef std::vector<EventContainer*> EventContainerS;

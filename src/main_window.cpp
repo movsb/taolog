@@ -125,16 +125,20 @@ LRESULT MainWindow::control_message(taowin::syscontrol* ctl, UINT umsg, WPARAM w
                 }
 
                 // 不初始化会报潜在使用了未初始化的变量（但实际上不可能）
-                SIZE szText = {0};
+                int text_width = 0;
+                constexpr int text_padding = 20;
+
                 if(!need_tip) {
                     HDC hdc = ::GetDC(_listview->hwnd());
                     HFONT hFont = (HFONT)::SendMessage(_listview->hwnd(), WM_GETFONT, 0, 0);
                     HFONT hOldFont = SelectFont(hdc, hFont);
 
+                    SIZE szText = {0};
                     if(::GetTextExtentPoint32(hdc, text, wcslen(text), &szText)) {
                         int col_width = _columns[hti.iSubItem].width;
+                        text_width = szText.cx + text_padding;
 
-                        if(szText.cx > col_width) {
+                        if(text_width > col_width) {
                             need_tip = true;
                         }
                     }
@@ -149,7 +153,7 @@ LRESULT MainWindow::control_message(taowin::syscontrol* ctl, UINT umsg, WPARAM w
                     ::GetClientRect(_listview->hwnd(), &rcListView);
 
                     if(_listview->get_subitem_rect(0, hti.iSubItem, &rcSubItem)) {
-                        if(rcSubItem.left < rcListView.left || rcSubItem.left + szText.cx > rcListView.right) {
+                        if(rcSubItem.left < rcListView.left || rcSubItem.left + text_width > rcListView.right) {
                             need_tip = true;
                         }
                     }

@@ -1,5 +1,7 @@
 #include "stdafx.h"
 
+#include "utils.h"
+
 #include "config.h"
 
 #include "_module_entry.hpp"
@@ -29,6 +31,10 @@ LPCTSTR ModuleManager::get_skin_xml() const
                 <button name="modify" text="修改" style="disabled,tabstop" height="24"/>
                 <control height="5" />
                 <button name="delete" text="删除" style="disabled,tabstop" height="24"/>
+                <control height="20" />
+                <button name="copy" text="复制" style="disabled,tabstop" height="24"/>
+                <control height="5" />
+                <button name="paste" text="粘贴" style="disabled,tabstop" height="24"/>
                 <control height="5" />
             </vertical>
         </horizontal>
@@ -43,16 +49,20 @@ LRESULT ModuleManager::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
     switch (umsg) {
     case WM_CREATE:
     {
+        _listview   = _root->find<taowin::listview>(L"list");
         _btn_add    = _root->find<taowin::button>(L"add");
         _btn_enable = _root->find<taowin::button>(L"enable");
         _btn_modify = _root->find<taowin::button>(L"modify");
         _btn_delete = _root->find<taowin::button>(L"delete");
-        _listview   = _root->find<taowin::listview>(L"list");
+        _btn_copy   = _root->find<taowin::button>(L"copy");
+        _btn_paste  = _root->find<taowin::button>(L"paste");
 
         _listview->insert_column(L"名字", 150, 0);
         _listview->insert_column(L"状态", 50, 1);
 
         _listview->set_item_count((int)_modules.size(), 0);
+
+        _update_pastebtn_status();
 
         return 0;
     }
@@ -60,6 +70,18 @@ LRESULT ModuleManager::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
     case WM_CLOSE:
     {
         _save_modules();
+        break;
+    }
+
+    case WM_ACTIVATE:
+    {
+        if(!_window_created)
+            break;
+
+        int state = (int)LOWORD(wparam);
+        if(state == WA_ACTIVE || state == WA_CLICKACTIVE) {
+            _update_pastebtn_status();
+        }
         break;
     }
 
@@ -71,7 +93,7 @@ LRESULT ModuleManager::on_notify(HWND hwnd, taowin::control * pc, int code, NMHD
 {
     if (!pc) return 0;
 
-    if (pc->name() == _T("list")) {
+    if (pc == _listview) {
         if (code == LVN_GETDISPINFO) {
             auto pdi = reinterpret_cast<NMLVDISPINFO*>(hdr);
             auto& mod = _modules[pdi->item.iItem];
@@ -127,7 +149,7 @@ LRESULT ModuleManager::on_notify(HWND hwnd, taowin::control * pc, int code, NMHD
             return 0;
         }
     }
-    else if (pc->name() == L"enable") {
+    else if (pc == _btn_enable) {
         if(code == BN_CLICKED) {
             std::vector<int> items;
 
@@ -150,13 +172,13 @@ LRESULT ModuleManager::on_notify(HWND hwnd, taowin::control * pc, int code, NMHD
             return 0;
         }
     }
-    else if (pc->name() == L"add") {
+    else if (pc == _btn_add) {
         if(code == BN_CLICKED) {
             _add_item();
             return 0;
         }
     }
-    else if (pc->name() == L"modify") {
+    else if (pc == _btn_modify) {
         if(code == BN_CLICKED) {
             int index = _listview->get_next_item(-1, LVNI_SELECTED);
             if(index != -1)
@@ -164,7 +186,7 @@ LRESULT ModuleManager::on_notify(HWND hwnd, taowin::control * pc, int code, NMHD
             return 0;
         }
     }
-    else if (pc->name() == L"delete") {
+    else if (pc == _btn_delete) {
         if(code == BN_CLICKED) {
             std::vector<int> items;
 
@@ -211,6 +233,18 @@ LRESULT ModuleManager::on_notify(HWND hwnd, taowin::control * pc, int code, NMHD
 
             _delete_items(items);
 
+            return 0;
+        }
+    }
+    else if(pc == _btn_copy) {
+        if(code == BN_CLICKED) {
+            _copy_items();
+            return 0;
+        }
+    }
+    else if(pc == _btn_paste) {
+        if(code == BN_CLICKED) {
+            _paste_items(false);
             return 0;
         }
     }
@@ -339,6 +373,7 @@ void ModuleManager::_on_item_state_change()
     _btn_enable->set_enabled(!items.empty());
     _btn_modify->set_enabled(items.size()==1 && (!opened || (items[0] != -1 && !_modules[items[0]]->enable)));
     _btn_delete->set_enabled(items.size() > 1 && (!opened || _get_enable_state_for_items(items) != 1) || (!items.empty() && (!opened || !_modules[items[0]]->enable)));
+    _btn_copy->set_enabled(!items.empty());
 
     if (!items.empty()) {
         int state = _get_enable_state_for_items(items);
@@ -355,6 +390,88 @@ void ModuleManager::_save_modules()
     for(auto& m : _modules) {
         modules.push_back(*m);
     }
+}
+
+void ModuleManager::_copy_items()
+{
+    std::vector<int> indices;
+    if(!_listview->get_selected_items(&indices))
+        return;
+
+    json11::Json::array objs;
+
+    for(const auto& i : indices) {
+        const auto& m = *_modules[i];
+        objs.emplace_back(m);
+    }
+
+    auto str = g_config.ws(JsonWrapper(objs)->dump(true, 4));
+    str += L'\n'; // 强迫症
+
+    utils::set_clipboard_text(str);
+}
+
+bool ModuleManager::_paste_items(bool test)
+{
+    auto str = utils::get_clipboard_text();
+    if(str.empty())
+        return false;
+
+    auto wstr = g_config.us(str);
+    std::string err;
+
+    auto json = json11::Json::parse(wstr.c_str(), err);
+    if(!err.empty() || !json.is_array()) {
+        if(!test) {
+            msgbox(L"无效 JSON 字符串。");
+        }
+        return false;
+    }
+
+    auto has_module = [&](const GUID& guid)
+    {
+        bool has = false;
+
+        for(auto& m : _modules) {
+            if(guid == m->guid) {
+                has = true;
+                break;
+           }
+        }
+
+        return has;
+    };
+
+    int count_added = 0;
+
+    for(const auto& jm : json.array_items()) {
+        auto m = ModuleEntry::from_json(jm);
+        if(!m) continue;
+
+        if(!has_module(m->guid))
+            count_added++;
+
+        if(!test) {
+            // 默认都是不开启的
+            m->enable = false;
+            _modules.push_back(m);
+        }
+        else {
+            delete m;
+        }
+    }
+
+    if(!test && count_added) {
+        _listview->set_item_count((int)_modules.size(), LVSICF_NOINVALIDATEALL);
+        msgbox(L"粘贴了 " + std::to_wstring(count_added) + L" 个。");
+    }
+
+    return !!count_added;
+}
+
+void ModuleManager::_update_pastebtn_status()
+{
+    _btn_paste->set_enabled(_paste_items(true));
 }
 
 }

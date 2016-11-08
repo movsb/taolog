@@ -27,6 +27,23 @@ void set_clipboard_text(const std::wstring& s)
     }
 }
 
+std::wstring get_clipboard_text()
+{
+    std::wstring s;
+
+    if(::OpenClipboard(nullptr)) {
+        if(HANDLE clip = ::GetClipboardData(CF_UNICODETEXT)) {
+            if(auto p = reinterpret_cast<wchar_t*>(::GlobalLock(clip))) {
+                s = p;
+                ::GlobalUnlock(p);
+            }
+        }
+        ::CloseClipboard();
+    }
+
+    return std::move(s);
+}
+
 }
 
 }

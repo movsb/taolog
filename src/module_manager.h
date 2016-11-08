@@ -21,6 +21,8 @@ protected:
     taowin::button*     _btn_add;
     taowin::button*     _btn_modify;
     taowin::button*     _btn_delete;
+    taowin::button*     _btn_copy;
+    taowin::button*     _btn_paste;
 
 public:
     ModuleManager(std::vector<ModuleEntry*>& modules, ModuleLevelMap& levels)
@@ -46,6 +48,9 @@ protected:
     int _get_enable_state_for_items(const std::vector<int>& items);
     void _on_item_state_change();
     void _save_modules();
+    void _copy_items();
+    bool _paste_items(bool test);
+    void _update_pastebtn_status();
 };
 
 

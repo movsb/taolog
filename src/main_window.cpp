@@ -552,30 +552,7 @@ void MainWindow::_init_config()
     auto modules = g_config->arr("modules");
     for(auto& mod : modules.as_arr()) {
         if(mod.is_object()) {
-            auto name = mod["name"];
-            auto root = mod["root"];
-            auto enable = mod["enable"];
-            auto level = mod["level"];
-            auto guidstr = mod["guid"];
-            GUID guid = {};
-
-            if((name.is_string() 
-                && root.is_string() 
-                && enable.is_bool() 
-                && level.is_number() 
-                && guidstr.is_string())
-                && (level >= TRACE_LEVEL_CRITICAL && level <= TRACE_LEVEL_VERBOSE)
-                && (!FAILED(::CLSIDFromString(g_config.ws(guidstr.string_value()).c_str(), &guid)))
-            )
-            {
-                auto m = new ModuleEntry;
-                m->name = g_config.ws(name.string_value());
-                m->root = g_config.ws(root.string_value());
-                m->enable = enable.bool_value();
-                m->level = (unsigned char)level.int_value();
-                m->guid = guid;
-                m->guid_str = g_config.ws(guidstr.string_value());
-
+            if(auto m = ModuleEntry::from_json(mod)) {
                 _modules.push_back(m);
             }
             else {

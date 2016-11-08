@@ -169,6 +169,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\src\event_container.cpp" />
+    <ClCompile Include="..\src\event_system.cpp" />
     <ClCompile Include="..\src\listview_color.cpp" />
     <ClCompile Include="..\src\main.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
@@ -239,6 +240,7 @@
     <ClInclude Include="..\src\consumer.h" />
     <ClInclude Include="..\src\controller.h" />
     <ClInclude Include="..\src\event_detail.h" />
+    <ClInclude Include="..\src\event_system.h" />
     <ClInclude Include="..\src\listview_color.h" />
     <ClInclude Include="..\src\main_window.h" />
     <ClInclude Include="..\src\mini_view.h" />

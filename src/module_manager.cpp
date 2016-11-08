@@ -11,6 +11,12 @@
 
 namespace taoetw {
 
+void ModuleManager::get_metas(WindowMeta * metas)
+{
+    __super::get_metas(metas);
+    metas->style &= ~(WS_MINIMIZEBOX);
+}
+
 LPCTSTR ModuleManager::get_skin_xml() const
 {
     LPCTSTR json = LR"tw(

@@ -6,6 +6,12 @@
 
 namespace taoetw {
 
+void ColumnSelection::get_metas(WindowMeta * metas)
+{
+    __super::get_metas(metas);
+    metas->style &= ~(WS_MINIMIZEBOX);
+}
+
 LPCTSTR ColumnSelection::get_skin_xml() const
 {
     LPCTSTR json = LR"tw(

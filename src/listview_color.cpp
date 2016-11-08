@@ -34,6 +34,12 @@ void ListviewColor::choose_color_for(int i, bool fg)
     }
 }
 
+void ListviewColor::get_metas(WindowMeta * metas)
+{
+    __super::get_metas(metas);
+    metas->style &= ~(WS_MINIMIZEBOX);
+}
+
 LPCTSTR ListviewColor::get_skin_xml() const
 {
     LPCTSTR json = LR"tw(

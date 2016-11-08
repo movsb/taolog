@@ -8,6 +8,12 @@
 
 namespace taoetw {
 
+void ResultFilter::get_metas(WindowMeta * metas)
+{
+    __super::get_metas(metas);
+    metas->style &= ~(WS_MINIMIZEBOX);
+}
+
 LPCTSTR ResultFilter::get_skin_xml() const
 {
     LPCTSTR json = LR"tw(
@@ -169,6 +175,12 @@ LRESULT ResultFilter::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
+
+void AddNewFilter::get_metas(WindowMeta * metas)
+{
+    __super::get_metas(metas);
+    metas->style &= ~(WS_MINIMIZEBOX);
+}
 
 LPCTSTR AddNewFilter::get_skin_xml() const
 {

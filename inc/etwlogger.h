@@ -1,4 +1,8 @@
-#pragma once 
+#pragma once
+
+#ifdef ETW_LOGGER_MT
+  #define ETW_LOGGER
+#endif
 
 #ifdef ETW_LOGGER
 
@@ -65,12 +69,10 @@ public:
 		:m_providerGuid(providerGuid)
 		,m_registrationHandle(NULL)
 		,m_sessionHandle(NULL)
-		,m_traceOn(FALSE)
+		,m_traceOn(false)
 		,m_enableLevel(0)
 		,m_reg(FALSE)
 	{
-		::InitializeCriticalSection(&m_cs);
-
 		// This GUID defines the event trace class. 	
 		// {6E5E5CBC-8ACF-4fa6-98E4-0C63A075323B}
 		const GUID clsGuid = 
@@ -80,37 +82,40 @@ public:
 
         m_version = 0x0000;
 
+#ifdef ETW_LOGGER_MT
+        ::InitializeCriticalSection(&_cs);
+#endif
+
 		RegisterProvider();
 	}
 
 	~ETWLogger()
 	{
-		::DeleteCriticalSection(&m_cs);
-
+#ifdef ETW_LOGGER_MT
+        ::DeleteCriticalSection(&_cs);
+#endif
 		UnRegisterProvider();
 	}
 
-	void lock()
-	{
-		::EnterCriticalSection(&m_cs);
-	}
+#ifdef ETW_LOGGER_MT
+    void lock()
+    {
+        ::EnterCriticalSection(&_cs);
+    }
 
-	void unlock()
-	{
-		::LeaveCriticalSection(&m_cs);
-	}
+    void unlock()
+    {
+        ::LeaveCriticalSection(&_cs);
+    }
+#endif
 
-	static ULONG WINAPI ControlCallback(WMIDPREQUESTCODE requestCode, PVOID context, ULONG* reserved, PVOID buffer)
+	static ULONG WINAPI ControlCallback(WMIDPREQUESTCODE requestCode, PVOID context, ULONG* /* reserved */, PVOID buffer)
 	{
 		ULONG ret = ERROR_SUCCESS;	
-
-		UNREFERENCED_PARAMETER(reserved);// 仅消除编译等级4警告，没有任何作用
 
 		ETWLogger * logger = (ETWLogger *)context;
 		if(logger != NULL && buffer != NULL)
 		{
-			logger->lock();
-
 			switch (requestCode)
 			{
 			case WMI_ENABLE_EVENTS:  //Enable Provider.
@@ -118,7 +123,6 @@ public:
 					logger->m_sessionHandle = GetTraceLoggerHandle(buffer);
 					if (INVALID_HANDLE_VALUE == (HANDLE)logger->m_sessionHandle)
 					{
-						wprintf(L"GetTraceLoggerHandle failed with, %d.\n", ret);
 						break;
 					}
 
@@ -129,7 +133,6 @@ public:
 						DWORD id = GetLastError();
 						if (id != ERROR_SUCCESS)
 						{
-							wprintf(L"GetTraceEnableLevel failed with, %d.\n", ret);
 							break;
 						} 
 						else  // Decide what a zero enable level means to your provider
@@ -137,8 +140,6 @@ public:
 							logger->m_enableLevel = TRACE_LEVEL_WARNING; 
 						}
 					}	
-
-					wprintf(L"Tracing enabled for Level %u\n", logger->m_enableLevel);
 
 					logger->m_traceOn = TRUE;
 					break;
@@ -157,8 +158,6 @@ public:
 					break;
 				}
 			}
-
-			logger->unlock();
 		}			
 
 		return ret;
@@ -187,20 +186,9 @@ public:
 	}
 
 	// 判断是否打印日志
-	BOOL IsLog(unsigned char level)
+	bool IsLog(unsigned char level)
 	{
-		BOOL ret = FALSE;
-
-		lock();
-
-		if (m_traceOn && level <= m_enableLevel)
-		{
-			ret = TRUE;
-		}
-
-		unlock();
-
-		return ret;
+        return m_traceOn && level <= m_enableLevel;
 	}
 
 	void WriteEvent(unsigned char level, const TCHAR* file, const TCHAR* function, unsigned int line, const TCHAR* format, ...)
@@ -208,7 +196,9 @@ public:
         if (!IsLog(level))
             return;
 
-		lock();	
+#ifdef ETW_LOGGER_MT
+        lock();
+#endif
 
         int cch;
 
@@ -274,23 +264,27 @@ public:
             }
         }
 
-		unlock();
+#ifdef ETW_LOGGER_MT
+        unlock();
+#endif
 	}
 
 private:
 	
     USHORT m_version;
 	UCHAR m_enableLevel; 
-	BOOL m_traceOn; 
+	volatile bool m_traceOn; 
 	BOOL m_reg;
 	GUID m_providerGuid;
 	GUID m_clsGuid;
 	TRACEHANDLE m_registrationHandle;
 	TRACEHANDLE m_sessionHandle;
 
-    LogDataTrace m_log;
+#ifdef ETW_LOGGER_MT
+    CRITICAL_SECTION _cs;
+#endif
 
-	CRITICAL_SECTION m_cs;
+    LogDataTrace m_log;
 };
 
 extern ETWLogger g_etwLogger;

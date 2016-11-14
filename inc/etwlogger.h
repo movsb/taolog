@@ -1,9 +1,5 @@
 #pragma once
 
-#ifdef ETW_LOGGER_MT
-  #define ETW_LOGGER
-#endif
-
 #ifdef ETW_LOGGER
 
 #pragma warning(push)
@@ -16,6 +12,8 @@
 #include <wmistr.h>
 #include <guiddef.h>
 #include <Evntrace.h>
+#include <process.h>
+#include <list>
 
 #define WIDEN2(x) L ## x
 #define WIDEN(x) WIDEN2(x)
@@ -47,6 +45,10 @@ public:
     #pragma pack(push,1)
     struct LogData
     {
+        UCHAR           version;                            // 日志版本
+        int             pid;                                // 进程编号
+        int             tid;                                // 线程编号
+        UCHAR           level;                              // 日志等级
         UINT            flags;                              // 标记位
         GUID            guid;                               // 生成者
         SYSTEMTIME      time;                               // 时间戳
@@ -58,10 +60,21 @@ public:
     };
     #pragma pack(pop)
 
-    struct LogDataTrace
+protected:
+    union LogDataMsg
     {
-        EVENT_TRACE_HEADER hdr;
-        LogData data;
+        LogDataMsg* next;
+        LogData log;
+    };
+
+    struct WndMsg
+    {
+        enum Value
+        {
+            __Start = WM_USER,
+            Alloc,
+            Trace,
+        };
     };
 
 public:
@@ -72,6 +85,8 @@ public:
 		,m_traceOn(false)
 		,m_enableLevel(0)
 		,m_reg(FALSE)
+        ,m_hWnd(NULL)
+        ,m_Root(NULL)
 	{
 		// This GUID defines the event trace class. 	
 		// {6E5E5CBC-8ACF-4fa6-98E4-0C63A075323B}
@@ -82,33 +97,52 @@ public:
 
         m_version = 0x0000;
 
-#ifdef ETW_LOGGER_MT
-        ::InitializeCriticalSection(&_cs);
-#endif
-
 		RegisterProvider();
+        RegisterLoggerWindowClass();
+
+        m_Thread = (HANDLE)::_beginthreadex(NULL, 0, __ThreadProc, this, 0, NULL);
+        while(!::IsWindow(m_hWnd))
+            ::Sleep(100);
 	}
 
 	~ETWLogger()
 	{
-#ifdef ETW_LOGGER_MT
-        ::DeleteCriticalSection(&_cs);
-#endif
 		UnRegisterProvider();
+
+        ::SendMessage(m_hWnd, WM_CLOSE, 0, 0);
+
+        for(const auto& log : m_logs)
+            ::operator delete(log);
+
+        m_logs.clear();
+
+        ::CloseHandle(m_Thread);
 	}
 
-#ifdef ETW_LOGGER_MT
-    void lock()
+protected:
+    LogDataMsg* Alloc()
     {
-        ::EnterCriticalSection(&_cs);
+        static int n = 0;
+        if(!m_Root) {
+            m_Root = (LogDataMsg*)::operator new(sizeof(LogDataMsg));
+            m_Root->next = NULL;
+            m_logs.emplace_back(m_Root);
+        }
+
+        LogDataMsg* node = m_Root;
+        m_Root = m_Root->next;
+
+        return new (node) LogDataMsg;
     }
 
-    void unlock()
+    void Dealloc(LogDataMsg* p)
     {
-        ::LeaveCriticalSection(&_cs);
+        p->~LogDataMsg();
+        p->next = m_Root;
+        m_Root = p;
     }
-#endif
 
+public:
 	static ULONG WINAPI ControlCallback(WMIDPREQUESTCODE requestCode, PVOID context, ULONG* /* reserved */, PVOID buffer)
 	{
 		ULONG ret = ERROR_SUCCESS;	
@@ -120,6 +154,8 @@ public:
 			{
 			case WMI_ENABLE_EVENTS:  //Enable Provider.
 				{
+                    logger->m_HostWnd = ::FindWindowEx(HWND_MESSAGE, NULL, _T("{6E5E5CBC-8ACF-4fa6-98E4-0C63A075323B}"), _T("{6E5E5CBC-8ACF-4fa6-98E4-0C63A075323B}::HostWnd"));
+
 					logger->m_sessionHandle = GetTraceLoggerHandle(buffer);
 					if (INVALID_HANDLE_VALUE == (HANDLE)logger->m_sessionHandle)
 					{
@@ -148,6 +184,7 @@ public:
 			case WMI_DISABLE_EVENTS:  // Disable Provider.
 				{
 					logger->m_traceOn = FALSE;
+                    logger->m_HostWnd = NULL;
 					logger->m_sessionHandle = NULL;
 					break;
 				}
@@ -196,13 +233,16 @@ public:
         if (!IsLog(level))
             return;
 
-#ifdef ETW_LOGGER_MT
-        lock();
-#endif
-
         int cch;
 
-        LogData& data = m_log.data;
+        LogDataMsg* logmsg = (LogDataMsg*)::SendMessage(m_hWnd, WndMsg::Alloc, 0, 0);
+
+        LogData& data = logmsg->log;
+
+        data.version = m_version;
+        data.pid = ::GetCurrentProcessId();
+        data.tid = (int)::GetCurrentThreadId();
+        data.level = level;
 
         // the flags
         data.flags = 0;
@@ -241,37 +281,93 @@ public:
             data.text[0] = 0;
         }
 
-        // the header
-        EVENT_TRACE_HEADER& hdr = m_log.hdr;
-        memset(&hdr, 0, sizeof(hdr));
-
-        // 还没搞懂 MSDN 上下面这句话的意思
-        // On input, the size must be less than the size of the event tracing session's buffer minus 72 (0x48)
-        hdr.Size            = (USHORT)(sizeof(hdr) + offsetof(LogData, text) + data.cch * sizeof(data.text[0]));
-        hdr.Class.Type      = EVENT_TRACE_TYPE_INFO;
-        hdr.Class.Level     = level;
-        hdr.Class.Version   = m_version;
-        hdr.Guid            = m_clsGuid;
-        hdr.Flags           = WNODE_FLAG_TRACED_GUID;
-
-        // Trace it!
-        ULONG status = ::TraceEvent(m_sessionHandle, &hdr);
-        if (ERROR_SUCCESS != status)
-        {
-            if (ERROR_INVALID_HANDLE == status)
-            {
-                m_traceOn = FALSE;
-            }
-        }
-
-#ifdef ETW_LOGGER_MT
-        unlock();
-#endif
+        LRESULT lr = ::PostMessage(m_hWnd, WndMsg::Trace, 0, reinterpret_cast<LPARAM>(logmsg));
+        lr = lr;
 	}
 
+    LRESULT CALLBACK WindowProcedure(UINT uMsg, WPARAM wParam, LPARAM lParam)
+    {
+        switch(uMsg)
+        {
+        case WndMsg::Alloc:
+        {
+            return reinterpret_cast<LRESULT>(Alloc());
+        }
+
+        case WndMsg::Trace:
+        {
+            LogDataMsg* logmsg = reinterpret_cast<LogDataMsg*>(lParam);
+            COPYDATASTRUCT cds;
+            cds.dwData = 0;
+            cds.cbData = offsetof(LogData, text) + logmsg->log.cch * sizeof(logmsg->log.text[0]);
+            cds.lpData = static_cast<void*>(logmsg);
+
+            ::SendMessage(m_HostWnd, WM_COPYDATA, WPARAM(m_hWnd), LPARAM(&cds));
+            Dealloc(logmsg);
+            return 0;
+        }
+        }
+
+        return ::DefWindowProc(m_hWnd, uMsg, wParam, lParam);
+    }
+
+    static unsigned int __stdcall __ThreadProc(void* ud)
+    {
+        ETWLogger* logger = reinterpret_cast<ETWLogger*>(ud);
+
+        MSG msg;
+        ::PeekMessage(&msg, NULL, WM_USER, WM_USER, PM_NOREMOVE);
+
+        (void)::CreateWindowEx(0, _T("{6E5E5CBC-8ACF-4fa6-98E4-0C63A075323B}"), NULL, 0, 0, 0, 0, 0, HWND_MESSAGE, NULL, NULL, LPVOID(logger));
+
+        while(::GetMessage(&msg, NULL, 0, 0))
+        {
+            ::TranslateMessage(&msg);
+            ::DispatchMessage(&msg);
+        }
+
+        return (int)msg.wParam;
+    }
+
+    static LRESULT CALLBACK __WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+    {
+        ETWLogger* logger = reinterpret_cast<ETWLogger*>(::GetWindowLongPtr(hWnd, 0));
+
+        if(uMsg == WM_NCCREATE) {
+            LPCREATESTRUCT lpcs = reinterpret_cast<LPCREATESTRUCT>(lParam);
+            logger = static_cast<ETWLogger*>(lpcs->lpCreateParams);
+            logger->m_hWnd = hWnd;
+            ::SetWindowLongPtr(hWnd, 0, reinterpret_cast<LPARAM>(logger));
+            return TRUE;
+        }
+
+        return logger
+            ? logger->WindowProcedure(uMsg, wParam, lParam)
+            : ::DefWindowProc(hWnd, uMsg, wParam, lParam);
+    }
+
+    static void RegisterLoggerWindowClass()
+    {
+        static bool bRegistered = false;
+
+        if(bRegistered) return;
+
+        WNDCLASSEX wcx = {sizeof(wcx)};
+        wcx.lpszClassName = _T("{6E5E5CBC-8ACF-4fa6-98E4-0C63A075323B}");
+        wcx.lpfnWndProc = __WindowProcedure;
+        wcx.hInstance = ::GetModuleHandle(NULL);
+        wcx.cbWndExtra = sizeof(void*);
+
+        bRegistered = !!::RegisterClassEx(&wcx);
+    }
+
 private:
-	
-    USHORT m_version;
+    std::list<LogDataMsg*> m_logs;
+    HANDLE m_Thread;
+    HWND m_hWnd;
+    HWND m_HostWnd;
+    LogDataMsg* m_Root;
+    UCHAR m_version;
 	UCHAR m_enableLevel; 
 	volatile bool m_traceOn; 
 	BOOL m_reg;
@@ -279,12 +375,6 @@ private:
 	GUID m_clsGuid;
 	TRACEHANDLE m_registrationHandle;
 	TRACEHANDLE m_sessionHandle;
-
-#ifdef ETW_LOGGER_MT
-    CRITICAL_SECTION _cs;
-#endif
-
-    LogDataTrace m_log;
 };
 
 extern ETWLogger g_etwLogger;

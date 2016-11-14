@@ -1009,7 +1009,8 @@ LRESULT MainWindow::_on_log(LogDataUI* pItem)
     // 但如果当前焦点行是最后一行，则自动滚屏
     int count = (int)_current_filter->size();
     int sic_flag = LVSICF_NOINVALIDATEALL | LVSICF_NOSCROLL;
-    bool is_last_focused = count > 1 && (_listview->get_item_state(count - 2, LVIS_FOCUSED) & LVIS_FOCUSED);
+    bool is_last_focused = count > 1 && (_listview->get_item_state(count - 2, LVIS_FOCUSED) & LVIS_FOCUSED)
+        || _listview->get_next_item(-1, LVIS_FOCUSED) == -1;
 
     if(is_last_focused) {
         sic_flag &= ~LVSICF_NOSCROLL;

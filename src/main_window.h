@@ -1,5 +1,7 @@
 #pragma once
 
+#include "mem_pool.hpp"
+
 #include "_module_entry.hpp"
 #include "_logdata_define.hpp"
 
@@ -17,6 +19,15 @@
 
 
 namespace taoetw {
+
+struct LoggerMessage {
+    enum Value {
+        __Start = 0,
+        LogMsg,
+        AllocMsg,
+        DeallocMsg,
+    };
+};
 
 class MainWindow : public taowin::window_creator
 {
@@ -38,6 +49,10 @@ public:
 
     ~MainWindow()
     {
+        // 日志结构体是由内存池管理的
+        // 所以要强制手动释放，不能等到智能指针析构的时候进行
+        _clear_results();
+
         ::DestroyWindow(_tipwnd->hwnd());
         _tipwnd = nullptr;
     }
@@ -81,6 +96,8 @@ protected:
 
     Guid2Module         _guid2mod;
 
+    MemPoolT<LogDataUI, 1024> _log_pool;
+
 protected:
     virtual LPCTSTR get_skin_xml() const override;
     virtual LRESULT handle_message(UINT umsg, WPARAM wparam, LPARAM lparam) override;
@@ -115,7 +132,7 @@ protected:
 protected:
     LRESULT _on_create();
     LRESULT _on_close();
-    LRESULT _on_log(LogDataUI* log);
+    LRESULT _on_log(LoggerMessage::Value msg, LPARAM lParam);
     LRESULT _on_custom_draw_listview(NMHDR* hdr);
     LRESULT _on_get_dispinfo(NMHDR* hdr);
     LRESULT _on_select_column();

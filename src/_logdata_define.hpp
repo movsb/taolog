@@ -101,10 +101,10 @@ struct LogDataUI : LogData
         ::MultiByteToWideChar(CP_ACP, 0, a, -1, u, c);
     }
 
-    static LogDataUI* from_logdata(LogData* log)
+    static LogDataUI* from_logdata(LogData* log, LogDataUI* place = nullptr)
     {
         const auto& log_data = *log;
-        auto log_ui = new LogDataUI;
+        auto log_ui = place ? new (place) LogDataUI : new LogDataUI;
 
         // 日志正文前面的部分都是一样的
         // 除了日志输出方长度固定，接收方长度不固定

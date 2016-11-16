@@ -22,12 +22,17 @@ namespace {
     }
 }
 
+namespace taoetw {
+    extern void DoEtwLog(LogDataUI* log);
+    extern LogDataUI* DoEtwAlloc();
+}
+
 static LRESULT CALLBACK __WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     if(uMsg == WM_COPYDATA) {
         auto cds = reinterpret_cast<COPYDATASTRUCT*>(lParam);
         auto log = reinterpret_cast<taoetw::LogData*>(cds->lpData);
-        DoEtwLog(taoetw::LogDataUI::from_logdata(log));
+        taoetw::DoEtwLog(taoetw::LogDataUI::from_logdata(log, taoetw::DoEtwAlloc()));
         return 0;
     }
 

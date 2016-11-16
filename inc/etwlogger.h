@@ -67,6 +67,8 @@ protected:
         LogData log;
     };
 
+    typedef std::list<LogDataMsg*> LogList;
+
     struct WndMsg
     {
         enum Value
@@ -111,8 +113,8 @@ public:
 
         ::SendMessage(m_hWnd, WM_CLOSE, 0, 0);
 
-        for(const auto& log : m_logs)
-            ::operator delete(log);
+        for(LogList::const_iterator begin = m_logs.begin(), end = m_logs.end(); begin != end; ++begin)
+            ::operator delete(*begin);
 
         m_logs.clear();
 
@@ -126,7 +128,7 @@ protected:
         if(!m_Root) {
             m_Root = (LogDataMsg*)::operator new(sizeof(LogDataMsg));
             m_Root->next = NULL;
-            m_logs.emplace_back(m_Root);
+            m_logs.push_back(m_Root);
         }
 
         LogDataMsg* node = m_Root;
@@ -362,7 +364,7 @@ public:
     }
 
 private:
-    std::list<LogDataMsg*> m_logs;
+    LogList m_logs;
     HANDLE m_Thread;
     HWND m_hWnd;
     HWND m_HostWnd;

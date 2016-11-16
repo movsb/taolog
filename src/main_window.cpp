@@ -14,7 +14,12 @@ static UINT g_logger_message;
 
 void DoEtwLog(LogDataUI* log)
 {
-    ::PostMessage(g_logger_hwnd, g_logger_message, 0, LPARAM(log));
+    ::PostMessage(g_logger_hwnd, g_logger_message, LoggerMessage::LogMsg, LPARAM(log));
+}
+
+LogDataUI* DoEtwAlloc()
+{
+    return (LogDataUI*)::SendMessage(g_logger_hwnd, g_logger_message, LoggerMessage::AllocMsg, 0);
 }
 
 LPCTSTR MainWindow::get_skin_xml() const
@@ -65,7 +70,7 @@ LRESULT MainWindow::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
     {
     case WM_CREATE: return _on_create();
     case WM_CLOSE:  return _on_close();
-    case kDoLog:    return _on_log((LogDataUI*)lparam);
+    case kDoLog:    return _on_log(LoggerMessage::Value(wparam), lparam);
     case WM_NCACTIVATE:
     {
         if(wparam == FALSE && _tipwnd->showing()) {
@@ -975,57 +980,70 @@ LRESULT MainWindow::_on_close()
     return 0;
 }
 
-LRESULT MainWindow::_on_log(LogDataUI* pItem)
+LRESULT MainWindow::_on_log(LoggerMessage::Value msg, LPARAM lParam)
 {
-    LogDataUIPtr item(pItem);
+    if(msg == LoggerMessage::AllocMsg) {
+        return (LRESULT)_log_pool.alloc();
+    }
+    else if(msg == LoggerMessage::DeallocMsg) {
+        auto p = reinterpret_cast<LogDataUI*>(lParam);
+        p->~LogDataUI();
+        _log_pool.destroy(p);
+        return 0;
+    }
+    else if(msg == LoggerMessage::LogMsg) {
+        LogDataUIPtr item((LogDataUI*)lParam, [&](LogDataUI* p) {
+            _on_log(LoggerMessage::DeallocMsg, LPARAM(p));
+        });
 
-    const std::wstring* root = nullptr;
+        const std::wstring* root = nullptr;
 
-    _snwprintf(item->id, _countof(item->id), L"%llu", (unsigned long long)_events.size()+1);
+        _snwprintf(item->id, _countof(item->id), L"%llu", (unsigned long long)_events.size() + 1);
 
-    _module_from_guid(item->guid, &item->strProject, &root);
+        _module_from_guid(item->guid, &item->strProject, &root);
 
-    // 相对路径
-    item->offset_of_file = 0;
-    if (*item->file && root) {
-        if (::_wcsnicmp(item->file, root->c_str(), root->size()) == 0) {
-            item->offset_of_file = (int)root->size();
+        // 相对路径
+        item->offset_of_file = 0;
+        if(*item->file && root) {
+            if(::_wcsnicmp(item->file, root->c_str(), root->size()) == 0) {
+                item->offset_of_file = (int)root->size();
+            }
         }
-    }
 
-    item->strLevel = &_level_maps[item->level].cmt1;
+        item->strLevel = &_level_maps[item->level].cmt1;
 
-    // 全部事件容器
-    _events.add(item);
+        // 全部事件容器
+        _events.add(item);
 
-    // 带过滤的事件容器（指针复用）
-    if (!_filters.empty()) {
-        for (auto& f : _filters) {
-            f->add(item);
+        // 带过滤的事件容器（指针复用）
+        if(!_filters.empty()) {
+            for(auto& f : _filters) {
+                f->add(item);
+            }
         }
-    }
 
-    // 默认是非自动滚屏到最后一行的
-    // 但如果当前焦点行是最后一行，则自动滚屏
-    int count = (int)_current_filter->size();
-    int sic_flag = LVSICF_NOINVALIDATEALL | LVSICF_NOSCROLL;
-    bool is_last_focused = count > 1 && (_listview->get_item_state(count - 2, LVIS_FOCUSED) & LVIS_FOCUSED)
-        || _listview->get_next_item(-1, LVIS_FOCUSED) == -1;
+        // 默认是非自动滚屏到最后一行的
+        // 但如果当前焦点行是最后一行，则自动滚屏
+        int count = (int)_current_filter->size();
+        int sic_flag = LVSICF_NOINVALIDATEALL | LVSICF_NOSCROLL;
+        bool is_last_focused = count > 1 && (_listview->get_item_state(count - 2, LVIS_FOCUSED) & LVIS_FOCUSED)
+            || _listview->get_next_item(-1, LVIS_FOCUSED) == -1;
 
-    if(is_last_focused) {
-        sic_flag &= ~LVSICF_NOSCROLL;
-    }
+        if(is_last_focused) {
+            sic_flag &= ~LVSICF_NOSCROLL;
+        }
 
-    _listview->set_item_count(count, sic_flag);
+        _listview->set_item_count(count, sic_flag);
 
-    if(is_last_focused) {
-        _listview->set_item_state(-1, LVIS_FOCUSED | LVIS_SELECTED, 0);
-        _listview->ensure_visible(count - 1);
-        _listview->set_item_state(count - 1, LVIS_FOCUSED|LVIS_SELECTED, LVIS_FOCUSED|LVIS_SELECTED);
-    }
+        if(is_last_focused) {
+            _listview->set_item_state(-1, LVIS_FOCUSED | LVIS_SELECTED, 0);
+            _listview->ensure_visible(count - 1);
+            _listview->set_item_state(count - 1, LVIS_FOCUSED | LVIS_SELECTED, LVIS_FOCUSED | LVIS_SELECTED);
+        }
 
-    if(_miniview) {
-        _miniview->update();
+        if(_miniview) {
+            _miniview->update();
+        }
     }
 
     return 0;

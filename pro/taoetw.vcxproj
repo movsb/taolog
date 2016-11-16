@@ -243,6 +243,7 @@
     <ClInclude Include="..\src\event_system.h" />
     <ClInclude Include="..\src\listview_color.h" />
     <ClInclude Include="..\src\main_window.h" />
+    <ClInclude Include="..\src\mem_pool.hpp" />
     <ClInclude Include="..\src\mini_view.h" />
     <ClInclude Include="..\src\module_editor.h" />
     <ClInclude Include="..\src\result_filter.h" />

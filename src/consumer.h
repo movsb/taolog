@@ -7,6 +7,7 @@ namespace taoetw {
 class Consumer;
 
 extern void DoEtwLog(LogDataUI* log);
+extern LogDataUI* DoEtwAlloc();
 
 class Consumer
 {

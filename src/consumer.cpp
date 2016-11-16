@@ -72,7 +72,7 @@ void Consumer::ProcessEvents(EVENT_TRACE * pEvent)
         return;
 
     const auto log_data = (LogData*)pEvent->MofData;
-    auto log_ui = LogDataUI::from_logdata(log_data);
+    auto log_ui = LogDataUI::from_logdata(log_data, DoEtwAlloc());
     DoEtwLog(log_ui);
 }
 

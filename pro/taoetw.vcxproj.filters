@@ -193,6 +193,9 @@
     <ClInclude Include="..\src\event_system.h">
       <Filter>Source Files\misc</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\mem_pool.hpp">
+      <Filter>Source Files\misc</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="../res/taoetw.rc">

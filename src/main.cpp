@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "event_system.h"
+#include "event_system.hpp"
 #include "config.h"
 
 #include "main_window.h"

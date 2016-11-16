@@ -492,8 +492,8 @@ void MainWindow::_init_listview()
             int level = co["level"].int_value();
 
             unsigned int fgc[3], bgc[3];
-            ::sscanf(co["fgc"].string_value().c_str(), "%d,%d,%d", &fgc[0], &fgc[1], &fgc[2]);
-            ::sscanf(co["bgc"].string_value().c_str(), "%d,%d,%d", &bgc[0], &bgc[1], &bgc[2]);
+            (void)::sscanf(co["fgc"].string_value().c_str(), "%d,%d,%d", &fgc[0], &fgc[1], &fgc[2]);
+            (void)::sscanf(co["bgc"].string_value().c_str(), "%d,%d,%d", &bgc[0], &bgc[1], &bgc[2]);
 
             COLORREF crfg = RGB(fgc[0] & 0xff, fgc[1] & 0xff, fgc[2] & 0xff);
             COLORREF crbg = RGB(bgc[0] & 0xff, bgc[1] & 0xff, bgc[2] & 0xff);
@@ -532,8 +532,6 @@ void MainWindow::_init_listview()
 
 void MainWindow::_init_config()
 {
-    std::string err;
-
     // the gui main
     auto windows = g_config->obj("windows");
 
@@ -562,6 +560,23 @@ void MainWindow::_init_config()
             }
             else {
                 msgbox(L"无效模块配置。", MB_ICONERROR);
+            }
+        }
+    }
+}
+
+void MainWindow::_init_filters()
+{
+    if(g_config->has_arr("filters")) {
+        auto filters = g_config->arr("filters");
+        for(auto& fo : filters.as_arr()) {
+            if(fo.is_object()) {
+                if(auto fp = EventContainer::from_json(fo)) {
+                    _filters.emplace_back(fp);
+                }
+                else {
+                    msgbox(L"无效的过滤器配置。", MB_ICONERROR);
+                }
             }
         }
     }
@@ -939,6 +954,17 @@ void MainWindow::_copy_selected_item()
     }
 }
 
+void MainWindow::_save_filters()
+{
+    auto& filters = g_config->arr("filters").as_arr();
+
+    filters.clear();
+
+    for(auto& f : _filters) {
+        filters.push_back(*f);
+    }
+}
+
 LRESULT MainWindow::_on_create()
 {
     _btn_start          = _root->find<taowin::button>(L"start-logging");
@@ -959,6 +985,8 @@ LRESULT MainWindow::_on_create()
 
     _init_listview();
 
+    _init_filters();
+
     _current_filter = &_events;
     
     _level_maps.try_emplace(TRACE_LEVEL_VERBOSE,     L"Verbose",      L"详细 - TRACE_LEVEL_VERBOSE" );
@@ -975,6 +1003,8 @@ LRESULT MainWindow::_on_create()
 
 LRESULT MainWindow::_on_close()
 {
+    _save_filters();
+
     DestroyWindow(_hwnd);
 
     return 0;

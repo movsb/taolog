@@ -114,6 +114,7 @@ protected:
 
     void _init_listview();
     void _init_config();
+    void _init_filters();
     void _view_detail(int i);
     void _manage_modules();
     void _show_filters();
@@ -128,6 +129,9 @@ protected:
     // 复制当前选中的行内容到剪贴板
     // 只复制第 1 个选中的行
     void _copy_selected_item();
+
+protected:
+    void _save_filters();
 
 protected:
     LRESULT _on_create();

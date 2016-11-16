@@ -30,6 +30,10 @@ public:
     }
 
 public:
+    json11::Json to_json() const;
+    static EventContainer* from_json(const json11::Json& obj);
+
+public:
     bool add(EVENT& evt);
     bool filter_results(EventContainer* container);
     EVENT operator[](int index) { return _events[index]; }

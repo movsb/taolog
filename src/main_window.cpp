@@ -1026,10 +1026,11 @@ LRESULT MainWindow::_on_log(LoggerMessage::Value msg, LPARAM lParam)
             _on_log(LoggerMessage::DeallocMsg, LPARAM(p));
         });
 
-        const std::wstring* root = nullptr;
-
+        // 日志编号
         _snwprintf(item->id, _countof(item->id), L"%llu", (unsigned long long)_events.size() + 1);
 
+        // 项目名称 & 项目根目录
+        const std::wstring* root = nullptr;
         _module_from_guid(item->guid, &item->strProject, &root);
 
         // 相对路径
@@ -1040,39 +1041,48 @@ LRESULT MainWindow::_on_log(LoggerMessage::Value msg, LPARAM lParam)
             }
         }
 
+        // 字符串形式的日志等级
         item->strLevel = &_level_maps[item->level].cmt1;
 
         // 全部事件容器
         _events.add(item);
 
+        // 判断一下当前过滤器是否添加了此事件
+        // 如果没有添加，就不必要刷新列表控件了
+        bool added_to_current = _current_filter == &_events;
+
         // 带过滤的事件容器（指针复用）
         if(!_filters.empty()) {
             for(auto& f : _filters) {
-                f->add(item);
+                bool added = f->add(item);
+                if(f == _current_filter && added && !added_to_current)
+                    added_to_current = true;
             }
         }
 
-        // 默认是非自动滚屏到最后一行的
-        // 但如果当前焦点行是最后一行，则自动滚屏
-        int count = (int)_current_filter->size();
-        int sic_flag = LVSICF_NOINVALIDATEALL | LVSICF_NOSCROLL;
-        bool is_last_focused = count > 1 && (_listview->get_item_state(count - 2, LVIS_FOCUSED) & LVIS_FOCUSED)
-            || _listview->get_next_item(-1, LVIS_FOCUSED) == -1;
+        if(added_to_current) {
+            // 默认是非自动滚屏到最后一行的
+            // 但如果当前焦点行是最后一行，则自动滚屏
+            int count = (int)_current_filter->size();
+            int sic_flag = LVSICF_NOINVALIDATEALL | LVSICF_NOSCROLL;
+            bool is_last_focused = count > 1 && (_listview->get_item_state(count - 2, LVIS_FOCUSED) & LVIS_FOCUSED)
+                || _listview->get_next_item(-1, LVIS_FOCUSED) == -1;
 
-        if(is_last_focused) {
-            sic_flag &= ~LVSICF_NOSCROLL;
-        }
+            if(is_last_focused) {
+                sic_flag &= ~LVSICF_NOSCROLL;
+            }
 
-        _listview->set_item_count(count, sic_flag);
+            _listview->set_item_count(count, sic_flag);
 
-        if(is_last_focused) {
-            _listview->set_item_state(-1, LVIS_FOCUSED | LVIS_SELECTED, 0);
-            _listview->ensure_visible(count - 1);
-            _listview->set_item_state(count - 1, LVIS_FOCUSED | LVIS_SELECTED, LVIS_FOCUSED | LVIS_SELECTED);
-        }
+            if(is_last_focused) {
+                _listview->set_item_state(-1, LVIS_FOCUSED | LVIS_SELECTED, 0);
+                _listview->ensure_visible(count - 1);
+                _listview->set_item_state(count - 1, LVIS_FOCUSED | LVIS_SELECTED, LVIS_FOCUSED | LVIS_SELECTED);
+            }
 
-        if(_miniview) {
-            _miniview->update();
+            if(_miniview) {
+                _miniview->update();
+            }
         }
     }
 

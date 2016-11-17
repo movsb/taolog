@@ -9,15 +9,14 @@ void TooltipWindow::popup(const wchar_t* str, HFONT font)
     _text = str;
     _font = font;
 
-    RECT rc {0,0,500,0};
+    taowin::Rect rc {0,0,::GetSystemMetrics(SM_CXSCREEN),0};
     HDC hdc = ::GetDC(_hwnd);
     HFONT hOldFont = (HFONT)::SelectObject(hdc, _font);
-    ::DrawText(hdc, _text, -1, &rc, DT_CALCRECT|DT_NOPREFIX);
+    ::DrawText(hdc, _text, -1, &rc, DT_CALCRECT|DT_NOPREFIX|DT_WORDBREAK);
     ::SelectObject(hdc, hOldFont);
     ::ReleaseDC(_hwnd, hdc);
 
-    ::GetCursorPos(&_pt);
-    ::SetWindowPos(_hwnd, HWND_TOPMOST, _pt.x + 10, _pt.y+10, rc.right - rc.left + 10, rc.bottom - rc.top + 10, SWP_NOACTIVATE);
+    adjust_window_pos(rc);
 
     ::ShowWindow(_hwnd, SW_SHOWNOACTIVATE);
 
@@ -86,8 +85,8 @@ LRESULT TooltipWindow::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
 
         ::SetBkMode(hdc, TRANSPARENT);
 
-        rc.deflate(5, 5);
-        ::DrawText(hdc, _text, -1, &rc, DT_NOPREFIX);
+        rc.deflate(padding, padding);
+        ::DrawText(hdc, _text, -1, &rc, DT_NOPREFIX|DT_WORDBREAK);
 
         ::SelectObject(hdc, hOldFont);
 
@@ -97,6 +96,51 @@ LRESULT TooltipWindow::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
     }
     }
     return __super::handle_message(umsg, wparam, lparam);
+}
+
+// 调整窗口的最终位置
+void TooltipWindow::adjust_window_pos(const taowin::Rect& calc)
+{
+    // calc 是计算出的文字所占据的大小
+    taowin::Rect rc(calc);
+
+    // 加上文字外边距
+    rc.inflate(padding, padding);
+
+    // 屏幕信息
+    taowin::Rect rcScreen;
+    {
+        HMONITOR hMonitor = ::MonitorFromPoint(_pt, MONITOR_DEFAULTTONEAREST);
+        MONITORINFO info = {sizeof(info)};
+
+        if(hMonitor && ::GetMonitorInfo(hMonitor, &info)) {
+            rcScreen = info.rcWork;
+        }
+        else {
+            rcScreen = {0, 0, ::GetSystemMetrics(SM_CXSCREEN), ::GetSystemMetrics(SM_CYSCREEN)};
+        }
+    }
+
+    rcScreen.deflate(padding, padding);
+
+    // 限制大小为屏幕大小（工作区）
+    if(rc.width() > rcScreen.width())   rc.right = rc.left + rcScreen.width();
+    if(rc.height() > rcScreen.height()) rc.bottom = rc.top + rcScreen.height();
+
+    // 根据当前鼠标定位原点
+    ::GetCursorPos(&_pt);
+    rc.offset(_pt.x + offset, _pt.y + offset);
+
+    // 不能超出屏幕边缘
+    int dxscr = rc.right - rcScreen.right;
+    int dyscr = rc.bottom - rcScreen.bottom;
+    if(dxscr > 0 || dyscr > 0) {
+        int dx = max(dxscr, 0);
+        int dy = max(dyscr, 0);
+        rc.offset(-dx, -dy);
+    }
+
+    ::SetWindowPos(_hwnd, HWND_TOPMOST, rc.left, rc.top, rc.width(), rc.height(), SWP_NOACTIVATE);
 }
 
 }

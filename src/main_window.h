@@ -120,6 +120,7 @@ protected:
     void _init_listview();
     void _init_config();
     void _init_filters();
+    void _init_filter_events();
     void _view_detail(int i);
     void _manage_modules();
     void _show_filters();

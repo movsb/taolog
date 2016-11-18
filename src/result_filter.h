@@ -6,18 +6,12 @@ class ResultFilter : public taowin::window_creator
 {
 public:
     typedef std::function<void(std::vector<std::wstring>*)> fnOnGetFields;
-    typedef std::function<void(int i)> fnOnDeleteFilter;
-    typedef std::function<void(EventContainer* p)> fnOnSetFilter;
-    typedef std::function<void(EventContainer* p)> fnOnAddNewFilter;
     typedef std::function<void(int, std::unordered_map<int, const wchar_t*>*)> fnGetValueList;
 
 public:
-    ResultFilter(EventContainerS& filters, fnOnGetFields getfields, fnOnDeleteFilter ondelete, fnOnSetFilter onsetfilter, fnOnAddNewFilter onaddnew, EventContainer* curflt, fnGetValueList getvalues)
+    ResultFilter(EventContainerS& filters, fnOnGetFields getfields, EventContainer* curflt, fnGetValueList getvalues)
         : _filters(filters)
         , _on_get_fields(getfields)
-        , _on_delete(ondelete)
-        , _on_set_filter(onsetfilter)
-        , _on_add_new(onaddnew)
         , _current_filter(curflt)
         , _get_value_list(getvalues)
     {
@@ -32,9 +26,6 @@ protected:
 protected:
     EventContainerS&    _filters;
     fnOnGetFields       _on_get_fields;
-    fnOnDeleteFilter    _on_delete;
-    fnOnSetFilter       _on_set_filter;
-    fnOnAddNewFilter    _on_add_new;
     EventContainer*     _current_filter;
     fnGetValueList      _get_value_list;
 

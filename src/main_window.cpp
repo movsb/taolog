@@ -5,6 +5,7 @@
 
 #include "../res/resource.h"
 
+#include "event_system.hpp"
 #include "main_window.h"
 
 namespace taoetw {
@@ -361,8 +362,27 @@ bool MainWindow::filter_special_key(int vk)
         _last_search_string = _edt_search->get_text();
 
         if (!_last_search_string.empty()) {
-            if (!_do_search(_last_search_string, _last_search_line, -1))
+            if(_do_search(_last_search_string, _last_search_line, -1)) {
+                // 如果有搜索结果，并且按住了CTRL键，则自动创建新的过滤器
+                if(::GetAsyncKeyState(VK_CONTROL) & 0x8000) {
+                    // 当前选择的列
+                    int col = (int)_cbo_filter->get_cur_data();
+                    if(col == -1) {
+                        msgbox(L"新建过滤器不能指定为 <全部> 列。", MB_ICONINFORMATION);
+                    }
+                    else {
+                        auto& name      = _last_search_string;
+                        auto& colname   = _columns[col].name;
+                        auto& value     = _last_search_string;
+                        auto p = new EventContainer(_last_search_string, col, colname, -1, L"", value);
+                        g_evtsys.trigger(L"filter:new", p);
+                        g_evtsys.trigger(L"filter:set", p);
+                    }
+                }
+            }
+            else {
                 _edt_search->focus();
+            }
             return true;
         }
     }
@@ -605,6 +625,39 @@ void MainWindow::_init_filters()
     }
 }
 
+void MainWindow::_init_filter_events()
+{
+    g_evtsys.attach(L"filter:new", [&](const EventArguments& args) {
+        auto p = static_cast<EventContainer*>(args[0].ptr_value());
+        _filters.push_back(p);
+        _current_filter->filter_results(p);
+        _update_filter_list(nullptr);
+    });
+
+    g_evtsys.attach(L"filter:set", [&](const EventArguments& args) {
+        auto p = static_cast<EventContainer*>(args[0].ptr_value());
+        if(!p) p = &_events;
+        _set_current_filter(p);
+        _update_filter_list(p);
+    });
+    
+    g_evtsys.attach(L"filter:del", [&](const EventArguments& args) {
+        int i = args[0].int_value();
+        auto it = _filters.begin() + i;
+
+        if (*it == _current_filter) {
+            _current_filter = &_events;
+            _listview->set_item_count(_current_filter->size(), 0);
+            _listview->redraw_items(0, _listview->get_item_count() -1);
+        }
+
+        delete *it;
+        _filters.erase(it);
+
+        _update_filter_list(nullptr);
+    });
+}
+
 void MainWindow::_view_detail(int i)
 {
     auto get_column_name = [&](int i) {
@@ -653,31 +706,6 @@ void MainWindow::_show_filters()
     };
 
     auto ondelete = [&](int i) {
-        auto it = _filters.begin() + i;
-
-        if (*it == _current_filter) {
-            _current_filter = &_events;
-            _listview->set_item_count(_current_filter->size(), 0);
-            _listview->redraw_items(0, _listview->get_item_count() -1);
-        }
-
-        delete *it;
-        _filters.erase(it);
-
-        _update_filter_list(nullptr);
-    };
-
-    auto onaddnew = [&](EventContainer* p) {
-        _filters.push_back(p);
-        _current_filter->filter_results(p);
-
-        _update_filter_list(nullptr);
-    };
-
-    auto onsetfilter = [&](EventContainer* p) {
-        if(!p) p = &_events;
-        _set_current_filter(p);
-        _update_filter_list(p);
     };
 
     auto ongetvalues = [&](int baseindex, std::unordered_map<int, const wchar_t*>* values) {
@@ -700,7 +728,7 @@ void MainWindow::_show_filters()
         }
     };
 
-    auto dlg = new ResultFilter(_filters, get_base, ondelete, onsetfilter, onaddnew, _current_filter, ongetvalues);
+    auto dlg = new ResultFilter(_filters, get_base, _current_filter, ongetvalues);
     dlg->domodal(this);
 }
 
@@ -1011,6 +1039,7 @@ LRESULT MainWindow::_on_create()
     _init_listview();
 
     _init_filters();
+    _init_filter_events();
 
     _current_filter = &_events;
     

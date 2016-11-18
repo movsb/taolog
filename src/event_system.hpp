@@ -47,6 +47,12 @@ public:
         assign(p);
     }
 
+    // TODO 为啥需要这个？
+    EventArg(std::nullptr_t p)
+    {
+        assign((void*)p);
+    }
+
 public:
     bool operator== (bool b) const
     {
@@ -79,13 +85,13 @@ public:
     }
 
 public:
-    Type::Value type() const { return _type; }
+    Type::Value type() const    { return _type; }
 
-    bool    bool_value() const { return _bool_value; }
-    int     int_value() const { return _int_value; }
+    bool    bool_value() const  { return _bool_value; }
+    int     int_value() const   { return _int_value; }
     const std::wstring&
-            str_value() const {return _str_value;}
-    void*   ptr_value() const { return const_cast<void*>(_ptr_value); }
+            str_value() const   { return _str_value;}
+    void*   ptr_value() const   { return const_cast<void*>(_ptr_value); }
 
 protected:
     void assign(bool b)
@@ -132,7 +138,7 @@ public:
 
 public:
     int size() const { return (int)_argv.size(); }
-    const EventArg& operator[](int i)
+    const EventArg& operator[](int i) const
     {
         if(i >= 0 && i < size())
             return _argv[i];

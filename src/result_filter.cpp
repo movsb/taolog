@@ -6,6 +6,8 @@
 
 #include "result_filter.h"
 
+#include "event_system.hpp"
+
 namespace taoetw {
 
 void ResultFilter::get_metas(WindowMeta * metas)
@@ -104,8 +106,7 @@ LRESULT ResultFilter::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR
             auto nmlv = reinterpret_cast<NMITEMACTIVATE*>(hdr);
 
             if (nmlv->iItem != -1) {
-                _on_set_filter(_filters[nmlv->iItem]);
-
+                g_evtsys.trigger(L"filter:set", _filters[nmlv->iItem]);
                 close(0);
             }
         }
@@ -135,7 +136,8 @@ LRESULT ResultFilter::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR
         if(code == BN_CLICKED) {
             AddNewFilter dlg(_on_get_fields, _get_value_list);
             if(dlg.domodal(this) == IDOK) {
-                _on_add_new(new EventContainer(dlg.name, dlg.field_index, dlg.field_name, dlg.value_index, dlg.value_name, dlg.value_input));
+                auto p = new EventContainer(dlg.name, dlg.field_index, dlg.field_name, dlg.value_index, dlg.value_name, dlg.value_input);
+                g_evtsys.trigger(L"filter:new", p);
                 _listview->set_item_count(_filters.size(), LVSICF_NOINVALIDATEALL);
 
                 int index = _listview->get_item_count() - 1;
@@ -152,7 +154,7 @@ LRESULT ResultFilter::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR
             _listview->get_selected_items(&items);
 
             for(auto it = items.crbegin(); it != items.crend(); ++it) {
-                _on_delete(*it);
+                g_evtsys.trigger(L"filter:del", *it);
             }
 
             _listview->set_item_count((int)_filters.size(), 0);
@@ -165,8 +167,7 @@ LRESULT ResultFilter::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR
     }
     else if (pc == _btn_all) {
         if(code == BN_CLICKED) {
-            _on_set_filter(nullptr);
-
+            g_evtsys.trigger(L"filter:set", nullptr);
             close(0);
         }
     }

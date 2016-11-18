@@ -101,6 +101,38 @@ struct LogDataUI : LogData
         ::MultiByteToWideChar(CP_ACP, 0, a, -1, u, c);
     }
 
+    static LogDataUI* from_dbgview(DWORD pid, const char* str, LogDataUI* place = nullptr)
+    {
+        auto logui = place ? new (place) LogDataUI : new LogDataUI;
+
+        ::memset(logui, 0, sizeof(LogData));
+
+        logui->pid = (int)pid;
+        logui->level = TRACE_LEVEL_INFORMATION;
+        
+        {
+            wchar_t buf[4096]; // enough
+            buf[0] = L'\0';
+            ::MultiByteToWideChar(CP_ACP, 0, str, -1, &buf[0], _countof(buf));
+            logui->strText.assign(buf);
+        }
+
+        {
+            TCHAR buf[1024];
+            SYSTEMTIME t;
+            ::GetLocalTime(&t);
+
+            _sntprintf(&buf[0], _countof(buf),
+                _T("%02d:%02d:%02d:%03d"),
+                t.wHour, t.wMinute, t.wSecond, t.wMilliseconds
+            );
+
+            logui->strTime = buf;
+        }
+
+        return logui;
+    }
+
     static LogDataUI* from_logdata(LogData* log, LogDataUI* place = nullptr)
     {
         const auto& log_data = *log;

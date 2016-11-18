@@ -412,6 +412,18 @@ bool MainWindow::_start()
         return false;
     }
 
+    // 启动 DebugView
+    // called from thread
+    auto notify = [&](DWORD pid, const char* str)
+    {
+        auto logui = LogDataUI::from_dbgview(pid, str, DoEtwAlloc());
+        DoEtwLog(logui);
+    };
+
+    if(!_dbgview.init(notify)) {
+        msgbox(L"没有成功启动 DebugView 日志记录。");
+    }
+
     return true;
 }
 
@@ -419,6 +431,8 @@ bool MainWindow::_stop()
 {
     _controller.stop();
     _consumer.stop();
+
+    _dbgview.uninit();
 
     return true;
 }
@@ -1004,6 +1018,8 @@ LRESULT MainWindow::_on_create()
 LRESULT MainWindow::_on_close()
 {
     _save_filters();
+
+    _stop();
 
     DestroyWindow(_hwnd);
 

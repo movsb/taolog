@@ -17,6 +17,8 @@
 #include "controller.h"
 #include "consumer.h"
 
+#include "debug_view.h"
+
 
 namespace taoetw {
 
@@ -93,6 +95,7 @@ protected:
 
     Controller          _controller;
     Consumer            _consumer;
+    DebugView           _dbgview;
 
     Guid2Module         _guid2mod;
 

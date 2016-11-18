@@ -124,7 +124,6 @@ public:
 protected:
     LogDataMsg* Alloc()
     {
-        static int n = 0;
         if(!m_Root) {
             m_Root = (LogDataMsg*)::operator new(sizeof(LogDataMsg));
             m_Root->next = NULL;

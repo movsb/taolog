@@ -9,10 +9,10 @@ void TooltipWindow::popup(const wchar_t* str, HFONT font)
     _text = str;
     _font = font;
 
-    taowin::Rect rc {0,0,::GetSystemMetrics(SM_CXSCREEN),0};
+    taowin::Rect rc {0,0,::GetSystemMetrics(SM_CXSCREEN) - padding * 2,0};
     HDC hdc = ::GetDC(_hwnd);
     HFONT hOldFont = (HFONT)::SelectObject(hdc, _font);
-    ::DrawText(hdc, _text, -1, &rc, DT_CALCRECT|DT_NOPREFIX|DT_WORDBREAK);
+    ::DrawText(hdc, _text, -1, &rc, DT_CALCRECT|DT_NOPREFIX|DT_WORDBREAK|DT_EDITCONTROL);
     ::SelectObject(hdc, hOldFont);
     ::ReleaseDC(_hwnd, hdc);
 
@@ -86,7 +86,7 @@ LRESULT TooltipWindow::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
         ::SetBkMode(hdc, TRANSPARENT);
 
         rc.deflate(padding, padding);
-        ::DrawText(hdc, _text, -1, &rc, DT_NOPREFIX|DT_WORDBREAK);
+        ::DrawText(hdc, _text, -1, &rc, DT_NOPREFIX|DT_WORDBREAK|DT_EDITCONTROL);
 
         ::SelectObject(hdc, hOldFont);
 

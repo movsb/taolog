@@ -1,5 +1,11 @@
 #pragma once
 
+#include <string>
+#include <map>
+#include <vector>
+#include <stack>
+#include <functional>
+
 namespace taoetw {
 
 class EventArg
@@ -164,11 +170,12 @@ protected:
 class EventSystem
 {
 public:
-    typedef std::function<void(const EventArguments&)>  Callable;
+    typedef std::function<void()>                       Callable;
     typedef unsigned long long                          Cookie;
     typedef std::map<Cookie, Callable>                  Callbacks;
     typedef std::map<std::wstring, Cookie>              NextCookie;
     typedef std::map<std::wstring, Callbacks>           EventMap;
+    typedef std::stack<EventArguments*>                 ArgStack;
 
 public:
     Cookie attach(const wchar_t* name, Callable fn)
@@ -189,14 +196,25 @@ public:
         EventArguments arguments;
         arguments.add(std::forward<T>(args)...);
 
+        _argstk.emplace(&arguments);
+
         for(const auto& pair : _events[name]) {
-            pair.second(arguments);
+            pair.second(/* arguments */);
         }
+
+        _argstk.pop();
+    }
+
+    const EventArg& operator[](int i) const
+    {
+        return (*_argstk.top())[i];
     }
 
 protected:
     EventMap    _events;
     NextCookie  _next;
+    ArgStack    _argstk;
+    
 };
 
 extern EventSystem& g_evtsys;

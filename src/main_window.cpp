@@ -627,22 +627,22 @@ void MainWindow::_init_filters()
 
 void MainWindow::_init_filter_events()
 {
-    g_evtsys.attach(L"filter:new", [&](const EventArguments& args) {
-        auto p = static_cast<EventContainer*>(args[0].ptr_value());
+    g_evtsys.attach(L"filter:new", [&]() {
+        auto p = static_cast<EventContainer*>(g_evtsys[0].ptr_value());
         _filters.push_back(p);
         _current_filter->filter_results(p);
         _update_filter_list(nullptr);
     });
 
-    g_evtsys.attach(L"filter:set", [&](const EventArguments& args) {
-        auto p = static_cast<EventContainer*>(args[0].ptr_value());
+    g_evtsys.attach(L"filter:set", [&]() {
+        auto p = static_cast<EventContainer*>(g_evtsys[0].ptr_value());
         if(!p) p = &_events;
         _set_current_filter(p);
         _update_filter_list(p);
     });
     
-    g_evtsys.attach(L"filter:del", [&](const EventArguments& args) {
-        int i = args[0].int_value();
+    g_evtsys.attach(L"filter:del", [&]() {
+        int i = g_evtsys[0].int_value();
         auto it = _filters.begin() + i;
 
         if (*it == _current_filter) {

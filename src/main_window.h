@@ -67,6 +67,7 @@ protected:
     taowin::button*     _btn_clear;
     taowin::button*     _btn_modules;
     taowin::button*     _btn_filter;
+    taowin::button*     _btn_debugview;
     taowin::button*     _btn_topmost;
     taowin::edit*       _edt_search;
     taowin::combobox*   _cbo_filter;
@@ -85,6 +86,7 @@ protected:
 
     ModuleContainer     _modules;
     EventContainer      _events;
+    EventContainer      _dbglog;
     EventContainerS     _filters;
     EventContainer*     _current_filter;
     ModuleLevelMap      _level_maps;

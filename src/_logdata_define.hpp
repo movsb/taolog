@@ -6,6 +6,7 @@ namespace taoetw {
 
 enum class ETW_LOGGER_FLAG {
     ETW_LOGGER_FLAG_UNICODE = 1,
+    ETW_LOGGER_FLAG_DBGVIEW = 2,
 };
 
 
@@ -109,6 +110,7 @@ struct LogDataUI : LogData
 
         logui->pid = (int)pid;
         logui->level = TRACE_LEVEL_INFORMATION;
+        logui->flags |= (int)ETW_LOGGER_FLAG::ETW_LOGGER_FLAG_DBGVIEW;
         
         {
             wchar_t buf[4096]; // enough

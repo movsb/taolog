@@ -45,6 +45,9 @@ LPCTSTR MainWindow::get_skin_xml() const
                 <control width="5" />
                 <button name="export-to-file" text="导出日志" width="60" style="tabstop"/>
                 <control width="5" />
+                <control width="5" />
+                <button name="debug-view" text="DebugView" width="60" style="tabstop"/>
+                <control width="5" />
                 <control />
                 <label text="过滤：" width="38" style="centerimage"/>
                 <combobox name="select-filter" style="tabstop" height="400" width="64" padding="0,0,4,0"/>
@@ -337,6 +340,12 @@ LRESULT MainWindow::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR *
     else if(pc == _btn_export2file) {
         if(code == BN_CLICKED) {
             _export2file();
+            return 0;
+        }
+    }
+    else if(pc == _btn_debugview) {
+        if(code == BN_CLICKED) {
+            _set_current_filter(&_dbglog);
             return 0;
         }
     }
@@ -793,6 +802,7 @@ void MainWindow::_clear_results()
     //    delete evt;
 
     _events.clear();
+    _dbglog.clear();
 
     // 更新界面
     _listview->set_item_count(0, 0);
@@ -985,6 +995,7 @@ LRESULT MainWindow::_on_create()
     _btn_clear          = _root->find<taowin::button>(L"clear-logging");
     _btn_modules        = _root->find<taowin::button>(L"module-manager");
     _btn_filter         = _root->find<taowin::button>(L"filter-result");
+    _btn_debugview      = _root->find<taowin::button>(L"debug-view");
     _btn_topmost        = _root->find<taowin::button>(L"topmost");
     _edt_search         = _root->find<taowin::edit>(L"s");
     _cbo_filter         = _root->find<taowin::combobox>(L"s-filter");
@@ -1045,27 +1056,37 @@ LRESULT MainWindow::_on_log(LoggerMessage::Value msg, LPARAM lParam)
         // 日志编号
         _snwprintf(item->id, _countof(item->id), L"%llu", (unsigned long long)_events.size() + 1);
 
-        // 项目名称 & 项目根目录
-        const std::wstring* root = nullptr;
-        _module_from_guid(item->guid, &item->strProject, &root);
+        bool is_etw_log = !(item->flags & (int)ETW_LOGGER_FLAG::ETW_LOGGER_FLAG_DBGVIEW);
 
-        // 相对路径
-        item->offset_of_file = 0;
-        if(*item->file && root) {
-            if(::_wcsnicmp(item->file, root->c_str(), root->size()) == 0) {
-                item->offset_of_file = (int)root->size();
+        if(is_etw_log) {
+            // 项目名称 & 项目根目录
+            const std::wstring* root = nullptr;
+            _module_from_guid(item->guid, &item->strProject, &root);
+
+            // 相对路径
+            item->offset_of_file = 0;
+            if(*item->file && root) {
+                if(::_wcsnicmp(item->file, root->c_str(), root->size()) == 0) {
+                    item->offset_of_file = (int)root->size();
+                }
             }
+        }
+        else {
+            item->offset_of_file = 0;
         }
 
         // 字符串形式的日志等级
         item->strLevel = &_level_maps[item->level].cmt1;
 
         // 全部事件容器
-        _events.add(item);
+        if(is_etw_log)
+            _events.add(item);
+        else
+            _dbglog.add(item);
 
         // 判断一下当前过滤器是否添加了此事件
         // 如果没有添加，就不必要刷新列表控件了
-        bool added_to_current = _current_filter == &_events;
+        bool added_to_current = (is_etw_log && _current_filter == &_events) || _current_filter == &_dbglog;
 
         // 带过滤的事件容器（指针复用）
         if(!_filters.empty()) {

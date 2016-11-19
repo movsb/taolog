@@ -98,12 +98,6 @@ LRESULT MainWindow::control_message(taowin::syscontrol* ctl, UINT umsg, WPARAM w
             }
         }
         else if(umsg == WM_MOUSELEAVE) {
-            TRACKMOUSEEVENT tme = {0};
-            tme.cbSize = sizeof(tme);
-            tme.hwndTrack = _listview->hwnd();
-            tme.dwFlags = TME_CANCEL;
-            _TrackMouseEvent(&tme);
-
             mi = false;
         }
         if(umsg == WM_MOUSEHOVER) {

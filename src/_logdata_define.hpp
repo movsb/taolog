@@ -126,8 +126,14 @@ struct LogDataUI : LogData
         {
             wchar_t buf[4096]; // enough
             buf[0] = L'\0';
-            ::MultiByteToWideChar(CP_ACP, 0, str, -1, &buf[0], _countof(buf));
-            logui->strText.assign(buf);
+            if(int cch = ::MultiByteToWideChar(CP_ACP, 0, str, -1, &buf[0], _countof(buf))) {
+                auto p = &buf[cch-2]; // & !'\0';
+
+                while(p >= buf && (*p == L'\r' || *p == L'\n'))
+                    --p;
+
+                logui->strText.assign(buf, p+1);
+            }
         }
 
         {

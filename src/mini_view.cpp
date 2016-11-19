@@ -11,6 +11,7 @@
 #include "listview_color.h"
 #include "column_selection.h"
 #include "result_filter.h"
+#include "tooltip_window.h"
 
 #include "debug_view.h"
 
@@ -41,6 +42,16 @@ void MiniView::update()
         _listview->ensure_visible(count - 1);
         _listview->set_item_state(count - 1, LVIS_FOCUSED|LVIS_SELECTED, LVIS_FOCUSED|LVIS_SELECTED);
     }
+}
+
+void MiniView::_clear_results()
+{
+    for (auto& f : _filters)
+        f->clear();
+
+    _events.clear();
+
+    _listview->set_item_count(0, 0);
 }
 
 LRESULT MiniView::_on_logcmd(LogMessage::Value cmd, LPARAM lParam)
@@ -159,6 +170,8 @@ LRESULT MiniView::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
             _listview->insert_column(col.name.c_str(), col.show ? col.width : 0, i);
         }
 
+        subclass_control(_listview);
+
         async_call([&] {
             auto fnGetFields = [&](std::vector<std::wstring>* fields, int* def) {
                 for(auto& c : _columns) {
@@ -203,6 +216,13 @@ LRESULT MiniView::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
     {
         break;
     }
+    case WM_NCACTIVATE:
+    {
+        if(wparam == FALSE && _tipwnd->showing()) {
+            return FALSE;
+        }
+        break;
+    }
     case WM_CLOSE:
     {
         ::GetWindowRect(_hwnd, &winpos);
@@ -219,16 +239,19 @@ LRESULT MiniView::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
 
 LRESULT MiniView::on_notify(HWND hwnd, taowin::control* pc, int code, NMHDR* hdr)
 {
+    if (!pc) {
+        if (hwnd == _listview->get_header()) {
+            if (code == HDN_ENDTRACK) {
+                return _on_drag_column(hdr);
+            }
+        }
+
+        return 0;
+    }
+
     if(pc == _listview) {
         if(code == LVN_GETDISPINFO) {
-            auto pdi = reinterpret_cast<NMLVDISPINFO*>(hdr);
-            auto& evt = _events[pdi->item.iItem];
-            auto lit = &pdi->item;
-            auto field = (*evt)[pdi->item.iSubItem];
-
-            lit->pszText = const_cast<LPWSTR>(field);
-
-            return 0;
+            return _on_get_dispinfo(hdr);
         }
         else if(code == NM_CUSTOMDRAW) {
             return _on_custom_draw_listview(hdr);
@@ -262,5 +285,116 @@ LRESULT MiniView::_on_custom_draw_listview(NMHDR* hdr)
     return lr;
 }
 
+LRESULT MiniView::_on_get_dispinfo(NMHDR * hdr)
+{
+    auto pdi = reinterpret_cast<NMLVDISPINFO*>(hdr);
+    auto& evt = _events[pdi->item.iItem];
+    auto lit = &pdi->item;
+    auto field = (*evt)[pdi->item.iSubItem];
+
+    lit->pszText = const_cast<LPWSTR>(field);
+
+    return 0;
+}
+
+LRESULT MiniView::_on_drag_column(NMHDR * hdr)
+{
+    auto nmhdr = (NMHEADER*)hdr;
+    auto& item = nmhdr->pitem;
+    auto& col = _columns[nmhdr->iItem];
+
+    col.show = item->cxy != 0;
+    if (item->cxy) col.width = item->cxy;
+
+    return 0;
+}
+
+LRESULT MiniView::control_message(taowin::syscontrol* ctl, UINT umsg, WPARAM wparam, LPARAM lparam)
+{
+    if(ctl == _listview) {
+        // TODO static!!
+        static bool mi = false;
+
+        if(umsg == WM_MOUSEMOVE) {
+            if(!mi) {
+                TRACKMOUSEEVENT tme = {0};
+                tme.cbSize = sizeof(tme);
+                tme.hwndTrack = _listview->hwnd();
+                tme.dwFlags = TME_HOVER | TME_LEAVE;
+                tme.dwHoverTime = HOVER_DEFAULT;
+                _TrackMouseEvent(&tme);
+                mi = true;
+            }
+        }
+        else if(umsg == WM_MOUSELEAVE) {
+            mi = false;
+        }
+        if(umsg == WM_MOUSEHOVER) {
+            mi = false;
+
+            LVHITTESTINFO hti;
+            hti.pt = {GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam)};
+
+            if(_listview->subitem_hittest(&hti) != -1/* && hti.iSubItem == 9*/) {
+                // TODO 界面与逻辑应该是要分离的啊！！
+                NMLVDISPINFO info;
+                info.item.iItem = hti.iItem;
+                info.item.iSubItem = hti.iSubItem;
+                _on_get_dispinfo((NMHDR*)&info);
+
+                bool need_tip = false;
+                auto text = info.item.pszText;
+
+                if(!need_tip) {
+                    if(wcschr(text, L'\n')) {
+                        need_tip = true;
+                    }
+                }
+
+                // 不初始化会报潜在使用了未初始化的变量（但实际上不可能）
+                int text_width = 0;
+                constexpr int text_padding = 20;
+
+                if(!need_tip) {
+                    HDC hdc = ::GetDC(_listview->hwnd());
+                    HFONT hFont = (HFONT)::SendMessage(_listview->hwnd(), WM_GETFONT, 0, 0);
+                    HFONT hOldFont = SelectFont(hdc, hFont);
+
+                    SIZE szText = {0};
+                    if(::GetTextExtentPoint32(hdc, text, wcslen(text), &szText)) {
+                        int col_width = _columns[hti.iSubItem].width;
+                        text_width = szText.cx + text_padding;
+
+                        if(text_width > col_width) {
+                            need_tip = true;
+                        }
+                    }
+
+                    SelectFont(hdc, hOldFont);
+
+                    ::ReleaseDC(_listview->hwnd(), hdc);
+                }
+
+                if(!need_tip) {
+                    taowin::Rect rcSubItem, rcListView;
+                    ::GetClientRect(_listview->hwnd(), &rcListView);
+
+                    if(_listview->get_subitem_rect(0, hti.iSubItem, &rcSubItem)) {
+                        if(rcSubItem.left < rcListView.left || rcSubItem.left + text_width > rcListView.right) {
+                            need_tip = true;
+                        }
+                    }
+                }
+
+                if(need_tip && !_tipwnd->showing()) {
+                    _tipwnd->popup(text, _mgr.get_font(L"default"));
+                }
+            }
+
+            return 0;
+        }
+    }
+    return __super::control_message(ctl, umsg, wparam, lparam);
+}
 
 }

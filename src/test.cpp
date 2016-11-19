@@ -27,7 +27,7 @@ start:
     EtwFat(_T("Critical"));
     EtwVbs(_T("Longstring jasl;alkdjfklasfjdklajsfeaskdlfjsakdfjasklfj asalalfas asdfaslfk"));
     EtwLog(_T("11111111111111111111111111111111111111111111111111111112222222222222222222222222222222222222222222222333333333333333333333333333333333333333333333444444444444444444444444444444444444444444444455555555555555555555555555555555555555555"));
-    EtwLog(_T(R"!!!(LRESULT MainWindow::_on_log(LoggerMessage::Value msg, LPARAM lParam)
+    EtwLog(_T("%s"), _T(R"!!!(LRESULT MainWindow::_on_log(LoggerMessage::Value msg, LPARAM lParam)
 {
     if(msg == LoggerMessage::AllocMsg) {
         return (LRESULT)_log_pool.alloc();

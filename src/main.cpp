@@ -58,8 +58,6 @@ static void RegisterLoggerWindowClass()
 
 int __stdcall wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR lpCmdline, int nShowCmd)
 {
-    taowin::init();
-
     RegisterLoggerWindowClass();
 
     HWND hHostWnd = ::CreateWindowEx(0, 
@@ -71,13 +69,20 @@ int __stdcall wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR lpCmdline, int nSh
 
     taoetw::config.load(L"taoetw.json");
 
-    // auto main = new taoetw::MainWindow;
-    auto main = new taoetw::MiniView;
+    int what = ::MessageBox(nullptr, L"¡¾ÊÇ¡¿Æô¶¯ EtwLog£»\n¡¾·ñ¡¿Æô¶¯ DebugView¡£", L"", MB_ICONQUESTION | MB_YESNOCANCEL);
+    if(what != IDCANCEL) {
+        taowin::init();
 
-    main->create();
-    main->show();
+        taowin::window_creator* main;
 
-    taowin::loop_message();
+        if(what == IDYES)   main = new taoetw::MainWindow;
+        else                main = new taoetw::MiniView;
+
+        main->create();
+        main->show();
+
+        taowin::loop_message();
+    }
 
     ::DestroyWindow(hHostWnd);
 

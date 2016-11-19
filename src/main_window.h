@@ -11,14 +11,11 @@
 #include "event_detail.h"
 #include "module_manager.h"
 #include "result_filter.h"
-#include "mini_view.h"
+
 #include "tooltip_window.h"
 
 #include "controller.h"
 #include "consumer.h"
-
-#include "debug_view.h"
-
 
 namespace taoetw {
 
@@ -43,7 +40,6 @@ public:
         , _btn_clear(nullptr)
         , _btn_modules(nullptr)
         , _last_search_line(-1)
-        , _miniview(nullptr)
     {
         _tipwnd = new TooltipWindow;
         _tipwnd->create();
@@ -67,16 +63,13 @@ protected:
     taowin::button*     _btn_clear;
     taowin::button*     _btn_modules;
     taowin::button*     _btn_filter;
-    taowin::button*     _btn_debugview;
     taowin::button*     _btn_topmost;
     taowin::edit*       _edt_search;
     taowin::combobox*   _cbo_filter;
     taowin::button*     _btn_colors;
-    taowin::button*     _btn_miniview;
     taowin::button*     _btn_export2file;
     taowin::combobox*   _cbo_sel_flt;
 
-    MiniView*           _miniview;
     TooltipWindow*      _tipwnd;
 
     HACCEL              _accels;
@@ -86,7 +79,6 @@ protected:
 
     ModuleContainer     _modules;
     EventContainer      _events;
-    EventContainer      _dbglog;
     EventContainerS     _filters;
     EventContainer*     _current_filter;
     ModuleLevelMap      _level_maps;
@@ -97,7 +89,6 @@ protected:
 
     Controller          _controller;
     Consumer            _consumer;
-    DebugView           _dbgview;
 
     Guid2Module         _guid2mod;
 

@@ -19,8 +19,11 @@ bool DebugView::init(OnNotify notify)
 
     _notify = notify;
 
-    //_hMutex = ::CreateMutex(nullptr, FALSE, L"DbWinMutex");
-    //::ReleaseMutex(_hMutex);
+    HANDLE hTest = ::OpenEvent(SYNCHRONIZE, FALSE, L"DBWIN_BUFFER_READY");
+    if(hTest) {
+        ::CloseHandle(hTest);
+        return false;
+    }
 
     _hEvtBufReady = ::CreateEvent(nullptr, FALSE, TRUE, L"DBWIN_BUFFER_READY");
     _hEvtDataReady = ::CreateEvent(nullptr, FALSE, FALSE, L"DBWIN_DATA_READY");

@@ -75,24 +75,33 @@ struct LogDataUI : LogData
 
     inline const wchar_t* operator[](int i)
     {
-        // 返回 "" 而不是 null，以防错误
-        if (i<0 || i > data_cols - 1)
-            return L"";
-
         const wchar_t* value = L"";
 
-        switch(i)
-        {
-        case 0: value = id;                            break;
-        case 1: value = strTime.c_str();               break;
-        case 2: value = strPid.c_str();                break;
-        case 3: value = strTid.c_str();                break;
-        case 4: value = strProject.c_str();            break;
-        case 5: value = file + offset_of_file;         break;
-        case 6: value = func;                          break;
-        case 7: value = strLine.c_str();               break;
-        case 8: value = strLevel->c_str();             break;
-        case 9: value = strText.c_str();               break;
+        bool isdbgview = !!(flags & (int)ETW_LOGGER_FLAG::ETW_LOGGER_FLAG_DBGVIEW);
+
+        if(isdbgview) {
+            switch(i)
+            {
+            case 0: value = id;                     break;
+            case 1: value = strTime.c_str();        break;
+            case 2: value = strPid.c_str();         break;
+            case 3: value = strText.c_str();        break;
+            }
+        }
+        else {
+            switch(i)
+            {
+            case 0: value = id;                     break;
+            case 1: value = strTime.c_str();        break;
+            case 2: value = strPid.c_str();         break;
+            case 3: value = strTid.c_str();         break;
+            case 4: value = strProject.c_str();     break;
+            case 5: value = file + offset_of_file;  break;
+            case 6: value = func;                   break;
+            case 7: value = strLine.c_str();        break;
+            case 8: value = strLevel->c_str();      break;
+            case 9: value = strText.c_str();        break;
+            }
         }
 
         return value;
@@ -111,6 +120,8 @@ struct LogDataUI : LogData
         logui->pid = (int)pid;
         logui->level = TRACE_LEVEL_INFORMATION;
         logui->flags |= (int)ETW_LOGGER_FLAG::ETW_LOGGER_FLAG_DBGVIEW;
+
+        logui->strPid = std::to_wstring(logui->pid);
         
         {
             wchar_t buf[4096]; // enough

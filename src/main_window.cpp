@@ -42,12 +42,7 @@ LPCTSTR MainWindow::get_skin_xml() const
                 <control width="5" />
                 <button name="filter-result" text="结果过滤" width="60" style="tabstop"/>
                 <control width="5" />
-                <button name="mini-view" text="精简视图" width="60" style="tabstop"/>
-                <control width="5" />
                 <button name="export-to-file" text="导出日志" width="60" style="tabstop"/>
-                <control width="5" />
-                <control width="5" />
-                <button name="debug-view" text="DebugView" width="60" style="tabstop"/>
                 <control width="5" />
                 <control />
                 <label text="过滤：" width="38" style="centerimage"/>
@@ -323,30 +318,9 @@ LRESULT MainWindow::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR *
             (new ListviewColor(&_colors, &_level_maps, set))->domodal(this);
         }
     }
-    else if(pc == _btn_miniview) {
-        if(code == BN_CLICKED) {
-            auto mini = new MiniView(*_current_filter, _colors);
-            mini->on_close([&]() {
-                show();
-                _miniview = nullptr;
-            });
-            mini->create();
-            mini->update();
-            mini->show();
-            this->show(false);
-            _miniview = mini;
-            return 0;
-        }
-    }
     else if(pc == _btn_export2file) {
         if(code == BN_CLICKED) {
             _export2file();
-            return 0;
-        }
-    }
-    else if(pc == _btn_debugview) {
-        if(code == BN_CLICKED) {
-            _set_current_filter(&_dbglog);
             return 0;
         }
     }
@@ -441,18 +415,6 @@ bool MainWindow::_start()
         return false;
     }
 
-    // 启动 DebugView
-    // called from thread
-    auto notify = [&](DWORD pid, const char* str)
-    {
-        auto logui = LogDataUI::from_dbgview(pid, str, DoEtwAlloc());
-        DoEtwLog(logui);
-    };
-
-    if(!_dbgview.init(notify)) {
-        msgbox(L"没有成功启动 DebugView 日志记录。");
-    }
-
     return true;
 }
 
@@ -460,8 +422,6 @@ bool MainWindow::_stop()
 {
     _controller.stop();
     _consumer.stop();
-
-    _dbgview.uninit();
 
     return true;
 }
@@ -830,7 +790,6 @@ void MainWindow::_clear_results()
     //    delete evt;
 
     _events.clear();
-    _dbglog.clear();
 
     // 更新界面
     _listview->set_item_count(0, 0);
@@ -1023,12 +982,10 @@ LRESULT MainWindow::_on_create()
     _btn_clear          = _root->find<taowin::button>(L"clear-logging");
     _btn_modules        = _root->find<taowin::button>(L"module-manager");
     _btn_filter         = _root->find<taowin::button>(L"filter-result");
-    _btn_debugview      = _root->find<taowin::button>(L"debug-view");
     _btn_topmost        = _root->find<taowin::button>(L"topmost");
     _edt_search         = _root->find<taowin::edit>(L"s");
     _cbo_filter         = _root->find<taowin::combobox>(L"s-filter");
     _btn_colors         = _root->find<taowin::button>(L"color-settings");
-    _btn_miniview       = _root->find<taowin::button>(L"mini-view");
     _btn_export2file    = _root->find<taowin::button>(L"export-to-file");
     _cbo_sel_flt        = _root->find<taowin::combobox>(L"select-filter");
 
@@ -1085,37 +1042,27 @@ LRESULT MainWindow::_on_log(LoggerMessage::Value msg, LPARAM lParam)
         // 日志编号
         _snwprintf(item->id, _countof(item->id), L"%llu", (unsigned long long)_events.size() + 1);
 
-        bool is_etw_log = !(item->flags & (int)ETW_LOGGER_FLAG::ETW_LOGGER_FLAG_DBGVIEW);
+        // 项目名称 & 项目根目录
+        const std::wstring* root = nullptr;
+        _module_from_guid(item->guid, &item->strProject, &root);
 
-        if(is_etw_log) {
-            // 项目名称 & 项目根目录
-            const std::wstring* root = nullptr;
-            _module_from_guid(item->guid, &item->strProject, &root);
-
-            // 相对路径
-            item->offset_of_file = 0;
-            if(*item->file && root) {
-                if(::_wcsnicmp(item->file, root->c_str(), root->size()) == 0) {
-                    item->offset_of_file = (int)root->size();
-                }
+        // 相对路径
+        item->offset_of_file = 0;
+        if(*item->file && root) {
+            if(::_wcsnicmp(item->file, root->c_str(), root->size()) == 0) {
+                item->offset_of_file = (int)root->size();
             }
-        }
-        else {
-            item->offset_of_file = 0;
         }
 
         // 字符串形式的日志等级
         item->strLevel = &_level_maps[item->level].cmt1;
 
         // 全部事件容器
-        if(is_etw_log)
-            _events.add(item);
-        else
-            _dbglog.add(item);
+        _events.add(item);
 
         // 判断一下当前过滤器是否添加了此事件
         // 如果没有添加，就不必要刷新列表控件了
-        bool added_to_current = (is_etw_log && _current_filter == &_events) || _current_filter == &_dbglog;
+        bool added_to_current = _current_filter == &_events;
 
         // 带过滤的事件容器（指针复用）
         if(!_filters.empty()) {
@@ -1144,10 +1091,6 @@ LRESULT MainWindow::_on_log(LoggerMessage::Value msg, LPARAM lParam)
                 _listview->set_item_state(-1, LVIS_FOCUSED | LVIS_SELECTED, 0);
                 _listview->ensure_visible(count - 1);
                 _listview->set_item_state(count - 1, LVIS_FOCUSED | LVIS_SELECTED, LVIS_FOCUSED | LVIS_SELECTED);
-            }
-
-            if(_miniview) {
-                _miniview->update();
             }
         }
     }

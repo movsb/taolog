@@ -1,5 +1,7 @@
 #pragma once
 
+#include "debug_view.h"
+
 namespace taoetw {
 
 class MiniView : public taowin::window_creator
@@ -7,16 +9,33 @@ class MiniView : public taowin::window_creator
 private:
     static RECT winpos;
 
+    struct LogMessage
+    {
+        enum Value {
+            __Start,
+            Alloc,
+            Dealloc,
+            Log,
+        };
+    };
+
+    static constexpr UINT kLogCmd = WM_USER + 1;
+
 private:
-    EventContainer&     _events;
-    MapColors&          _colors;
     taowin::listview*   _listview;
-    std::function<void()> _on_close;
+
+protected:
+    MemPoolT<LogDataUI, 1024>
+                        _logpool;
+    EventContainer      _events;
+    EventContainerS     _filters;
+    ColumnContainer     _columns;
+    DebugView           _dbgview;
+
+    EventContainer*     _curflt;
 
 public:
-    MiniView(EventContainer& events, MapColors& colors)
-        : _events(events)
-        , _colors(colors)
+    MiniView()
     {
     }
 
@@ -25,7 +44,9 @@ public:
     }
 
     void update();
-    void on_close(std::function<void()> fn) { _on_close = fn; }
+
+protected:
+    LRESULT _on_logcmd(LogMessage::Value cmd, LPARAM lParam);
 
 protected:
     virtual LPCTSTR get_skin_xml() const override;

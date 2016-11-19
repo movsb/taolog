@@ -4,6 +4,7 @@
 #include "config.h"
 
 #include "main_window.h"
+#include "mini_view.h"
 
 namespace taoetw {
 
@@ -70,7 +71,8 @@ int __stdcall wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR lpCmdline, int nSh
 
     taoetw::config.load(L"taoetw.json");
 
-    auto main = new taoetw::MainWindow;
+    // auto main = new taoetw::MainWindow;
+    auto main = new taoetw::MiniView;
 
     main->create();
     main->show();

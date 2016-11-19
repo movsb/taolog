@@ -659,10 +659,12 @@ void MainWindow::_manage_modules()
 
 void MainWindow::_show_filters()
 {
-    auto get_base = [&](std::vector<std::wstring>* bases) {
+    auto get_base = [&](std::vector<std::wstring>* bases, int* def) {
         for (auto& col : _columns) {
             bases->push_back(col.name);
         }
+
+        *def = (int)_columns.size() - 1;
     };
 
     auto ondelete = [&](int i) {

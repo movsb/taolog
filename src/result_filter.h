@@ -5,7 +5,7 @@ namespace taoetw {
 class ResultFilter : public taowin::window_creator
 {
 public:
-    typedef std::function<void(std::vector<std::wstring>*)> fnOnGetFields;
+    typedef std::function<void(std::vector<std::wstring>*, int*)> fnOnGetFields;
     typedef std::function<void(int, std::unordered_map<int, const wchar_t*>*)> fnGetValueList;
 
 public:

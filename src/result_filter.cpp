@@ -240,12 +240,13 @@ LRESULT AddNewFilter::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
         _save        = _root->find<taowin::button>(L"save");
         _cancel      = _root->find<taowin::button>(L"cancel");
 
-        _on_get_fields(&_fields);
+        int def = 0;
+        _on_get_fields(&_fields, &def);
 
         for (auto& field : _fields)
             _field_name->add_string(field.c_str());
 
-        _field_name->set_cur_sel(0);
+        _field_name->set_cur_sel(def);
         // TODO
         on_notify(_field_name->hwnd(), _field_name, CBN_SELCHANGE, nullptr);
 

@@ -11,7 +11,9 @@ protected:
 
 public:
     EventContainer()
-    {}
+    {
+        enable_filter(false);
+    }
 
     EventContainer(
         const std::wstring& name,
@@ -26,7 +28,7 @@ public:
         , value_name(value_name)
         , value_input(value_input)
     {
-        _init();
+        enable_filter(true);
     }
 
 public:
@@ -40,9 +42,7 @@ public:
     size_t size() const { return _events.size(); }
     void clear() { return _events.clear(); }
     EVENTS& events() { return _events; }
-
-protected:
-    void _init();
+    void enable_filter(bool b);
 
 public:
     std::wstring name;              // ÈÝÆ÷µÄÃû×Ö

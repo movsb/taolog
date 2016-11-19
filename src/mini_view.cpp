@@ -10,6 +10,7 @@
 #include "event_container.h"
 #include "listview_color.h"
 #include "column_selection.h"
+#include "result_filter.h"
 
 #include "debug_view.h"
 
@@ -151,24 +152,50 @@ LRESULT MiniView::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
         _columns.emplace_back(L"编号", true,   50, "id"   ,0);
         _columns.emplace_back(L"时间", true,   86, "time" ,1);
         _columns.emplace_back(L"进程", true ,  50, "pid"  ,2);
-        _columns.emplace_back(L"日志", true,  300, "log"  ,9);
+        _columns.emplace_back(L"日志", true,  300, "log"  ,3);
 
         for (int i = 0; i < (int)_columns.size(); i++) {
             auto& col = _columns[i];
             _listview->insert_column(col.name.c_str(), col.show ? col.width : 0, i);
         }
 
-        if(!_dbgview.init([&](DWORD pid, const char* str) {
-            auto p = (LogDataUI*)::SendMessage(_hwnd, kLogCmd, LogMessage::Alloc, 0);
-            p = LogDataUI::from_dbgview(pid, str, p);
-            ::PostMessage(_hwnd, kLogCmd, LogMessage::Log, LPARAM(p));
-        }))
-        {
-            async_call([&]() {
-                msgbox(L"无法启动 DebugView 日志，当前可能有其它的 DebugView 日志查看器正在运行。", MB_ICONINFORMATION);
-                ::SendMessage(_hwnd, WM_CLOSE, 0, 0);
-            });
-        }
+        async_call([&] {
+            auto fnGetFields = [&](std::vector<std::wstring>* fields, int* def) {
+                for(auto& c : _columns) {
+                    fields->emplace_back(c.name);
+                }
+
+                *def = (int)_columns.size() - 1;
+            };
+
+            auto fnGetValues = [&](int idx, std::unordered_map<int, const wchar_t*>* values) {
+                values->clear();
+            };
+
+            AddNewFilter dlg(fnGetFields, fnGetValues);
+            if(dlg.domodal(this) == IDOK) {
+                _events.name        = dlg.name;
+                _events.field_index = dlg.field_index;
+                _events.field_name  = dlg.field_name;
+                _events.value_index = dlg.value_index;
+                _events.value_name  = dlg.value_name;
+                _events.value_input = dlg.value_input;
+
+                _events.enable_filter(true);
+            }
+
+            if(!_dbgview.init([&](DWORD pid, const char* str) {
+                auto p = (LogDataUI*)::SendMessage(_hwnd, kLogCmd, LogMessage::Alloc, 0);
+                p = LogDataUI::from_dbgview(pid, str, p);
+                ::PostMessage(_hwnd, kLogCmd, LogMessage::Log, LPARAM(p));
+            }))
+            {
+                async_call([&]() {
+                    msgbox(L"无法启动 DebugView 日志，当前可能有其它的 DebugView 日志查看器正在运行。", MB_ICONINFORMATION);
+                    close();
+                });
+            }
+        });
 
         return 0;
     }

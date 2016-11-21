@@ -79,6 +79,7 @@ LRESULT MainWindow::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
 LRESULT MainWindow::control_message(taowin::syscontrol* ctl, UINT umsg, WPARAM wparam, LPARAM lparam)
 {
     if(ctl == _listview) {
+        // TODO static!!
         static bool mi = false;
 
         if(umsg == WM_MOUSEMOVE) {
@@ -111,6 +112,7 @@ LRESULT MainWindow::control_message(taowin::syscontrol* ctl, UINT umsg, WPARAM w
                 bool need_tip = false;
                 auto text = info.item.pszText;
 
+                // 1) 有换行符
                 if(!need_tip) {
                     if(wcschr(text, L'\n')) {
                         need_tip = true;
@@ -121,6 +123,7 @@ LRESULT MainWindow::control_message(taowin::syscontrol* ctl, UINT umsg, WPARAM w
                 int text_width = 0;
                 constexpr int text_padding = 20;
 
+                // 2) 文本宽度超出列宽
                 if(!need_tip) {
                     HDC hdc = ::GetDC(_listview->hwnd());
                     HFONT hFont = (HFONT)::SendMessage(_listview->hwnd(), WM_GETFONT, 0, 0);
@@ -141,6 +144,8 @@ LRESULT MainWindow::control_message(taowin::syscontrol* ctl, UINT umsg, WPARAM w
                     ::ReleaseDC(_listview->hwnd(), hdc);
                 }
 
+                // 3) 列没有完整地显示出来
+                // 包括：滚动条出现、位于屏幕外
                 if(!need_tip) {
                     taowin::Rect rcSubItem, rcListView;
                     ::GetClientRect(_listview->hwnd(), &rcListView);
@@ -148,6 +153,35 @@ LRESULT MainWindow::control_message(taowin::syscontrol* ctl, UINT umsg, WPARAM w
                     if(_listview->get_subitem_rect(0, hti.iSubItem, &rcSubItem)) {
                         if(rcSubItem.left < rcListView.left || rcSubItem.left + text_width > rcListView.right) {
                             need_tip = true;
+                        }
+
+                        if(!need_tip) {
+                            // 列的屏幕位置（B）
+                            taowin::Rect rc(rcSubItem);
+                            ::ClientToScreen(_listview->hwnd(), reinterpret_cast<POINT*>(&rc.left));
+                            ::ClientToScreen(_listview->hwnd(), reinterpret_cast<POINT*>(&rc.right));
+
+                            // 屏幕位置（A）
+                            taowin::Rect rcScreen;
+                            {
+                                POINT pt;
+                                ::GetCursorPos(&pt);
+
+                                HMONITOR hMonitor = ::MonitorFromPoint(pt, MONITOR_DEFAULTTONEAREST);
+                                MONITORINFO info = {sizeof(info)};
+
+                                if(hMonitor && ::GetMonitorInfo(hMonitor, &info)) {
+                                    rcScreen = info.rcWork;
+                                }
+                                else {
+                                    rcScreen = {0, 0, ::GetSystemMetrics(SM_CXSCREEN), ::GetSystemMetrics(SM_CYSCREEN)};
+                                }
+                            }
+
+                            // 如果 A & B != B
+                            if(rcScreen.join(rc) != rc) {
+                                need_tip = true;
+                            }
                         }
                     }
                 }
@@ -184,7 +218,7 @@ LRESULT MainWindow::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR *
             if (code == NM_RCLICK) {
                 return _on_select_column();
             }
-            else if (code == HDN_ENDTRACK) {
+            else if (code == HDN_ENDTRACK || code == HDN_DIVIDERDBLCLICK) {
                 return _on_drag_column(hdr);
             }
             else if(code == HDN_ENDDRAG) {
@@ -1168,6 +1202,13 @@ LRESULT MainWindow::_on_select_column()
 LRESULT MainWindow::_on_drag_column(NMHDR* hdr)
 {
     auto nmhdr = (NMHEADER*)hdr;
+
+    HDITEM hdi;
+    if(!nmhdr->pitem) {
+        Header_GetItem(hdr->hwndFrom, nmhdr->iItem, &hdr);
+        nmhdr->pitem = &hdi;
+    }
+
     auto& item = nmhdr->pitem;
     auto& col = _columns[nmhdr->iItem];
 

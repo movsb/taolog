@@ -20,29 +20,6 @@ namespace taoetw {
 
 RECT MiniView::winpos = {-1,-1};
 
-// TODO 这段代码也是直接从 main 中搬过来的
-void MiniView::update()
-{
-    // 默认是非自动滚屏到最后一行的
-    // 但如果当前焦点行是最后一行，则自动滚屏
-    int count = (int)_events.size();
-    int sic_flag = LVSICF_NOINVALIDATEALL | LVSICF_NOSCROLL;
-    bool is_last_focused = count > 1 && (_listview->get_item_state(count - 2, LVIS_FOCUSED) & LVIS_FOCUSED)
-        || _listview->get_next_item(-1, LVIS_FOCUSED) == -1;
-
-    if(is_last_focused) {
-        sic_flag &= ~LVSICF_NOSCROLL;
-    }
-
-    _listview->set_item_count(count, sic_flag);
-
-    if(is_last_focused) {
-        _listview->set_item_state(-1, LVIS_FOCUSED | LVIS_SELECTED, 0);
-        _listview->ensure_visible(count - 1);
-        _listview->set_item_state(count - 1, LVIS_FOCUSED|LVIS_SELECTED, LVIS_FOCUSED|LVIS_SELECTED);
-    }
-}
-
 void MiniView::_clear_results()
 {
     for (auto& f : _filters)
@@ -240,7 +217,7 @@ LRESULT MiniView::on_notify(HWND hwnd, taowin::control* pc, int code, NMHDR* hdr
 {
     if (!pc) {
         if (hwnd == _listview->get_header()) {
-            if (code == HDN_ENDTRACK) {
+            if (code == HDN_ENDTRACK || code == HDN_DIVIDERDBLCLICK) {
                 return _on_drag_column(hdr);
             }
         }
@@ -299,6 +276,13 @@ LRESULT MiniView::_on_get_dispinfo(NMHDR * hdr)
 LRESULT MiniView::_on_drag_column(NMHDR * hdr)
 {
     auto nmhdr = (NMHEADER*)hdr;
+
+    HDITEM hdi;
+    if(!nmhdr->pitem) {
+        Header_GetItem(hdr->hwndFrom, nmhdr->iItem, &hdr);
+        nmhdr->pitem = &hdi;
+    }
+
     auto& item = nmhdr->pitem;
     auto& col = _columns[nmhdr->iItem];
 
@@ -344,6 +328,7 @@ LRESULT MiniView::control_message(taowin::syscontrol* ctl, UINT umsg, WPARAM wpa
                 bool need_tip = false;
                 auto text = info.item.pszText;
 
+                // 1) 有换行符
                 if(!need_tip) {
                     if(wcschr(text, L'\n')) {
                         need_tip = true;
@@ -354,6 +339,7 @@ LRESULT MiniView::control_message(taowin::syscontrol* ctl, UINT umsg, WPARAM wpa
                 int text_width = 0;
                 constexpr int text_padding = 20;
 
+                // 2) 文本宽度超出列宽
                 if(!need_tip) {
                     HDC hdc = ::GetDC(_listview->hwnd());
                     HFONT hFont = (HFONT)::SendMessage(_listview->hwnd(), WM_GETFONT, 0, 0);
@@ -374,6 +360,8 @@ LRESULT MiniView::control_message(taowin::syscontrol* ctl, UINT umsg, WPARAM wpa
                     ::ReleaseDC(_listview->hwnd(), hdc);
                 }
 
+                // 3) 列没有完整地显示出来
+                // 包括：滚动条出现、位于屏幕外
                 if(!need_tip) {
                     taowin::Rect rcSubItem, rcListView;
                     ::GetClientRect(_listview->hwnd(), &rcListView);
@@ -381,6 +369,35 @@ LRESULT MiniView::control_message(taowin::syscontrol* ctl, UINT umsg, WPARAM wpa
                     if(_listview->get_subitem_rect(0, hti.iSubItem, &rcSubItem)) {
                         if(rcSubItem.left < rcListView.left || rcSubItem.left + text_width > rcListView.right) {
                             need_tip = true;
+                        }
+
+                        if(!need_tip) {
+                            // 列的屏幕位置（B）
+                            taowin::Rect rc(rcSubItem);
+                            ::ClientToScreen(_listview->hwnd(), reinterpret_cast<POINT*>(&rc.left));
+                            ::ClientToScreen(_listview->hwnd(), reinterpret_cast<POINT*>(&rc.right));
+
+                            // 屏幕位置（A）
+                            taowin::Rect rcScreen;
+                            {
+                                POINT pt;
+                                ::GetCursorPos(&pt);
+
+                                HMONITOR hMonitor = ::MonitorFromPoint(pt, MONITOR_DEFAULTTONEAREST);
+                                MONITORINFO info = {sizeof(info)};
+
+                                if(hMonitor && ::GetMonitorInfo(hMonitor, &info)) {
+                                    rcScreen = info.rcWork;
+                                }
+                                else {
+                                    rcScreen = {0, 0, ::GetSystemMetrics(SM_CXSCREEN), ::GetSystemMetrics(SM_CYSCREEN)};
+                                }
+                            }
+
+                            // 如果 A & B != B
+                            if(rcScreen.join(rc) != rc) {
+                                need_tip = true;
+                            }
                         }
                     }
                 }

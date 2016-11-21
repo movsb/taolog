@@ -53,8 +53,6 @@ public:
         _tipwnd = nullptr;
     }
 
-    void update();
-
 protected:
     void _clear_results();
 

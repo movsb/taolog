@@ -111,7 +111,7 @@ struct LogDataUI : LogData
         ::MultiByteToWideChar(CP_ACP, 0, a, -1, u, c);
     }
 
-    static LogDataUI* from_dbgview(DWORD pid, const char* str, LogDataUI* place = nullptr)
+    static LogDataUI* from_dbgview(DWORD pid, const char* str, void* place = nullptr)
     {
         auto logui = place ? new (place) LogDataUI : new LogDataUI;
 
@@ -152,7 +152,7 @@ struct LogDataUI : LogData
         return logui;
     }
 
-    static LogDataUI* from_logdata(LogData* log, LogDataUI* place = nullptr)
+    static LogDataUI* from_logdata(LogData* log, void* place = nullptr)
     {
         const auto& log_data = *log;
         auto log_ui = place ? new (place) LogDataUI : new LogDataUI;

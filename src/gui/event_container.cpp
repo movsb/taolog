@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "config.h"
+#include "misc/config.h"
 #include "_logdata_define.hpp"
 
 #include "event_container.h"

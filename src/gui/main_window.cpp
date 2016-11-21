@@ -1,11 +1,11 @@
 #include "stdafx.h"
 
-#include "config.h"
-#include "utils.h"
+#include "misc/config.h"
+#include "misc/utils.h"
+#include "misc/event_system.hpp"
 
 #include "../res/resource.h"
 
-#include "event_system.hpp"
 #include "main_window.h"
 
 namespace taoetw {
@@ -13,14 +13,9 @@ namespace taoetw {
 static HWND g_logger_hwnd;
 static UINT g_logger_message;
 
-void DoEtwLog(LogDataUI* log)
+void DoEtwLog(void* log)
 {
-    ::PostMessage(g_logger_hwnd, g_logger_message, LoggerMessage::LogMsg, LPARAM(log));
-}
-
-LogDataUI* DoEtwAlloc()
-{
-    return (LogDataUI*)::SendMessage(g_logger_hwnd, g_logger_message, LoggerMessage::AllocMsg, 0);
+    ::SendMessage(g_logger_hwnd, g_logger_message, LoggerMessage::LogMsg, LPARAM(log));
 }
 
 LPCTSTR MainWindow::get_skin_xml() const
@@ -1021,18 +1016,13 @@ LRESULT MainWindow::_on_close()
 
 LRESULT MainWindow::_on_log(LoggerMessage::Value msg, LPARAM lParam)
 {
-    if(msg == LoggerMessage::AllocMsg) {
-        return (LRESULT)_log_pool.alloc();
-    }
-    else if(msg == LoggerMessage::DeallocMsg) {
-        auto p = reinterpret_cast<LogDataUI*>(lParam);
-        p->~LogDataUI();
-        _log_pool.destroy(p);
-        return 0;
-    }
-    else if(msg == LoggerMessage::LogMsg) {
-        LogDataUIPtr item((LogDataUI*)lParam, [&](LogDataUI* p) {
-            _on_log(LoggerMessage::DeallocMsg, LPARAM(p));
+    if(msg == LoggerMessage::LogMsg) {
+        auto logdata = reinterpret_cast<LogData*>(lParam);
+        auto logui = LogDataUI::from_logdata(logdata, _log_pool.alloc());
+
+        LogDataUIPtr item(logui, [&](LogDataUI* p) {
+            p->~LogDataUI();
+            _log_pool.destroy(p);
         });
 
         // »’÷æ±‡∫≈

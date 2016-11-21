@@ -1,6 +1,6 @@
 #pragma once
 
-#include "debug_view.h"
+#include "log/dbgview.h"
 
 namespace taoetw {
 

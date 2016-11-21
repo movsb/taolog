@@ -1,8 +1,7 @@
 #include "stdafx.h"
 
-#include "utils.h"
-
-#include "config.h"
+#include "misc/utils.h"
+#include "misc/config.h"
 
 #include "_module_entry.hpp"
 

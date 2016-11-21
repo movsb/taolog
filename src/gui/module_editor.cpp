@@ -1,9 +1,8 @@
 #include "stdafx.h"
 
-#include "config.h"
+#include "misc/config.h"
 
 #include "_module_entry.hpp"
-
 #include "module_editor.h"
 
 namespace taoetw {

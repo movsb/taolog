@@ -1,13 +1,10 @@
 #pragma once
 
-#include "_logdata_define.hpp"
-
 namespace taoetw {
 
 class Consumer;
 
-extern void DoEtwLog(LogDataUI* log);
-extern LogDataUI* DoEtwAlloc();
+extern void DoEtwLog(void* log);
 
 class Consumer
 {

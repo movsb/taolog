@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "config.h"
+#include "misc/config.h"
 
 #include "column_selection.h"
 

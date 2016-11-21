@@ -71,9 +71,7 @@ void Consumer::ProcessEvents(EVENT_TRACE * pEvent)
     if (!pEvent || !IsEqualGUID(pEvent->Header.Guid, g_clsGuid))
         return;
 
-    const auto log_data = (LogData*)pEvent->MofData;
-    auto log_ui = LogDataUI::from_logdata(log_data, DoEtwAlloc());
-    DoEtwLog(log_ui);
+    DoEtwLog(pEvent->MofData);
 }
 
 unsigned int Consumer::ConsumerThread(void * ud)

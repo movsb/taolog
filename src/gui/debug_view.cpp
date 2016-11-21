@@ -1,8 +1,7 @@
 #include "stdafx.h"
 
-#include "config.h"
-
-#include "mem_pool.hpp"
+#include "misc/config.h"
+#include "misc/mem_pool.hpp"
 
 #include "_logdata_define.hpp"
 #include "_module_entry.hpp"
@@ -13,9 +12,9 @@
 #include "result_filter.h"
 #include "tooltip_window.h"
 
-#include "debug_view.h"
+#include "log/dbgview.h"
 
-#include "mini_view.h"
+#include "debug_view.h"
 
 namespace taoetw {
 

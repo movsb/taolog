@@ -9,9 +9,6 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Source Files\etw">
-      <UniqueIdentifier>{7acd843e-c1d4-483f-922d-8dd2b7b94753}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\gui">
       <UniqueIdentifier>{8a0991d9-164b-4be7-ac08-f4e7a509f62e}</UniqueIdentifier>
     </Filter>
@@ -29,6 +26,9 @@
     </Filter>
     <Filter Include="Source Files\misc">
       <UniqueIdentifier>{59c04a97-b7a3-496f-a169-749c66b58f14}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\log">
+      <UniqueIdentifier>{7acd843e-c1d4-483f-922d-8dd2b7b94753}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -53,59 +53,59 @@
     <ClCompile Include="..\3rd\taowin\src\tw_window.cpp">
       <Filter>Source Files\3rd\taowin</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\consumer.cpp">
-      <Filter>Source Files\etw</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\controller.cpp">
-      <Filter>Source Files\etw</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\column_selection.cpp">
-      <Filter>Source Files\gui</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\module_manager.cpp">
-      <Filter>Source Files\gui</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\module_editor.cpp">
-      <Filter>Source Files\gui</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\event_detail.cpp">
-      <Filter>Source Files\gui</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\main_window.cpp">
-      <Filter>Source Files\gui</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\main.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\result_filter.cpp">
-      <Filter>Source Files\gui</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\event_container.cpp">
-      <Filter>Source Files\gui</Filter>
     </ClCompile>
     <ClCompile Include="..\3rd\json11\json11.cpp">
       <Filter>Source Files\3rd\json11</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\config.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\listview_color.cpp">
-      <Filter>Source Files\gui</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\stdafx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\utils.cpp">
+    <ClCompile Include="..\src\log\consumer.cpp">
+      <Filter>Source Files\log</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\log\controller.cpp">
+      <Filter>Source Files\log</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\log\dbgview.cpp">
+      <Filter>Source Files\log</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gui\column_selection.cpp">
+      <Filter>Source Files\gui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gui\debug_view.cpp">
+      <Filter>Source Files\gui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gui\event_container.cpp">
+      <Filter>Source Files\gui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gui\event_detail.cpp">
+      <Filter>Source Files\gui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gui\listview_color.cpp">
+      <Filter>Source Files\gui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gui\main_window.cpp">
+      <Filter>Source Files\gui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gui\module_editor.cpp">
+      <Filter>Source Files\gui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gui\module_manager.cpp">
+      <Filter>Source Files\gui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gui\result_filter.cpp">
+      <Filter>Source Files\gui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gui\tooltip_window.cpp">
+      <Filter>Source Files\gui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\misc\config.cpp">
       <Filter>Source Files\misc</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\mini_view.cpp">
-      <Filter>Source Files\gui</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\tooltip_window.cpp">
-      <Filter>Source Files\gui</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\debug_view.cpp">
-      <Filter>Source Files\etw</Filter>
+    <ClCompile Include="..\src\misc\utils.cpp">
+      <Filter>Source Files\misc</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -130,74 +130,74 @@
     <ClInclude Include="..\3rd\taowin\src\tw_window.h">
       <Filter>Source Files\3rd\taowin</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\consumer.h">
-      <Filter>Source Files\etw</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\controller.h">
-      <Filter>Source Files\etw</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\column_selection.h">
-      <Filter>Source Files\gui</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\module_manager.h">
-      <Filter>Source Files\gui</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\module_editor.h">
-      <Filter>Source Files\gui</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\event_detail.h">
-      <Filter>Source Files\gui</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\main_window.h">
-      <Filter>Source Files\gui</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\_module_entry.hpp">
-      <Filter>Source Files\gui</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\result_filter.h">
-      <Filter>Source Files\gui</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\event_container.h">
-      <Filter>Source Files\gui</Filter>
-    </ClInclude>
     <ClInclude Include="..\3rd\json11\json11.hpp">
       <Filter>Source Files\3rd\json11</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\config.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\_logdata_define.hpp">
-      <Filter>Source Files\gui</Filter>
     </ClInclude>
     <ClInclude Include="..\inc\etwlogger.h">
       <Filter>Source Files\inc</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\listview_color.h">
-      <Filter>Source Files\gui</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\stdafx.h">
       <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\utils.h">
-      <Filter>Source Files\misc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\mini_view.h">
-      <Filter>Source Files\gui</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\tooltip_window.h">
-      <Filter>Source Files\gui</Filter>
     </ClInclude>
     <ClInclude Include="../res/resource.h">
       <Filter>Resource Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\mem_pool.hpp">
+    <ClInclude Include="..\src\log\consumer.h">
+      <Filter>Source Files\log</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\log\controller.h">
+      <Filter>Source Files\log</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\log\dbgview.h">
+      <Filter>Source Files\log</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\gui\_logdata_define.hpp">
+      <Filter>Source Files\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\gui\_module_entry.hpp">
+      <Filter>Source Files\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\gui\column_selection.h">
+      <Filter>Source Files\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\gui\debug_view.h">
+      <Filter>Source Files\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\gui\event_container.h">
+      <Filter>Source Files\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\gui\event_detail.h">
+      <Filter>Source Files\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\gui\listview_color.h">
+      <Filter>Source Files\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\gui\main_window.h">
+      <Filter>Source Files\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\gui\module_editor.h">
+      <Filter>Source Files\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\gui\module_manager.h">
+      <Filter>Source Files\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\gui\result_filter.h">
+      <Filter>Source Files\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\gui\tooltip_window.h">
+      <Filter>Source Files\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\misc\config.h">
       <Filter>Source Files\misc</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\event_system.hpp">
+    <ClInclude Include="..\src\misc\event_system.hpp">
       <Filter>Source Files\misc</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\debug_view.h">
-      <Filter>Source Files\etw</Filter>
+    <ClInclude Include="..\src\misc\mem_pool.hpp">
+      <Filter>Source Files\misc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\misc\utils.h">
+      <Filter>Source Files\misc</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

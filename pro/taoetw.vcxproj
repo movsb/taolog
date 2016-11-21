@@ -92,7 +92,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_CRT_SECURE_NO_WARNINGS;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>../3rd</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../3rd;../src</AdditionalIncludeDirectories>
       <AssemblerOutput>NoListing</AssemblerOutput>
       <TreatSpecificWarningsAsErrors>4701</TreatSpecificWarningsAsErrors>
       <DisableSpecificWarnings>4100</DisableSpecificWarnings>
@@ -126,7 +126,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;_CRT_SECURE_NO_WARNINGS;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>../3rd</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../3rd;../src</AdditionalIncludeDirectories>
       <AssemblerOutput>NoListing</AssemblerOutput>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <TreatSpecificWarningsAsErrors>4701</TreatSpecificWarningsAsErrors>
@@ -164,21 +164,32 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="..\src\config.cpp">
+    <ClCompile Include="..\src\gui\column_selection.cpp" />
+    <ClCompile Include="..\src\gui\debug_view.cpp" />
+    <ClCompile Include="..\src\gui\event_container.cpp" />
+    <ClCompile Include="..\src\gui\event_detail.cpp" />
+    <ClCompile Include="..\src\gui\listview_color.cpp" />
+    <ClCompile Include="..\src\gui\main_window.cpp" />
+    <ClCompile Include="..\src\gui\module_editor.cpp" />
+    <ClCompile Include="..\src\gui\module_manager.cpp" />
+    <ClCompile Include="..\src\gui\result_filter.cpp" />
+    <ClCompile Include="..\src\gui\tooltip_window.cpp" />
+    <ClCompile Include="..\src\log\consumer.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="..\src\debug_view.cpp">
+    <ClCompile Include="..\src\log\controller.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="..\src\event_container.cpp" />
-    <ClCompile Include="..\src\listview_color.cpp" />
+    <ClCompile Include="..\src\log\dbgview.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="..\src\main.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="..\src\main_window.cpp" />
     <ClCompile Include="..\3rd\taowin\src\tw_control.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
@@ -207,26 +218,15 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="..\src\column_selection.cpp" />
-    <ClCompile Include="..\src\consumer.cpp">
+    <ClCompile Include="..\src\misc\config.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="..\src\controller.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="..\src\event_detail.cpp" />
-    <ClCompile Include="..\src\mini_view.cpp" />
-    <ClCompile Include="..\src\module_editor.cpp" />
-    <ClCompile Include="..\src\module_manager.cpp" />
-    <ClCompile Include="..\src\result_filter.cpp" />
+    <ClCompile Include="..\src\misc\utils.cpp" />
     <ClCompile Include="..\src\stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="..\src\tooltip_window.cpp" />
-    <ClCompile Include="..\src\utils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\3rd\json11\json11.hpp" />
@@ -238,26 +238,26 @@
     <ClInclude Include="..\3rd\taowin\src\tw_util.h" />
     <ClInclude Include="..\3rd\taowin\src\tw_window.h" />
     <ClInclude Include="..\inc\etwlogger.h" />
-    <ClInclude Include="..\src\column_selection.h" />
-    <ClInclude Include="..\src\config.h" />
-    <ClInclude Include="..\src\consumer.h" />
-    <ClInclude Include="..\src\controller.h" />
-    <ClInclude Include="..\src\event_detail.h" />
-    <ClInclude Include="..\src\event_system.hpp" />
-    <ClInclude Include="..\src\debug_view.h" />
-    <ClInclude Include="..\src\listview_color.h" />
-    <ClInclude Include="..\src\main_window.h" />
-    <ClInclude Include="..\src\mem_pool.hpp" />
-    <ClInclude Include="..\src\mini_view.h" />
-    <ClInclude Include="..\src\module_editor.h" />
-    <ClInclude Include="..\src\result_filter.h" />
-    <ClInclude Include="..\src\event_container.h" />
+    <ClInclude Include="..\src\gui\column_selection.h" />
+    <ClInclude Include="..\src\gui\debug_view.h" />
+    <ClInclude Include="..\src\gui\event_container.h" />
+    <ClInclude Include="..\src\gui\event_detail.h" />
+    <ClInclude Include="..\src\gui\listview_color.h" />
+    <ClInclude Include="..\src\gui\main_window.h" />
+    <ClInclude Include="..\src\gui\module_editor.h" />
+    <ClInclude Include="..\src\gui\module_manager.h" />
+    <ClInclude Include="..\src\gui\result_filter.h" />
+    <ClInclude Include="..\src\gui\tooltip_window.h" />
+    <ClInclude Include="..\src\gui\_logdata_define.hpp" />
+    <ClInclude Include="..\src\gui\_module_entry.hpp" />
+    <ClInclude Include="..\src\log\consumer.h" />
+    <ClInclude Include="..\src\log\controller.h" />
+    <ClInclude Include="..\src\log\dbgview.h" />
+    <ClInclude Include="..\src\misc\config.h" />
+    <ClInclude Include="..\src\misc\event_system.hpp" />
+    <ClInclude Include="..\src\misc\mem_pool.hpp" />
+    <ClInclude Include="..\src\misc\utils.h" />
     <ClInclude Include="..\src\stdafx.h" />
-    <ClInclude Include="..\src\tooltip_window.h" />
-    <ClInclude Include="..\src\utils.h" />
-    <ClInclude Include="..\src\_logdata_define.hpp" />
-    <ClInclude Include="..\src\_module_entry.hpp" />
-    <ClInclude Include="..\src\module_manager.h" />
     <ClInclude Include="../res/resource.h" />
   </ItemGroup>
   <ItemGroup>

@@ -1,10 +1,10 @@
 #include "stdafx.h"
 
-#include "event_system.hpp"
-#include "config.h"
+#include "misc/event_system.hpp"
+#include "misc/config.h"
 
-#include "main_window.h"
-#include "mini_view.h"
+#include "gui/main_window.h"
+#include "gui/debug_view.h"
 
 namespace taoetw {
 
@@ -33,7 +33,7 @@ static LRESULT CALLBACK __WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, L
     if(uMsg == WM_COPYDATA) {
         auto cds = reinterpret_cast<COPYDATASTRUCT*>(lParam);
         auto log = reinterpret_cast<taoetw::LogData*>(cds->lpData);
-        taoetw::DoEtwLog(taoetw::LogDataUI::from_logdata(log, taoetw::DoEtwAlloc()));
+        taoetw::DoEtwLog(log);
         return 0;
     }
 

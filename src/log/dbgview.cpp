@@ -8,7 +8,7 @@
 #include <Windows.h>
 #include <process.h>
 
-#include "debug_view.h"
+#include "dbgview.h"
 
 namespace taoetw
 {

@@ -1,12 +1,11 @@
 #include "stdafx.h"
 
+#include "misc/event_system.hpp"
+
 #include "_logdata_define.hpp"
-
 #include "event_container.h"
-
 #include "result_filter.h"
 
-#include "event_system.hpp"
 
 namespace taoetw {
 

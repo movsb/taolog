@@ -1,6 +1,6 @@
 #pragma once
 
-#include "mem_pool.hpp"
+#include "misc/mem_pool.hpp"
 
 #include "_module_entry.hpp"
 #include "_logdata_define.hpp"
@@ -14,8 +14,8 @@
 
 #include "tooltip_window.h"
 
-#include "controller.h"
-#include "consumer.h"
+#include "log/controller.h"
+#include "log/consumer.h"
 
 namespace taoetw {
 
@@ -23,8 +23,6 @@ struct LoggerMessage {
     enum Value {
         __Start = 0,
         LogMsg,
-        AllocMsg,
-        DeallocMsg,
     };
 };
 

@@ -165,7 +165,6 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\src\gui\column_selection.cpp" />
-    <ClCompile Include="..\src\gui\debug_view.cpp" />
     <ClCompile Include="..\src\gui\event_container.cpp" />
     <ClCompile Include="..\src\gui\event_detail.cpp" />
     <ClCompile Include="..\src\gui\listview_color.cpp" />
@@ -239,7 +238,6 @@
     <ClInclude Include="..\3rd\taowin\src\tw_window.h" />
     <ClInclude Include="..\inc\etwlogger.h" />
     <ClInclude Include="..\src\gui\column_selection.h" />
-    <ClInclude Include="..\src\gui\debug_view.h" />
     <ClInclude Include="..\src\gui\event_container.h" />
     <ClInclude Include="..\src\gui\event_detail.h" />
     <ClInclude Include="..\src\gui\listview_color.h" />

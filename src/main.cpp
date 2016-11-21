@@ -4,7 +4,6 @@
 #include "misc/config.h"
 
 #include "gui/main_window.h"
-#include "gui/debug_view.h"
 
 namespace taoetw {
 
@@ -75,8 +74,7 @@ int __stdcall wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR lpCmdline, int nSh
 
         taowin::window_creator* main;
 
-        if(what == IDYES)   main = new taoetw::MainWindow;
-        else                main = new taoetw::MiniView;
+        main = new taoetw::MainWindow(what == IDYES ? taoetw::LogSysType::EventTracing : taoetw::LogSysType::DebugView);
 
         main->create();
         main->show();

@@ -15,7 +15,7 @@ static UINT g_logger_message;
 
 void DoEtwLog(void* log)
 {
-    ::SendMessage(g_logger_hwnd, g_logger_message, LoggerMessage::LogMsg, LPARAM(log));
+    ::SendMessage(g_logger_hwnd, g_logger_message, LoggerMessage::LogEtwMsg, LPARAM(log));
 }
 
 LPCTSTR MainWindow::get_skin_xml() const
@@ -84,7 +84,7 @@ LRESULT MainWindow::control_message(taowin::syscontrol* ctl, UINT umsg, WPARAM w
 
         if(umsg == WM_MOUSEMOVE) {
             if(!mi) {
-                taowin::set_track_mouse(_listview);
+                //taowin::set_track_mouse(_listview);
                 mi = true;
             }
         }
@@ -96,7 +96,7 @@ LRESULT MainWindow::control_message(taowin::syscontrol* ctl, UINT umsg, WPARAM w
 
             POINT pt = {GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam)};
             const wchar_t* s;
-            if(_listview->showtip_needed(pt, &s)) {
+            if(0){//_listview->showtip_needed(pt, &s)) {
                 if(!_tipwnd->showing()) {
                     _tipwnd->popup(s, _mgr.get_font(L"default"));
                 }
@@ -403,13 +403,21 @@ void MainWindow::_init_listview()
         }
     }
 
-    for (int i = 0; i < (int)_columns.size(); i++) {
-        auto& col = _columns[i];
-        _listview->insert_column(col.name.c_str(), col.show ? col.width : 0, i);
+    if(isdbg()) {
+        int idx[] = {3,4,5,6,7,8};
+        for(auto i : idx) {
+            _columns[i].valid = false;
+        }
     }
 
-    if(_config.obj("listview").has_arr("column-order")) {
-        auto& orders = _config.obj("listview").arr("column-order").as_arr();
+    for (int i = 0; i < (int)_columns.size(); i++) {
+        auto& col = _columns[i];
+        auto width = col.valid && col.show ? col.width : 0;
+        _listview->insert_column(col.name.c_str(), width, i);
+    }
+
+    if(_config.obj("listview").has_arr("column_orders")) {
+        auto& orders = _config.obj("listview").arr("column_orders").as_arr();
         auto o = std::make_unique<int[]>(orders.size());
         for(int i = 0; i < (int)orders.size(); i++) {
             o.get()[i] = orders[i].int_value();
@@ -475,7 +483,7 @@ void MainWindow::_init_config()
 
     // 窗口标题
     {
-        std::wstring tt(L"ETW Log Viewer");
+        std::wstring tt(L"Log Viewer");
         if(_config.has_str("title")) {
             tt = g_config.ws(_config.str("title").as_str());
         }
@@ -486,15 +494,17 @@ void MainWindow::_init_config()
     // 窗口置顶与否
     _set_top_most(_config["topmost"].bool_value());
 
-    // the modules
-    auto modules = g_config->arr("modules");
-    for(auto& mod : modules.as_arr()) {
-        if(mod.is_object()) {
-            if(auto m = ModuleEntry::from_json(mod)) {
-                _modules.push_back(m);
-            }
-            else {
-                msgbox(L"无效模块配置。", MB_ICONERROR);
+    if(isetw()) {
+        // the modules
+        auto modules = g_config->arr("modules");
+        for(auto& mod : modules.as_arr()) {
+            if(mod.is_object()) {
+                if(auto m = ModuleEntry::from_json(mod)) {
+                    _modules.push_back(m);
+                }
+                else {
+                    msgbox(L"无效模块配置。", MB_ICONERROR);
+                }
             }
         }
     }
@@ -597,9 +607,6 @@ void MainWindow::_show_filters()
         }
 
         *def = (int)_columns.size() - 1;
-    };
-
-    auto ondelete = [&](int i) {
     };
 
     auto ongetvalues = [&](int baseindex, std::unordered_map<int, const wchar_t*>* values) {
@@ -906,6 +913,11 @@ LRESULT MainWindow::_on_create()
     _btn_export2file    = _root->find<taowin::button>(L"export-to-file");
     _cbo_sel_flt        = _root->find<taowin::combobox>(L"select-filter");
 
+    if(isdbg()) {
+        _btn_start->set_visible(false);
+        _btn_modules->set_visible(false);
+    }
+
     _accels = ::LoadAccelerators(nullptr, MAKEINTRESOURCE(IDR_ACCELERATOR_MAINWINDOW));
 
     _init_config();
@@ -926,6 +938,46 @@ LRESULT MainWindow::_on_create()
     _update_main_filter();
     _update_filter_list(nullptr);
 
+    if(isdbg()) {
+        async_call([&] {
+            auto fnGetFields = [&](std::vector<std::wstring>* fields, int* def) {
+                for(auto& c : _columns) {
+                    fields->emplace_back(c.name);
+                }
+
+                *def = (int)_columns.size() - 1;
+            };
+
+            auto fnGetValues = [&](int idx, std::unordered_map<int, const wchar_t*>* values) {
+                values->clear();
+            };
+
+            AddNewFilter dlg(fnGetFields, fnGetValues);
+            if(dlg.domodal(this) == IDOK) {
+                _events.name        = dlg.name;
+                _events.field_index = dlg.field_index;
+                _events.field_name  = dlg.field_name;
+                _events.value_index = dlg.value_index;
+                _events.value_name  = dlg.value_name;
+                _events.value_input = dlg.value_input;
+
+                _events.enable_filter(true);
+            }
+
+            if(!_dbgview.init([&](DWORD pid, const char* str) {
+                auto p = (LogDataUI*)::SendMessage(_hwnd, kDoLog, LoggerMessage::AllocLogUI, 0);
+                p = LogDataUI::from_dbgview(pid, str, p);
+                ::PostMessage(_hwnd, kDoLog, LoggerMessage::LogDbgMsg, LPARAM(p));
+            }))
+            {
+                async_call([&]() {
+                    msgbox(L"无法启动 DebugView 日志，当前可能有其它的 DebugView 日志查看器正在运行。", MB_ICONINFORMATION);
+                    close();
+                });
+            }
+        });
+    }
+
     return 0;
 }
 
@@ -942,9 +994,20 @@ LRESULT MainWindow::_on_close()
 
 LRESULT MainWindow::_on_log(LoggerMessage::Value msg, LPARAM lParam)
 {
-    if(msg == LoggerMessage::LogMsg) {
-        auto logdata = reinterpret_cast<LogData*>(lParam);
-        auto logui = LogDataUI::from_logdata(logdata, _log_pool.alloc());
+    if(msg == LoggerMessage::LogDbgMsg || msg == LoggerMessage::LogEtwMsg) {
+        LogDataUI* logui;
+
+        if(_logsystype == LogSysType::EventTracing) {
+            auto logdata = reinterpret_cast<LogData*>(lParam);
+            logui = LogDataUI::from_logdata(logdata, _log_pool.alloc());
+        }
+        else if(_logsystype == LogSysType::DebugView) {
+            logui = reinterpret_cast<LogDataUI*>(lParam);
+        }
+        else {
+            (logui=nullptr);
+            assert(0);
+        }
 
         LogDataUIPtr item(logui, [&](LogDataUI* p) {
             p->~LogDataUI();
@@ -954,16 +1017,21 @@ LRESULT MainWindow::_on_log(LoggerMessage::Value msg, LPARAM lParam)
         // 日志编号
         _snwprintf(item->id, _countof(item->id), L"%llu", (unsigned long long)_events.size() + 1);
 
-        // 项目名称 & 项目根目录
-        const std::wstring* root = nullptr;
-        _module_from_guid(item->guid, &item->strProject, &root);
+        if(isetw()) {
+            // 项目名称 & 项目根目录
+            const std::wstring* root = nullptr;
+            _module_from_guid(item->guid, &item->strProject, &root);
 
-        // 相对路径
-        item->offset_of_file = 0;
-        if(*item->file && root) {
-            if(::_wcsnicmp(item->file, root->c_str(), root->size()) == 0) {
-                item->offset_of_file = (int)root->size();
+            // 相对路径
+            item->offset_of_file = 0;
+            if(*item->file && root) {
+                if(::_wcsnicmp(item->file, root->c_str(), root->size()) == 0) {
+                    item->offset_of_file = (int)root->size();
+                }
             }
+        }
+        else if(isdbg()) {
+            item->offset_of_file = 0;
         }
 
         // 字符串形式的日志等级
@@ -1104,6 +1172,10 @@ LRESULT MainWindow::_on_drag_column(NMHDR* hdr)
     auto& item = nmhdr->pitem;
     auto& col = _columns[nmhdr->iItem];
 
+    if(!col.valid) {
+        return 0;
+    }
+
     col.show = item->cxy != 0;
     if (item->cxy) col.width = item->cxy;
 
@@ -1133,7 +1205,7 @@ void MainWindow::_on_drop_column()
             order.push_back(orders.get()[i]);
         }
 
-        auto& order_config = _config.obj("listview").arr("column-order").as_arr();
+        auto& order_config = _config.obj("listview").arr("column_orders").as_arr();
         order_config = std::move(order);
     }
 }

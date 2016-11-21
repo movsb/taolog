@@ -16,13 +16,27 @@
 
 #include "log/controller.h"
 #include "log/consumer.h"
+#include "log/dbgview.h"
 
 namespace taoetw {
 
 struct LoggerMessage {
     enum Value {
         __Start = 0,
-        LogMsg,
+        LogEtwMsg,
+        LogDbgMsg,
+        AllocLogUI,
+    };
+};
+
+struct LogSysType
+{
+    enum Value
+    {
+        __Start,
+        EventTracing,
+        DebugView,
+        __End,
     };
 };
 
@@ -32,11 +46,8 @@ private:
     static const UINT kDoLog = WM_USER + 1;
 
 public:
-    MainWindow()
-        : _listview(nullptr)
-        , _btn_start(nullptr)
-        , _btn_clear(nullptr)
-        , _btn_modules(nullptr)
+    MainWindow(LogSysType::Value type)
+        : _logsystype(type)
         , _last_search_line(-1)
     {
         _tipwnd = new TooltipWindow;
@@ -52,8 +63,12 @@ public:
         ::DestroyWindow(_tipwnd->hwnd());
         _tipwnd = nullptr;
     }
+
+    bool isetw() const { return _logsystype == LogSysType::EventTracing; }
+    bool isdbg() const { return _logsystype == LogSysType::DebugView; }
     
 protected:
+    LogSysType::Value   _logsystype;
     JsonWrapper         _config;
 
     taowin::listview*   _listview;
@@ -83,10 +98,11 @@ protected:
 
     int                 _last_search_line;
     std::wstring        _last_search_string;
-    bool                _last_search_matched_cols[LogDataUI::cols_max];
+    bool                _last_search_matched_cols[LogDataUI::cols()];
 
     Controller          _controller;
     Consumer            _consumer;
+    DebugView           _dbgview;
 
     Guid2Module         _guid2mod;
 

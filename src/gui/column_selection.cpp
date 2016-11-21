@@ -39,6 +39,8 @@ LRESULT ColumnSelection::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
     {
         auto container = _root->find<taowin::vertical>(L"container");
 
+        int visible_count = 0;
+
         for (int i = 0; i < (int)_columns.size(); i++) {
             auto check = new taowin::check;
             std::map<taowin::string, taowin::string> attrs;
@@ -50,9 +52,12 @@ LRESULT ColumnSelection::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
             check->create(_hwnd, attrs, _mgr);
             ::SetWindowLongPtr(check->hwnd(), GWL_USERDATA, LONG(check));
             container->add(check);
+
+            if(!_columns[i].valid) check->set_visible(false);
+            else visible_count++;
         }
 
-        taowin::Rect rc{ 0, 0, 200, (int)_columns.size() * 20 + 50 };
+        taowin::Rect rc{ 0, 0, 200, visible_count * 20 + 50 };
         ::AdjustWindowRectEx(&rc, ::GetWindowLongPtr(_hwnd, GWL_STYLE), !!::GetMenu(_hwnd), ::GetWindowLongPtr(_hwnd, GWL_EXSTYLE));
         ::SetWindowPos(_hwnd, nullptr, 0, 0, rc.width(), rc.height(), SWP_NOMOVE | SWP_NOZORDER);
 

@@ -74,9 +74,6 @@
     <ClCompile Include="..\src\gui\column_selection.cpp">
       <Filter>Source Files\gui</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\gui\debug_view.cpp">
-      <Filter>Source Files\gui</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\gui\event_container.cpp">
       <Filter>Source Files\gui</Filter>
     </ClCompile>
@@ -158,9 +155,6 @@
       <Filter>Source Files\gui</Filter>
     </ClInclude>
     <ClInclude Include="..\src\gui\column_selection.h">
-      <Filter>Source Files\gui</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\gui\debug_view.h">
       <Filter>Source Files\gui</Filter>
     </ClInclude>
     <ClInclude Include="..\src\gui\event_container.h">

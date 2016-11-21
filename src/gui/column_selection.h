@@ -8,6 +8,7 @@ struct Column {
     std::wstring name;
     bool show;
     int width;
+    bool valid;         // ¡Ÿ ± π”√
 
     Column(const wchar_t* name_, bool show_, int width_, const char* id_, int log_index_)
         : name(name_)
@@ -16,7 +17,7 @@ struct Column {
 		, id(id_)
         , log_index(log_index_)
     {
-
+        valid = true;
     }
 
     json11::Json to_json() const

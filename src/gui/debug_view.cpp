@@ -300,12 +300,7 @@ LRESULT MiniView::control_message(taowin::syscontrol* ctl, UINT umsg, WPARAM wpa
 
         if(umsg == WM_MOUSEMOVE) {
             if(!mi) {
-                TRACKMOUSEEVENT tme = {0};
-                tme.cbSize = sizeof(tme);
-                tme.hwndTrack = _listview->hwnd();
-                tme.dwFlags = TME_HOVER | TME_LEAVE;
-                tme.dwHoverTime = HOVER_DEFAULT;
-                _TrackMouseEvent(&tme);
+                taowin::set_track_mouse(_listview);
                 mi = true;
             }
         }

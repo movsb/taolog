@@ -84,12 +84,7 @@ LRESULT MainWindow::control_message(taowin::syscontrol* ctl, UINT umsg, WPARAM w
 
         if(umsg == WM_MOUSEMOVE) {
             if(!mi) {
-                TRACKMOUSEEVENT tme = {0};
-                tme.cbSize = sizeof(tme);
-                tme.hwndTrack = _listview->hwnd();
-                tme.dwFlags = TME_HOVER | TME_LEAVE;
-                tme.dwHoverTime = HOVER_DEFAULT;
-                _TrackMouseEvent(&tme);
+                taowin::set_track_mouse(_listview);
                 mi = true;
             }
         }
@@ -671,7 +666,7 @@ bool MainWindow::_do_search(const std::wstring& s, int line, int)
             bool has_col_match = false;
 
             // 一次性匹配整行
-            for (int i = 0; i < LogDataUI::data_cols; i++) {
+            for (int i = 0; i < evt.cols(); i++) {
                 if(search_text(evt[i])) {
                     _last_search_matched_cols[i] = true;
                     has_col_match = true;
@@ -810,17 +805,7 @@ void MainWindow::_update_filter_list(EventContainer* p)
 
 void MainWindow::_export2file()
 {
-    auto escape = [](const wchar_t* s) {
-        std::wstring r(s);
-
-        r = std::regex_replace(r, std::wregex(L"&"), L"&amp;");
-        r = std::regex_replace(r, std::wregex(L"<"), L"&lt;");
-        r = std::regex_replace(r, std::wregex(L">"), L"&gt;");
-
-        return r;
-    };
-
-    std::wstringstream s;
+    std::wostringstream s;
 
     s << LR"(<!doctype html>
 <html>
@@ -846,14 +831,7 @@ td:nth-child(10) {
 )";
 
     for(const auto& log : _current_filter->events()) {
-        s << L"<tr>";
-
-        for(int i = 0; i < log->data_cols; i++) {
-            auto p = (*log)[i];
-            s << L"<td>" << (log->should_escape[i] ? escape(p).c_str() : p) << L"</td>";
-        }
-
-        s << L"</tr>\n";
+        log->to_html_tr(s);
     }
 
     s << LR"(

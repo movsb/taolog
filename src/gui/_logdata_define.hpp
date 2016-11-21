@@ -38,9 +38,50 @@ struct LogDataUI : LogData
     typedef std::basic_stringstream<TCHAR> stringstream;
     typedef std::function<const wchar_t*(int i)> fnGetColumnName;
 
-    static constexpr int data_cols = 10;
+    static constexpr int dbg_cols = 4;
+    static constexpr int etw_cols = 10;
 
-    static constexpr bool should_escape[data_cols] = {false,false,false,false,true,true,false,false,false,true};
+    static constexpr int cols_max = etw_cols;
+
+
+    bool is_etw() const
+    {
+        return !(flags  & (int)ETW_LOGGER_FLAG::ETW_LOGGER_FLAG_DBGVIEW);
+    }
+
+    int cols() const
+    {
+        return is_etw() ? etw_cols : dbg_cols;
+    }
+
+    std::wostringstream& to_html_tr(std::wostringstream& os) const
+    {
+        static constexpr bool should_escape_dbg[4] = {false,false,false,true};
+        static constexpr bool should_escape_etw[10] = {false,false,false,false,true,true,false,false,false,true};
+
+        static auto escape = [](const wchar_t* s) {
+            std::wstring r(s);
+
+            r = std::regex_replace(r, std::wregex(L"&"), L"&amp;");
+            r = std::regex_replace(r, std::wregex(L"<"), L"&lt;");
+            r = std::regex_replace(r, std::wregex(L">"), L"&gt;");
+
+            return r;
+        };
+
+        int begin = 0, end = cols();
+        auto escape_table = is_etw() ? should_escape_etw : should_escape_dbg;
+
+        os << L"<tr>";
+
+        for(int i = begin; i < end; ++i) {
+            os << L"<td>" << (escape_table[i] ? escape(operator[](i)) : operator[](i)) << L"</td>";
+        }
+
+        os << L"</tr>\n";
+
+        return os;
+    }
 
     string to_string(fnGetColumnName get_column_name) const
     {
@@ -73,7 +114,7 @@ struct LogDataUI : LogData
         return std::move(ss.str());
     }
 
-    inline const wchar_t* operator[](int i)
+    inline const wchar_t* operator[](int i) const
     {
         const wchar_t* value = L"";
 

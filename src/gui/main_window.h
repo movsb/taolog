@@ -83,7 +83,7 @@ protected:
 
     int                 _last_search_line;
     std::wstring        _last_search_string;
-    bool                _last_search_matched_cols[LogDataUI::data_cols];
+    bool                _last_search_matched_cols[LogDataUI::cols_max];
 
     Controller          _controller;
     Consumer            _consumer;

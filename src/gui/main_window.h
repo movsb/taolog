@@ -89,6 +89,7 @@ protected:
 
     MapColors           _colors;
     ColumnContainer     _columns;
+    std::vector<int>    _subitem2column;
 
     ModuleContainer     _modules;
     EventContainer      _events;

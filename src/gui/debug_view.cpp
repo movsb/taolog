@@ -315,95 +315,12 @@ LRESULT MiniView::control_message(taowin::syscontrol* ctl, UINT umsg, WPARAM wpa
         if(umsg == WM_MOUSEHOVER) {
             mi = false;
 
-            LVHITTESTINFO hti;
-            hti.pt = {GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam)};
+            POINT pt = {GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam)};
+            const wchar_t* s;
 
-            if(_listview->subitem_hittest(&hti) != -1/* && hti.iSubItem == 9*/) {
-                // TODO 界面与逻辑应该是要分离的啊！！
-                NMLVDISPINFO info;
-                info.item.iItem = hti.iItem;
-                info.item.iSubItem = hti.iSubItem;
-                _on_get_dispinfo((NMHDR*)&info);
-
-                bool need_tip = false;
-                auto text = info.item.pszText;
-
-                // 1) 有换行符
-                if(!need_tip) {
-                    if(wcschr(text, L'\n')) {
-                        need_tip = true;
-                    }
-                }
-
-                // 不初始化会报潜在使用了未初始化的变量（但实际上不可能）
-                int text_width = 0;
-                constexpr int text_padding = 20;
-
-                // 2) 文本宽度超出列宽
-                if(!need_tip) {
-                    HDC hdc = ::GetDC(_listview->hwnd());
-                    HFONT hFont = (HFONT)::SendMessage(_listview->hwnd(), WM_GETFONT, 0, 0);
-                    HFONT hOldFont = SelectFont(hdc, hFont);
-
-                    SIZE szText = {0};
-                    if(::GetTextExtentPoint32(hdc, text, wcslen(text), &szText)) {
-                        int col_width = _columns[hti.iSubItem].width;
-                        text_width = szText.cx + text_padding;
-
-                        if(text_width > col_width) {
-                            need_tip = true;
-                        }
-                    }
-
-                    SelectFont(hdc, hOldFont);
-
-                    ::ReleaseDC(_listview->hwnd(), hdc);
-                }
-
-                // 3) 列没有完整地显示出来
-                // 包括：滚动条出现、位于屏幕外
-                if(!need_tip) {
-                    taowin::Rect rcSubItem, rcListView;
-                    ::GetClientRect(_listview->hwnd(), &rcListView);
-
-                    if(_listview->get_subitem_rect(0, hti.iSubItem, &rcSubItem)) {
-                        if(rcSubItem.left < rcListView.left || rcSubItem.left + text_width > rcListView.right) {
-                            need_tip = true;
-                        }
-
-                        if(!need_tip) {
-                            // 列的屏幕位置（B）
-                            taowin::Rect rc(rcSubItem);
-                            ::ClientToScreen(_listview->hwnd(), reinterpret_cast<POINT*>(&rc.left));
-                            ::ClientToScreen(_listview->hwnd(), reinterpret_cast<POINT*>(&rc.right));
-
-                            // 屏幕位置（A）
-                            taowin::Rect rcScreen;
-                            {
-                                POINT pt;
-                                ::GetCursorPos(&pt);
-
-                                HMONITOR hMonitor = ::MonitorFromPoint(pt, MONITOR_DEFAULTTONEAREST);
-                                MONITORINFO info = {sizeof(info)};
-
-                                if(hMonitor && ::GetMonitorInfo(hMonitor, &info)) {
-                                    rcScreen = info.rcWork;
-                                }
-                                else {
-                                    rcScreen = {0, 0, ::GetSystemMetrics(SM_CXSCREEN), ::GetSystemMetrics(SM_CYSCREEN)};
-                                }
-                            }
-
-                            // 如果 A & B != B
-                            if(rcScreen.join(rc) != rc) {
-                                need_tip = true;
-                            }
-                        }
-                    }
-                }
-
-                if(need_tip && !_tipwnd->showing()) {
-                    _tipwnd->popup(text, _mgr.get_font(L"default"));
+            if(_listview->showtip_needed(pt, &s)) {
+                if(!_tipwnd->showing()) {
+                    _tipwnd->popup(s, _mgr.get_font(L"default"));
                 }
             }
 

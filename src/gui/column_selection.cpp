@@ -58,6 +58,11 @@ LRESULT ColumnSelection::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
             valid_index++;
         }
 
+        // 始终选择第1个（禁止修改）
+        if(_columns.size()) {
+            container->operator[](0)->set_enabled(false);
+        }
+
         taowin::Rect rc{ 0, 0, 200, (valid_index+1) * 20 + 50 };
         ::AdjustWindowRectEx(&rc, ::GetWindowLongPtr(_hwnd, GWL_STYLE), !!::GetMenu(_hwnd), ::GetWindowLongPtr(_hwnd, GWL_EXSTYLE));
         ::SetWindowPos(_hwnd, nullptr, 0, 0, rc.width(), rc.height(), SWP_NOMOVE | SWP_NOZORDER);

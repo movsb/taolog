@@ -1146,14 +1146,17 @@ LRESULT MainWindow::_on_custom_draw_listview(NMHDR * hdr)
 LRESULT MainWindow::_on_get_dispinfo(NMHDR * hdr)
 {
     auto pdi = reinterpret_cast<NMLVDISPINFO*>(hdr);
-    auto& evt = *(*_current_filter)[pdi->item.iItem];
     auto lit = &pdi->item;
 
+    // WTF: 竟然有负数的索引号（拖动鼠标任意乱选会出现）
+    if(lit->iItem < 0) {
+        lit->pszText = L"<listview bug>";
+        return 0;
+    }
+
+    auto& evt = *(*_current_filter)[lit->iItem];
+
     int listview_col = lit->iSubItem;
-
-    // 如果第1列被删除了（但是listview还会发消息。。。）
-    if(!_columns.any_showing()) return 0;
-
     int evt_col = _columns.showing(listview_col).index;
     auto field = evt[evt_col];
 

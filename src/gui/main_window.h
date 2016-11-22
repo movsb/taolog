@@ -132,9 +132,17 @@ protected:
     bool _do_search(const std::wstring& s, int line, int col);
     void _clear_results();
     void _set_top_most(bool top);
-    void _update_main_filter();
+
+    // 更新主界面搜索栏可用的列
+    void _update_search_filter();
+
+    // 导出当前过滤器内容到文件
     void _export2file();
+
+    // 设置当前使用的过滤器
     void _set_current_filter(EventContainer* p);
+
+    // 更新主界面过滤器列表
     void _update_filter_list(EventContainer* p);
 
     // 复制当前选中的行内容到剪贴板

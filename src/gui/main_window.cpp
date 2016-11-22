@@ -614,7 +614,7 @@ void MainWindow::_manage_modules()
 void MainWindow::_show_filters()
 {
     auto get_base = [&](std::vector<std::wstring>* bases, int* def) {
-        _columns.for_each(ColumnManager::ColumnFlags::Showing, [&](int i, Column& c) {
+        _columns.for_each(ColumnManager::ColumnFlags::Available, [&](int i, Column& c) {
             bases->push_back(c.name);
         });
 
@@ -624,7 +624,7 @@ void MainWindow::_show_filters()
     auto ongetvalues = [&](int baseindex, std::unordered_map<int, const wchar_t*>* values) {
         values->clear();
 
-        const auto& id = _columns.showing(baseindex).id;
+        const auto& id = _columns.avail(baseindex).id;
 
         if (id == "level") {
             for (auto& pair : _level_maps) {
@@ -642,7 +642,7 @@ void MainWindow::_show_filters()
     };
 
     auto onok = [&](const std::wstring& name, int field_index, const std::wstring& field_name, int value_index, const std::wstring& value_name, const std::wstring& value_input) {
-        auto real_index = _columns.showing(field_index).index;
+        auto real_index = _columns.avail(field_index).index;
         auto filter = new EventContainer(name, real_index, field_name, value_index, value_name, value_input);
         g_evtsys.trigger(L"filter:new", filter);
     };
@@ -763,7 +763,7 @@ void MainWindow::_set_top_most(bool top)
 }
 
 // 主界面搜索栏
-void MainWindow::_update_main_filter()
+void MainWindow::_update_search_filter()
 {
     // 保留当前选中的项（如果有的话）
     // 保存的是真实索引
@@ -787,8 +787,8 @@ void MainWindow::_update_main_filter()
     _columns.for_each(ColumnManager::ColumnFlags::Showing, [&](int i, Column& c) {
         _cbo_filter->add_string(c.name.c_str(), (void*)i);
         strs.push_back(c.name.c_str());
-        if(c.index != cur_real_index) {
-            new_cur++;
+        if(c.index == cur_real_index) {
+            new_cur = i + 1;
         }
     });
 
@@ -953,7 +953,7 @@ LRESULT MainWindow::_on_create()
     _level_maps.try_emplace(TRACE_LEVEL_ERROR,       L"Error",        L"错误 - TRACE_LEVEL_ERROR" );
     _level_maps.try_emplace(TRACE_LEVEL_CRITICAL,    L"Critical",     L"严重 - TRACE_LEVEL_CRITICAL" );
 
-    _update_main_filter();
+    _update_search_filter();
     _update_filter_list(nullptr);
 
     if(isdbg()) {
@@ -1188,7 +1188,7 @@ LRESULT MainWindow::_on_select_column()
 
     colsel->domodal(this);
 
-    _update_main_filter();
+    _update_search_filter();
 
     return 0;
 }
@@ -1222,7 +1222,7 @@ LRESULT MainWindow::_on_drag_column(NMHDR* hdr)
     colobj["show"] = col.show;
     colobj["width"] = col.width;
 
-    _update_main_filter();
+    _update_search_filter();
 
     return 0;
 }

@@ -88,8 +88,7 @@ protected:
     HACCEL              _accels;
 
     MapColors           _colors;
-    ColumnContainer     _columns;
-    std::vector<int>    _subitem2column;
+    ColumnManager       _columns;
 
     ModuleContainer     _modules;
     EventContainer      _events;

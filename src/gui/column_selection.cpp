@@ -86,4 +86,95 @@ LRESULT ColumnSelection::on_notify(HWND hwnd, taowin::control * pc, int code, NM
     return 0;
 }
 
+//////////////////////////////////////////////////////////////////////////
+
+void ColumnManager::update()
+{
+    _available_indices.clear();
+    _showing_indices.clear();
+
+    int i = 0;
+
+    for(auto& c : _columns) {
+        if(c.valid) {
+            _available_indices.emplace_back(i);
+
+            if(c.show) {
+                _showing_indices.emplace_back(i);
+            }
+        }
+
+        i++;
+    }
+}
+
+void ColumnManager::for_each(ColumnFlags::Value f, std::function<void(int i, Column& c)> fn)
+{
+    int i = 0;
+
+    switch(f)
+    {
+    case ColumnFlags::All:
+        for(auto& c : _columns) {
+            fn(i++, c);
+        }
+        break;
+
+    case  ColumnFlags::Available:
+        for(auto& p : _available_indices) {
+            fn(i++, _columns[p]);
+        }
+        break;
+
+    case  ColumnFlags::Showing:
+        for(auto& p : _showing_indices) {
+            fn(i++, _columns[p]);
+        }
+        break;
+
+    default:
+        assert("invalid flags" && 0);
+        break;
+    }
+}
+
+void ColumnManager::show(int available_index, int* listview_index)
+{
+    if(available_index < 0 || available_index >= (int)_available_indices.size())
+        return;
+
+    auto ai = _available_indices[available_index];
+    auto& c = _columns[ai];
+
+    if(!c.valid || c.show)
+        return;
+
+    int pos = 0;
+    for(auto p : _showing_indices) {
+        if(p > ai)
+            break;
+        pos++;
+    }
+
+    *listview_index = pos;
+    _showing_indices.emplace(_showing_indices.cbegin() + pos, ai);
+}
+
+void ColumnManager::hide(bool is_listview_index, int index, int* listview_delete_index)
+{
+    int ai = is_listview_index ? _showing_indices[index] : _available_indices[index];
+
+    int show_index = 0;
+
+    for(auto p : _showing_indices) {
+        if(p == ai) {
+            break;
+        }
+        show_index++;
+    }
+
+    if(!is_listview_index) *listview_delete_index = show_index;
+    _showing_indices.erase(_showing_indices.cbegin() + show_index);
+}
+
 } // namespace taoetw

@@ -84,23 +84,26 @@ LRESULT MainWindow::control_message(taowin::syscontrol* ctl, UINT umsg, WPARAM w
 
         if(umsg == WM_MOUSEMOVE) {
             if(!mi) {
-                //taowin::set_track_mouse(_listview);
+                taowin::set_track_mouse(_listview);
                 mi = true;
             }
         }
         else if(umsg == WM_MOUSELEAVE) {
             mi = false;
         }
-        if(umsg == WM_MOUSEHOVER) {
+        else if(umsg == WM_MOUSEHOVER) {
             mi = false;
 
             POINT pt = {GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam)};
             const wchar_t* s;
-            if(0){//_listview->showtip_needed(pt, &s)) {
+            if(_listview->showtip_needed(pt, &s)) {
                 if(!_tipwnd->showing()) {
                     _tipwnd->popup(s, _mgr.get_font(L"default"));
                 }
             }
+
+            // 如果交给默认处理，会出现自动选中鼠标所在行的奇怪现象
+            return 0;
         }
     }
     return __super::control_message(ctl, umsg, wparam, lparam);
@@ -352,8 +355,13 @@ bool MainWindow::_start()
 
 bool MainWindow::_stop()
 {
-    _controller.stop();
-    _consumer.stop();
+    if(isetw()) {
+        _controller.stop();
+        _consumer.stop();
+    }
+    else if(isdbg()) {
+        _dbgview.uninit();
+    }
 
     return true;
 }
@@ -366,12 +374,11 @@ void MainWindow::_init_listview()
     if(_config.has_arr("columns")) {
         auto add_col = [&](json11::Json jsoncol) {
             auto& c = JsonWrapper(jsoncol).as_obj();
-            _columns.emplace_back(
+            _columns.push(
                 g_config.ws(c["name"].string_value()).c_str(),
                 c["show"].bool_value(),
                 c["width"].int_value(), 
-                c["id"].string_value().c_str(),
-                c["li"].int_value()
+                c["id"].string_value().c_str()
             );
         };
 
@@ -382,22 +389,22 @@ void MainWindow::_init_listview()
         }
     }
     else {
-        _columns.emplace_back(L"编号", false,  50, "id"   ,0);
-        _columns.emplace_back(L"时间", true,   86, "time" ,1);
-        _columns.emplace_back(L"进程", false,  50, "pid"  ,2);
-        _columns.emplace_back(L"线程", false,  50, "tid"  ,3);
-        _columns.emplace_back(L"项目", true,  100, "proj" ,4);
-        _columns.emplace_back(L"文件", true,  140, "file" ,5);
-        _columns.emplace_back(L"函数", true,  100, "func" ,6);
-        _columns.emplace_back(L"行号", true,   50, "line" ,7);
-        _columns.emplace_back(L"等级", false, 100, "level",8);
-        _columns.emplace_back(L"日志", true,  300, "log"  ,9);
+        _columns.push(L"编号", false,  50, "id"   );
+        _columns.push(L"时间", true,   86, "time" );
+        _columns.push(L"进程", false,  50, "pid"  );
+        _columns.push(L"线程", false,  50, "tid"  );
+        _columns.push(L"项目", true,  100, "proj" );
+        _columns.push(L"文件", true,  140, "file" );
+        _columns.push(L"函数", true,  100, "func" );
+        _columns.push(L"行号", true,   50, "line" );
+        _columns.push(L"等级", false, 100, "level");
+        _columns.push(L"日志", true,  300, "log"  );
 
         // 初次使用时初始化配置文件
         if(!_config.has_arr("columns")) {
             auto& columns = _config.arr("columns").as_arr();
 
-            for(auto& col : _columns) {
+            for(auto& col : _columns.all()) {
                 columns.push_back(col);
             }
         }
@@ -414,13 +421,11 @@ void MainWindow::_init_listview()
     _columns[0].valid = true;
     _columns[0].show = true;
 
-    for (int i = 0; i < (int)_columns.size(); i++) {
-        auto& col = _columns[i];
-        if(col.valid && col.show) {
-            _listview->insert_column(col.name.c_str(), col.width, i);
-            _subitem2column.emplace_back(i);
-        }
-    }
+    _columns.update();
+
+    _columns.for_each(ColumnManager::ColumnFlags::Showing, [&](int i, Column& c) {
+        _listview->insert_column(c.name.c_str(), c.width, i);
+    });
 
     if(_config.obj("listview").has_arr("column_orders")) {
         auto& orders = _config.obj("listview").arr("column_orders").as_arr();
@@ -608,17 +613,17 @@ void MainWindow::_manage_modules()
 void MainWindow::_show_filters()
 {
     auto get_base = [&](std::vector<std::wstring>* bases, int* def) {
-        for (auto& col : _subitem2column) {
-            bases->push_back(_columns[col].name);
-        }
+        _columns.for_each(ColumnManager::ColumnFlags::Showing, [&](int i, Column& c) {
+            bases->push_back(c.name);
+        });
 
-        *def = (int)_subitem2column.size() - 1;
+        *def = (int)bases->size() - 1;
     };
 
     auto ongetvalues = [&](int baseindex, std::unordered_map<int, const wchar_t*>* values) {
         values->clear();
 
-        const auto& id = _columns[_subitem2column[baseindex]].id;
+        const auto& id = _columns.showing(baseindex).id;
 
         if (id == "level") {
             for (auto& pair : _level_maps) {
@@ -768,16 +773,11 @@ void MainWindow::_update_main_filter()
 
     // 只添加已经显示的列
     int new_cur = 0;
-    for (size_t i = 0, j = 0; i < _subitem2column.size(); i++) {
-        auto idx = _subitem2column[i];
-        auto& col = _columns[idx];
-        _cbo_filter->add_string(col.name.c_str(), (void*)i);
-        strs.push_back(col.name.c_str());
-        j++;
-        if (cur == idx) {
-            new_cur = j;
-        }
-    }
+    _columns.for_each(ColumnManager::ColumnFlags::Showing, [&](int i, Column& c) {
+        _cbo_filter->add_string(c.name.c_str(), (void*)i);
+        strs.push_back(c.name.c_str());
+        // TODO keep selection
+    });
 
     // 保持选中原来的项
     _cbo_filter->set_cur_sel(new_cur);
@@ -946,14 +946,14 @@ LRESULT MainWindow::_on_create()
     if(isdbg()) {
         async_call([&] {
             auto fnGetFields = [&](std::vector<std::wstring>* fields, int* def) {
-                for(auto& i : _subitem2column) {
-                    fields->emplace_back(_columns[i].name);
-                }
+                _columns.for_each(ColumnManager::ColumnFlags::Showing, [&](int i, Column& c) {
+                    fields->emplace_back(c.name);
+                });
 
-                *def = (int)_subitem2column.size() - 1;
+                *def = (int)fields->size() - 1;
             };
 
-            auto fnGetValues = [&](int idx, std::unordered_map<int, const wchar_t*>* values) {
+            auto fnGetValues = [](int idx, std::unordered_map<int, const wchar_t*>* values) {
                 values->clear();
             };
 
@@ -1139,9 +1139,9 @@ LRESULT MainWindow::_on_get_dispinfo(NMHDR * hdr)
     int listview_col = lit->iSubItem;
 
     // 如果第1列被删除了（但是listview还会发消息。。。）
-    if(_subitem2column.empty()) return 0;
+    if(!_columns.any_showing()) return 0;
 
-    int evt_col = _subitem2column[listview_col];
+    int evt_col = _columns.showing(listview_col).index;
     auto field = evt[evt_col];
 
     lit->pszText = const_cast<LPWSTR>(field);
@@ -1153,56 +1153,24 @@ LRESULT MainWindow::_on_select_column()
 {
     auto colsel = new ColumnSelection(_columns);
 
-    // 选择列的的索引是全部可用的索引
-    // 那不是那些已经添加到列表中的列
     colsel->OnToggle([&](int i) {
-        int real_index = 0;
+        auto& c = _columns.avail(i);
 
-        for(int x = 0; x < (int)_columns.size(); ++x) {
-            if(_columns[x].valid) {
-                if(real_index == i) {
-                    real_index = x;
-                    break;
-                }
-                real_index++;
-            }
-        }
-
-        auto& col = _columns[real_index];
-
-        col.show = !col.show;
-
-        if(col.show) {
-            // 如果当前显示 0 1 !2
-            // 选择为 实际9 （有效为3），那么应该插入 位置2
-            int show_index = 0;
-            for(auto x : _subitem2column) {
-                if(x > real_index)
-                    break;
-                show_index++;
-            }
-
-            _listview->insert_column(col.name.c_str(), col.width, show_index);
-            _subitem2column.emplace(_subitem2column.begin() + show_index, real_index);
+        if(!c.show) {
+            int li;
+            _columns.show(i, &li);
+            _listview->insert_column(c.name.c_str(), c.width, li);
         }
         else {
-            // 注意 _subitem2column 保存的是已经显示的列
-            // 但这里的 i 是并不与其一一对应，因为中间可能有
-            // 有效但选中的列（空洞）
-            int show_index = 0;
-            for(auto x : _subitem2column) {
-                if(x == real_index) {
-                    break;
-                }
-                show_index++;
-            }
-
-            _subitem2column.erase(_subitem2column.cbegin() + show_index);
-            ListView_DeleteColumn(_listview->hwnd(), show_index);
+            int li;
+            _columns.hide(false, i, &li);
+            _listview->delete_column(li);
         }
 
+        c.show = !c.show;
+
         auto& columns = _config.arr("columns").as_arr();
-        JsonWrapper(columns[real_index]).as_obj()["show"] = col.show;
+        JsonWrapper(columns[c.index]).as_obj()["show"] = c.show;
     });
 
     colsel->domodal(this);
@@ -1223,8 +1191,7 @@ LRESULT MainWindow::_on_drag_column(NMHDR* hdr)
     }
 
     auto& item = nmhdr->pitem;
-    auto real_index = _subitem2column[nmhdr->iItem];
-    auto& col = _columns[real_index];
+    auto& col = _columns.showing(nmhdr->iItem);
 
     col.show = item->cxy != 0;
     if (item->cxy) col.width = item->cxy;
@@ -1233,12 +1200,12 @@ LRESULT MainWindow::_on_drag_column(NMHDR* hdr)
         int i = nmhdr->iItem;
         async_call([i, this]() {
             ListView_DeleteColumn(_listview->hwnd(), i);
-            _subitem2column.erase(_subitem2column.begin() + i);
+            _columns.hide(true, i, nullptr);
         });
     }
 
     auto& columns = _config.arr("columns").as_arr();
-    auto& colobj = JsonWrapper(columns[real_index]).as_obj();
+    auto& colobj = JsonWrapper(columns[col.index]).as_obj();
     colobj["show"] = col.show;
     colobj["width"] = col.width;
 

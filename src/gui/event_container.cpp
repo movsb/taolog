@@ -94,55 +94,33 @@ void EventContainer::enable_filter(bool b)
                 return !::wcsstr(haystack.c_str(), needle.c_str());
             };
 
-            bool isetw = !(evt->flags & (int)ETW_LOGGER_FLAG::ETW_LOGGER_FLAG_DBGVIEW);
-
-            if(isetw) {
-                switch(field_index)
-                {
-                // 编号，时间，进程，线程，行号
-                // 直接执行相等性比较（区分大小写）
-                case 0: case 1: case 2: case 3: case 7:
-                {
-                    return p != value_input;
-                }
-                // 文件，函数，日志
-                // 执行不区分大小写的搜索
-                case 5: case 6: case 9:
-                {
-                    return search_value_in_p();
-                }
-                // 项目
-                case 4:
-                {
-                    return value_name != p;
-                }
-                // 等级
-                case 8:
-                {
-                    return value_index != evt->level;
-                }
-                default:
-                    assert(0 && L"invalid index");
-                    return true;
-                }
+            switch(field_index)
+            {
+            // 编号，时间，进程，线程，行号
+            // 直接执行相等性比较（区分大小写）
+            case 0: case 1: case 2: case 3: case 7:
+            {
+                return p != value_input;
             }
-            else {
-                switch(field_index)
-                {
-                // 编号，时间，进程
-                case 0: case 1: case 2:
-                {
-                    return p != value_input;
-                }
-                // 日志
-                case 3:
-                {
-                    return search_value_in_p();
-                }
-                default:
-                    assert(0 && L"invalid index");
-                    return true;
-                }
+            // 文件，函数，日志
+            // 执行不区分大小写的搜索
+            case 5: case 6: case 9:
+            {
+                return search_value_in_p();
+            }
+            // 项目
+            case 4:
+            {
+                return value_name != p;
+            }
+            // 等级
+            case 8:
+            {
+                return value_index != evt->level;
+            }
+            default:
+                assert(0 && L"invalid index");
+                return true;
             }
         };
     }

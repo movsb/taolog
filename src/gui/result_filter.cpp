@@ -135,8 +135,7 @@ LRESULT ResultFilter::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR
         if(code == BN_CLICKED) {
             AddNewFilter dlg(_on_get_fields, _get_value_list);
             if(dlg.domodal(this) == IDOK) {
-                auto p = new EventContainer(dlg.name, dlg.field_index, dlg.field_name, dlg.value_index, dlg.value_name, dlg.value_input);
-                g_evtsys.trigger(L"filter:new", p);
+                _onnewfilter(dlg.name, dlg.field_index, dlg.field_name, dlg.value_index, dlg.value_name, dlg.value_input);
                 _listview->set_item_count(_filters.size(), LVSICF_NOINVALIDATEALL);
 
                 int index = _listview->get_item_count() - 1;

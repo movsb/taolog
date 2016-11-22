@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cassert>
+
 #include <string>
 #include <map>
 #include <vector>
@@ -146,10 +148,13 @@ public:
     int size() const { return (int)_argv.size(); }
     const EventArg& operator[](int i) const
     {
-        if(i >= 0 && i < size())
+        if(i >= 0 && i < size()) {
             return _argv[i];
-        else
+        }
+        else {
+            assert("Invalid index of EventArguments" && 0);
             return _nothing;
+        }
     }
 
     template<typename F, typename ...T>

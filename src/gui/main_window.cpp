@@ -274,16 +274,17 @@ bool MainWindow::filter_special_key(int vk)
             if(_do_search(_last_search_string, _last_search_line, -1)) {
                 // 如果有搜索结果，并且按住了CTRL键，则自动创建新的过滤器
                 if(::GetAsyncKeyState(VK_CONTROL) & 0x8000) {
-                    // 当前选择的列
+                    // 当前选择的列（绝对索引）
                     int col = (int)_cbo_filter->get_cur_data();
                     if(col == -1) {
                         msgbox(L"新建过滤器不能指定为 <全部> 列。", MB_ICONINFORMATION);
                     }
                     else {
+                        auto& c         = _columns.showing(col);
                         auto& name      = _last_search_string;
-                        auto& colname   = _columns[col].name;
+                        auto& colname   = c.name;
                         auto& value     = _last_search_string;
-                        auto p = new EventContainer(_last_search_string, col, colname, -1, L"", value);
+                        auto p = new EventContainer(_last_search_string, c.index, colname, -1, L"", value);
                         g_evtsys.trigger(L"filter:new", p);
                         g_evtsys.trigger(L"filter:set", p);
                     }
@@ -541,9 +542,9 @@ void MainWindow::_init_filters()
 void MainWindow::_init_filter_events()
 {
     g_evtsys.attach(L"filter:new", [&]() {
-        auto p = static_cast<EventContainer*>(g_evtsys[0].ptr_value());
-        _filters.push_back(p);
-        _current_filter->filter_results(p);
+        auto filter = static_cast<EventContainer*>(g_evtsys[0].ptr_value());
+        _filters.push_back(filter);
+        _current_filter->filter_results(filter);
         _update_filter_list(nullptr);
     });
 
@@ -640,7 +641,13 @@ void MainWindow::_show_filters()
         }
     };
 
-    auto dlg = new ResultFilter(_filters, get_base, _current_filter, ongetvalues);
+    auto onok = [&](const std::wstring& name, int field_index, const std::wstring& field_name, int value_index, const std::wstring& value_name, const std::wstring& value_input) {
+        auto real_index = _columns.showing(field_index).index;
+        auto filter = new EventContainer(name, real_index, field_name, value_index, value_name, value_input);
+        g_evtsys.trigger(L"filter:new", filter);
+    };
+
+    auto dlg = new ResultFilter(_filters, get_base, _current_filter, ongetvalues, onok);
     dlg->domodal(this);
 }
 
@@ -657,7 +664,9 @@ bool MainWindow::_do_search(const std::wstring& s, int line, int)
     bool valid = false;
 
     // 搜索哪一列：-1：全部
+    // 换算成直接的列
     int fltcol = (int)_cbo_filter->get_cur_data();
+    int real_index = fltcol != -1 ? _columns.showing(fltcol).index : -1;
 
     // 重置列匹配结果标记
     for (auto& b : _last_search_matched_cols)
@@ -695,7 +704,7 @@ bool MainWindow::_do_search(const std::wstring& s, int line, int)
         }
         // 仅搜索指定列
         else {
-            if (search_text(evt[fltcol])) {
+            if (search_text(evt[real_index])) {
                 _last_search_matched_cols[fltcol] = true;
                 valid = true;
             }
@@ -757,11 +766,13 @@ void MainWindow::_set_top_most(bool top)
 void MainWindow::_update_main_filter()
 {
     // 保留当前选中的项（如果有的话）
-    int cur = 0;
+    // 保存的是真实索引
+    int cur_real_index = 0;
+
     if (_cbo_filter->get_cur_sel() != -1) {
         int ud = (int)_cbo_filter->get_cur_data();
         if (ud != -1) {
-            cur = ud;
+            cur_real_index = ud;
         }
     }
 
@@ -776,7 +787,9 @@ void MainWindow::_update_main_filter()
     _columns.for_each(ColumnManager::ColumnFlags::Showing, [&](int i, Column& c) {
         _cbo_filter->add_string(c.name.c_str(), (void*)i);
         strs.push_back(c.name.c_str());
-        // TODO keep selection
+        if(c.index != cur_real_index) {
+            new_cur++;
+        }
     });
 
     // 保持选中原来的项

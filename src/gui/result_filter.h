@@ -7,13 +7,15 @@ class ResultFilter : public taowin::window_creator
 public:
     typedef std::function<void(std::vector<std::wstring>*, int*)> fnOnGetFields;
     typedef std::function<void(int, std::unordered_map<int, const wchar_t*>*)> fnGetValueList;
+    typedef std::function<void(const std::wstring& name, int field_index, const std::wstring& field_name, int value_index, const std::wstring& value_name, const std::wstring& value_input)> fnOnNewFilter;
 
 public:
-    ResultFilter(EventContainerS& filters, fnOnGetFields getfields, EventContainer* curflt, fnGetValueList getvalues)
+    ResultFilter(EventContainerS& filters, fnOnGetFields getfields, EventContainer* curflt, fnGetValueList getvalues, fnOnNewFilter onnewfilter)
         : _filters(filters)
         , _on_get_fields(getfields)
         , _current_filter(curflt)
         , _get_value_list(getvalues)
+        , _onnewfilter(onnewfilter)
     {
     }
 
@@ -28,9 +30,7 @@ protected:
     fnOnGetFields       _on_get_fields;
     EventContainer*     _current_filter;
     fnGetValueList      _get_value_list;
-
-public:
-    static ResultFilter* _this_instance;
+    fnOnNewFilter       _onnewfilter;
 
 protected:
     virtual void get_metas(WindowMeta* metas) override;

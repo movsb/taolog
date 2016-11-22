@@ -1199,7 +1199,9 @@ LRESULT MainWindow::_on_drag_column(NMHDR* hdr)
 
     HDITEM hdi;
     if(!nmhdr->pitem) {
-        Header_GetItem(hdr->hwndFrom, nmhdr->iItem, &hdr);
+        // 仅获取宽度字段，不要使用其它值
+        hdi.mask = HDI_WIDTH;
+        Header_GetItem(hdr->hwndFrom, nmhdr->iItem, &hdi);
         nmhdr->pitem = &hdi;
     }
 

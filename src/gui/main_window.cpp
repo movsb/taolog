@@ -785,7 +785,7 @@ void MainWindow::_update_search_filter()
     // 只添加已经显示的列
     int new_cur = 0;
     _columns.for_each(ColumnManager::ColumnFlags::Showing, [&](int i, Column& c) {
-        _cbo_filter->add_string(c.name.c_str(), (void*)i);
+        _cbo_filter->add_string(c.name.c_str(), (void*)c.index);
         strs.push_back(c.name.c_str());
         if(c.index == cur_real_index) {
             new_cur = i + 1;
@@ -793,7 +793,7 @@ void MainWindow::_update_search_filter()
     });
 
     if(cur_real_index == -1) {
-        new_cur = (int)strs.size()-1;
+        new_cur = 0;
     }
 
     // 保持选中原来的项
@@ -965,7 +965,7 @@ LRESULT MainWindow::_on_create()
     if(isdbg()) {
         async_call([&] {
             auto fnGetFields = [&](std::vector<std::wstring>* fields, int* def) {
-                _columns.for_each(ColumnManager::ColumnFlags::Showing, [&](int i, Column& c) {
+                _columns.for_each(ColumnManager::ColumnFlags::Available, [&](int i, Column& c) {
                     fields->emplace_back(c.name);
                 });
 
@@ -979,7 +979,7 @@ LRESULT MainWindow::_on_create()
             AddNewFilter dlg(fnGetFields, fnGetValues);
             if(dlg.domodal(this) == IDOK) {
                 _events.name        = dlg.name;
-                _events.field_index = _columns.showing(dlg.field_index).index;
+                _events.field_index = _columns.avail(dlg.field_index).index;
                 _events.field_name  = dlg.field_name;
                 _events.value_index = dlg.value_index;
                 _events.value_name  = dlg.value_name;

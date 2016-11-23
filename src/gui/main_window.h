@@ -51,7 +51,6 @@ public:
         , _last_search_line(-1)
     {
         _tipwnd = new TooltipWindow;
-        _tipwnd->create();
     }
 
     ~MainWindow()
@@ -60,7 +59,6 @@ public:
         // 所以要强制手动释放，不能等到智能指针析构的时候进行
         _clear_results();
 
-        ::DestroyWindow(_tipwnd->hwnd());
         _tipwnd = nullptr;
     }
 

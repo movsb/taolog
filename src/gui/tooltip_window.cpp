@@ -48,7 +48,7 @@ LRESULT TooltipWindow::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
             ::GetCursorPos(&pt);
             ::GetWindowRect(_hwnd, &rc);
 
-            if((abs(pt.x - _pt.x) >= 5 || abs(pt.y - _pt.y) >= 5)
+            if((abs(pt.x - _pt.x) > offset || abs(pt.y - _pt.y) > offset)
                 && !::PtInRect(&rc, pt)
             )
             {

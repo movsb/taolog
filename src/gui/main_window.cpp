@@ -68,7 +68,7 @@ LRESULT MainWindow::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
     case WM_NCACTIVATE:
     {
         if(wparam == FALSE && _tipwnd->showing()) {
-            return FALSE;
+            return TRUE;
         }
         break;
     }
@@ -924,6 +924,8 @@ void MainWindow::_save_filters()
 
 LRESULT MainWindow::_on_create()
 {
+    _tipwnd->create();
+
     _btn_start          = _root->find<taowin::button>(L"start-logging");
     _btn_clear          = _root->find<taowin::button>(L"clear-logging");
     _btn_modules        = _root->find<taowin::button>(L"module-manager");
@@ -1008,6 +1010,8 @@ LRESULT MainWindow::_on_close()
     _save_filters();
 
     _stop();
+
+    ::DestroyWindow(_tipwnd->hwnd());
 
     DestroyWindow(_hwnd);
 

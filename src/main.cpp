@@ -54,9 +54,13 @@ static void RegisterLoggerWindowClass()
     bRegistered = !!::RegisterClassEx(&wcx);
 }
 
-
-int __stdcall wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR lpCmdline, int nShowCmd)
-{
+#ifdef _DEBUG
+int main() {
+    setlocale(LC_ALL, "chs");
+    DBG(L"Running...");
+#else
+int __stdcall wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR lpCmdline, int nShowCmd) {
+#endif 
     RegisterLoggerWindowClass();
 
     HWND hHostWnd = ::CreateWindowEx(0, 

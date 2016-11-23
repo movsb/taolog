@@ -973,7 +973,7 @@ LRESULT MainWindow::_on_create()
             AddNewFilter dlg(fnGetFields, fnGetValues);
             if(dlg.domodal(this) == IDOK) {
                 _events.name        = dlg.name;
-                _events.field_index = dlg.field_index;
+                _events.field_index = _columns.showing(dlg.field_index).index;
                 _events.field_name  = dlg.field_name;
                 _events.value_index = dlg.value_index;
                 _events.value_name  = dlg.value_name;

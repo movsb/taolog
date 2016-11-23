@@ -664,9 +664,7 @@ bool MainWindow::_do_search(const std::wstring& s, int line, int)
     bool valid = false;
 
     // 搜索哪一列：-1：全部
-    // 换算成直接的列
     int fltcol = (int)_cbo_filter->get_cur_data();
-    int real_index = fltcol != -1 ? _columns.showing(fltcol).index : -1;
 
     // 重置列匹配结果标记
     for (auto& b : _last_search_matched_cols)
@@ -693,17 +691,19 @@ bool MainWindow::_do_search(const std::wstring& s, int line, int)
             bool has_col_match = false;
 
             // 一次性匹配整行
-            for (int i = 0; i < evt.cols(); i++) {
-                if(search_text(evt[i])) {
+            _columns.for_each(ColumnManager::ColumnFlags::Showing, [&](int i, Column& c) {
+                int real_index = c.index;
+                if(search_text(evt[real_index])) {
                     _last_search_matched_cols[i] = true;
                     has_col_match = true;
                 }
-            }
+            });
 
             valid = has_col_match;
         }
         // 仅搜索指定列
         else {
+            int real_index = _columns.showing(fltcol).index;
             if (search_text(evt[real_index])) {
                 _last_search_matched_cols[fltcol] = true;
                 valid = true;
@@ -1055,12 +1055,14 @@ LRESULT MainWindow::_on_log(LoggerMessage::Value msg, LPARAM lParam)
         // 字符串形式的日志等级
         item->strLevel = &_level_maps[item->level].cmt1;
 
+        bool added_to_current = false;
+
         // 全部事件容器
-        _events.add(item);
+        added_to_current = _events.add(item);
 
         // 判断一下当前过滤器是否添加了此事件
         // 如果没有添加，就不必要刷新列表控件了
-        bool added_to_current = _current_filter == &_events;
+        added_to_current = added_to_current && _current_filter == &_events;
 
         // 带过滤的事件容器（指针复用）
         if(!_filters.empty()) {

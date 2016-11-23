@@ -378,7 +378,7 @@ void MainWindow::_init_listview()
             _columns.push(
                 g_config.ws(c["name"].string_value()).c_str(),
                 c["show"].bool_value(),
-                c["width"].int_value(), 
+                std::max(c["width"].int_value(), 30), 
                 c["id"].string_value().c_str()
             );
         };

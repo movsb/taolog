@@ -135,8 +135,8 @@ void TooltipWindow::adjust_window_pos(const taowin::Rect& calc)
     int dxscr = rc.right - rcScreen.right;
     int dyscr = rc.bottom - rcScreen.bottom;
     if(dxscr > 0 || dyscr > 0) {
-        int dx = max(dxscr, 0);
-        int dy = max(dyscr, 0);
+        int dx = std::max(dxscr, 0);
+        int dy = std::max(dyscr, 0);
         rc.offset(-dx, -dy);
     }
 

@@ -767,7 +767,7 @@ void MainWindow::_update_search_filter()
 {
     // 保留当前选中的项（如果有的话）
     // 保存的是真实索引
-    int cur_real_index = 0;
+    int cur_real_index = -1;
 
     if (_cbo_filter->get_cur_sel() != -1) {
         int ud = (int)_cbo_filter->get_cur_data();
@@ -791,6 +791,10 @@ void MainWindow::_update_search_filter()
             new_cur = i + 1;
         }
     });
+
+    if(cur_real_index == -1) {
+        new_cur = (int)strs.size()-1;
+    }
 
     // 保持选中原来的项
     _cbo_filter->set_cur_sel(new_cur);

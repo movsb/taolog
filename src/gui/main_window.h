@@ -84,6 +84,7 @@ protected:
     TooltipWindow*      _tipwnd;
 
     HACCEL              _accels;
+    taowin::menu_manager _lvmenu;
 
     MapColors           _colors;
     ColumnManager       _columns;
@@ -110,7 +111,8 @@ protected:
     virtual LPCTSTR get_skin_xml() const override;
     virtual LRESULT handle_message(UINT umsg, WPARAM wparam, LPARAM lparam) override;
     virtual LRESULT control_message(taowin::syscontrol* ctl, UINT umsg, WPARAM wparam, LPARAM lparam) override;
-    virtual LRESULT on_menu(int id, bool is_accel = false);
+    virtual LRESULT on_menu(const std::vector<taowin::string>& ids) override;
+    virtual LRESULT on_accel(int id) override;
     virtual LRESULT on_notify(HWND hwnd, taowin::control* pc, int code, NMHDR* hdr) override;
     virtual bool filter_special_key(int vk) override;
     virtual void on_final_message() override { __super::on_final_message(); delete this; }
@@ -159,6 +161,7 @@ protected:
     LRESULT _on_select_column();
     LRESULT _on_drag_column(NMHDR* hdr);
 	void	_on_drop_column();
+    LRESULT _on_contextmenu(HWND hSender, int x, int y);
 
 protected:
     void _module_from_guid(const GUID& guid, std::wstring* name, const std::wstring** root);

@@ -104,6 +104,9 @@
     <ClCompile Include="..\src\misc\utils.cpp">
       <Filter>Source Files\misc</Filter>
     </ClCompile>
+    <ClCompile Include="..\3rd\taowin\src\tw_menu.cpp">
+      <Filter>Source Files\3rd\taowin</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\3rd\taowin\src\tw_control.h">
@@ -192,6 +195,9 @@
     </ClInclude>
     <ClInclude Include="..\src\misc\utils.h">
       <Filter>Source Files\misc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rd\taowin\src\tw_menu.h">
+      <Filter>Source Files\3rd\taowin</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

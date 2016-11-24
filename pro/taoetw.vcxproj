@@ -164,6 +164,10 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="..\3rd\taowin\src\tw_menu.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="..\src\gui\column_selection.cpp" />
     <ClCompile Include="..\src\gui\event_container.cpp" />
     <ClCompile Include="..\src\gui\event_detail.cpp" />
@@ -230,6 +234,7 @@
   <ItemGroup>
     <ClInclude Include="..\3rd\json11\json11.hpp" />
     <ClInclude Include="..\3rd\taowin\src\tw_control.h" />
+    <ClInclude Include="..\3rd\taowin\src\tw_menu.h" />
     <ClInclude Include="..\3rd\taowin\src\tw_parser.h" />
     <ClInclude Include="..\3rd\taowin\src\tw_resmgr.h" />
     <ClInclude Include="..\3rd\taowin\src\tw_syscontrols.h" />

@@ -62,9 +62,10 @@ LRESULT MainWindow::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
 {
     switch (umsg)
     {
-    case WM_CREATE: return _on_create();
-    case WM_CLOSE:  return _on_close();
-    case kDoLog:    return _on_log(LoggerMessage::Value(wparam), lparam);
+    case WM_CREATE:         return _on_create();
+    case WM_CLOSE:          return _on_close();
+    case kDoLog:            return _on_log(LoggerMessage::Value(wparam), lparam);
+    case WM_CONTEXTMENU:    return _on_contextmenu(HWND(wparam), GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam));
     case WM_NCACTIVATE:
     {
         if(wparam == FALSE && _tipwnd->showing()) {
@@ -109,17 +110,32 @@ LRESULT MainWindow::control_message(taowin::syscontrol* ctl, UINT umsg, WPARAM w
     return __super::control_message(ctl, umsg, wparam, lparam);
 }
 
-LRESULT MainWindow::on_menu(int id, bool is_accel)
+LRESULT MainWindow::on_menu(const std::vector<taowin::string>& ids)
 {
-    if(is_accel) {
-        switch(id)
-        {
-        case IDR_ACCEL_MAINWINDOW_SEARCH:
-            _edt_search->focus();
-            _edt_search->set_sel(0, -1);
-            break;
+    auto it = ids.crbegin();
+    if(*it == L"lv") {
+        ++it;
+        if(*it == L"top") {
+            msgbox(L"去顶部");
+        }
+        else if(*it == L"bot") {
+            msgbox(L"去底部");
         }
     }
+
+    return 0;
+}
+
+LRESULT MainWindow::on_accel(int id)
+{
+    switch(id)
+    {
+    case IDR_ACCEL_MAINWINDOW_SEARCH:
+        _edt_search->focus();
+        _edt_search->set_sel(0, -1);
+        break;
+    }
+
     return 0;
 }
 
@@ -480,6 +496,16 @@ void MainWindow::_init_listview()
             });
         }
     }
+
+    // ListView 菜单
+    _lvmenu.create(LR"(
+<menutree i="lv">
+    <item i="top" s="列表顶部" />
+    <item i="bot" s="列表底部" />
+</menutree>
+)");
+
+    add_menu(&_lvmenu);
 
     // subclass it
     subclass_control(_listview);
@@ -1261,6 +1287,15 @@ void MainWindow::_on_drop_column()
         auto& order_config = _config.obj("listview").arr("column_orders").as_arr();
         order_config = std::move(order);
     }
+}
+
+LRESULT MainWindow::_on_contextmenu(HWND hSender, int x, int y)
+{
+    if(hSender == _listview->hwnd()) {
+        _lvmenu.track();
+    }
+
+    return 0;
 }
 
 void MainWindow::_module_from_guid(const GUID & guid, std::wstring * name, const std::wstring ** root)

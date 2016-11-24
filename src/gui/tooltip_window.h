@@ -12,8 +12,10 @@ public:
     {
     }
 
-    void popup(const wchar_t* str, HFONT font);
+    void popup(const wchar_t* str);
     bool showing() const { return !!::IsWindowVisible(_hwnd); }
+    void set_font(HFONT font) { _font = font; }
+    void hide();
 
 protected:
     virtual void get_metas(WindowMeta* metas) override;

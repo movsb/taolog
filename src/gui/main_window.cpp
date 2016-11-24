@@ -65,7 +65,8 @@ LRESULT MainWindow::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
     case WM_CREATE:         return _on_create();
     case WM_CLOSE:          return _on_close();
     case kDoLog:            return _on_log(LoggerMessage::Value(wparam), lparam);
-    case WM_CONTEXTMENU:    return _on_contextmenu(HWND(wparam), GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam));
+    // case WM_CONTEXTMENU:    return _on_contextmenu(HWND(wparam), GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam));
+    case WM_INITMENUPOPUP:  return _on_init_popupmenu(HMENU(wparam));
     case WM_NCACTIVATE:
     {
         if(wparam == FALSE && _tipwnd->showing()) {
@@ -98,9 +99,7 @@ LRESULT MainWindow::control_message(taowin::syscontrol* ctl, UINT umsg, WPARAM w
             POINT pt = {GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam)};
             const wchar_t* s;
             if(_listview->showtip_needed(pt, &s)) {
-                if(!_tipwnd->showing()) {
-                    _tipwnd->popup(s, _mgr.get_font(L"default"));
-                }
+                _tipwnd->popup(s);
             }
 
             // 如果交给默认处理，会出现自动选中鼠标所在行的奇怪现象
@@ -110,17 +109,14 @@ LRESULT MainWindow::control_message(taowin::syscontrol* ctl, UINT umsg, WPARAM w
     return __super::control_message(ctl, umsg, wparam, lparam);
 }
 
-LRESULT MainWindow::on_menu(const std::vector<taowin::string>& ids)
+LRESULT MainWindow::on_menu(const taowin::MenuIds& m)
 {
-    auto it = ids.crbegin();
-    if(*it == L"lv") {
-        ++it;
-        if(*it == L"top") {
-            msgbox(L"去顶部");
-        }
-        else if(*it == L"bot") {
-            msgbox(L"去底部");
-        }
+    if(m[0] == L"lv") {
+        if(m[1] == L"top")              { msgbox(L"去顶部"); }
+        else if(m[1] == L"bot")         { msgbox(L"去底部"); }
+        else if(m[1] == L"clear")       { g_evtsys.trigger(L"log:clear"); }
+        else if(m[1] == L"full")        { g_evtsys.trigger(L"log:fullscreen"); }
+        else if(m[1] == L"copy")        { g_evtsys.trigger(L"log:copy"); }
     }
 
     return 0;
@@ -175,12 +171,14 @@ LRESULT MainWindow::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR *
             }
             return 0;
         }
+        else if(code == NM_RCLICK) {
+            _lvmenu.track();
+            return 0;
+        }
         else if (code == LVN_KEYDOWN) {
             auto nmlv = reinterpret_cast<NMLVKEYDOWN*>(hdr);
             if (nmlv->wVKey == VK_F11) {
-                auto toolbar = _root->find<taowin::container>(L"toolbar");
-                toolbar->set_visible(!toolbar->is_visible());
-                _listview->show_header(toolbar->is_visible());
+                g_evtsys.trigger(L"log:fullscreen");
                 return 0;
             }
             else if (nmlv->wVKey == VK_F3) {
@@ -500,8 +498,16 @@ void MainWindow::_init_listview()
     // ListView 菜单
     _lvmenu.create(LR"(
 <menutree i="lv">
-    <item i="top" s="列表顶部" />
-    <item i="bot" s="列表底部" />
+    <item i="clear" s="清空" />
+    <sep />
+    <item i="copy" s="复制" />
+    <sep />
+    <sub i="filters" s="过滤器"></sub>
+    <sep />
+    <item i="top" s="顶部" />
+    <item i="bot" s="底部" />
+    <sep />
+    <item i="full" s="最大化" />
 </menutree>
 )");
 
@@ -567,21 +573,21 @@ void MainWindow::_init_filters()
 
 void MainWindow::_init_filter_events()
 {
-    g_evtsys.attach(L"filter:new", [&]() {
+    g_evtsys.attach(L"filter:new", [&] {
         auto filter = static_cast<EventContainer*>(g_evtsys[0].ptr_value());
         _filters.push_back(filter);
         _current_filter->filter_results(filter);
         _update_filter_list(nullptr);
     });
 
-    g_evtsys.attach(L"filter:set", [&]() {
+    g_evtsys.attach(L"filter:set", [&] {
         auto p = static_cast<EventContainer*>(g_evtsys[0].ptr_value());
         if(!p) p = &_events;
         _set_current_filter(p);
         _update_filter_list(p);
     });
     
-    g_evtsys.attach(L"filter:del", [&]() {
+    g_evtsys.attach(L"filter:del", [&] {
         int i = g_evtsys[0].int_value();
         auto it = _filters.begin() + i;
 
@@ -595,6 +601,21 @@ void MainWindow::_init_filter_events()
         _filters.erase(it);
 
         _update_filter_list(nullptr);
+    });
+}
+
+void MainWindow::_init_logger_events()
+{
+    g_evtsys.attach(L"log:clear", [&] { _clear_results(); });
+
+    g_evtsys.attach(L"log:fullscreen", [&] {
+        auto toolbar = _root->find<taowin::container>(L"toolbar");
+        toolbar->set_visible(!toolbar->is_visible());
+        _listview->show_header(toolbar->is_visible());
+    });
+
+    g_evtsys.attach(L"log:copy", [&] {
+        _copy_selected_item();
     });
 }
 
@@ -951,6 +972,7 @@ void MainWindow::_save_filters()
 LRESULT MainWindow::_on_create()
 {
     _tipwnd->create();
+    _tipwnd->set_font(_mgr.get_font(L"default"));
 
     _btn_start          = _root->find<taowin::button>(L"start-logging");
     _btn_clear          = _root->find<taowin::button>(L"clear-logging");
@@ -976,6 +998,8 @@ LRESULT MainWindow::_on_create()
 
     _init_filters();
     _init_filter_events();
+
+    _init_logger_events();
 
     _current_filter = &_events;
     
@@ -1291,8 +1315,23 @@ void MainWindow::_on_drop_column()
 
 LRESULT MainWindow::_on_contextmenu(HWND hSender, int x, int y)
 {
-    if(hSender == _listview->hwnd()) {
-        _lvmenu.track();
+    return 0;
+}
+
+LRESULT MainWindow::_on_init_popupmenu(HMENU hPopup)
+{
+    auto sib = _lvmenu.find_sib(L"filters");
+    if(sib->self == hPopup) {
+        _lvmenu.clear_popup(sib);
+        
+        auto append = [&](const wchar_t* s) {
+            ::AppendMenu(hPopup, MF_STRING, 0, s);
+        };
+
+        append(L"全部");
+        for(auto& f : _filters) {
+            append(f->name.c_str());
+        }
     }
 
     return 0;

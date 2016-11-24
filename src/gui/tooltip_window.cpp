@@ -4,10 +4,9 @@
 
 namespace taoetw {
 
-void TooltipWindow::popup(const wchar_t* str, HFONT font)
+void TooltipWindow::popup(const wchar_t* str)
 {
     _text = str;
-    _font = font;
 
     taowin::Rect rc {0,0,::GetSystemMetrics(SM_CXSCREEN) - padding * 2,0};
     HDC hdc = ::GetDC(_hwnd);
@@ -21,6 +20,18 @@ void TooltipWindow::popup(const wchar_t* str, HFONT font)
     ::ShowWindow(_hwnd, SW_SHOWNOACTIVATE);
 
     ::SetTimer(_hwnd, 1, 250, 0);
+}
+
+void TooltipWindow::hide()
+{
+    ::KillTimer(_hwnd, 1);
+
+    taowin::Rect rcClient;
+    ::GetClientRect(_hwnd, &rcClient);
+    HDC hdc = ::GetDC(_hwnd);
+    ::FillRect(hdc, &rcClient, GetStockBrush(WHITE_BRUSH));
+    ::ReleaseDC(_hwnd, hdc);
+    ::ShowWindow(_hwnd, SW_HIDE);
 }
 
 void TooltipWindow::get_metas(WindowMeta* metas)
@@ -52,14 +63,7 @@ LRESULT TooltipWindow::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
                 && !::PtInRect(&rc, pt)
             )
             {
-                ::KillTimer(_hwnd, 1);
-
-                taowin::Rect rcClient;
-                ::GetClientRect(_hwnd, &rcClient);
-                HDC hdc = ::GetDC(_hwnd);
-                ::FillRect(hdc, &rcClient, GetStockBrush(WHITE_BRUSH));
-                ::ReleaseDC(_hwnd, hdc);
-                ::ShowWindow(_hwnd, SW_HIDE);
+                hide();
             }
             return 0;
         }

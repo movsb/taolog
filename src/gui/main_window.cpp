@@ -115,7 +115,7 @@ LR"(请输入待搜索的文本。
 
 \b快捷键：
 \b    Ctrl + F        \w100-   聚焦搜索框\w100
-\b    Entre           \w100-   执行搜索\w100
+\b    Enter           \w100-   执行搜索\w100
 \b    F3              \w100-   搜索下一个\w100
 \b    Ctrl + F3       \w100-   搜索上一个\w100
 \b    Ctrl + Enter    \w100-   添加过滤器\w100
@@ -687,21 +687,24 @@ void MainWindow::_show_filters()
         *def = (int)bases->size() - 1;
     };
 
-    auto ongetvalues = [&](int baseindex, std::unordered_map<int, const wchar_t*>* values) {
+    auto ongetvalues = [&](int baseindex, ResultFilter::IntStrPairs* values, bool* editable) {
         values->clear();
+        *editable = false;
 
         const auto& id = _columns.avail(baseindex).id;
 
         if (id == "level") {
             for (auto& pair : _level_maps) {
-                (*values)[pair.first] = pair.second.cmt2.c_str();
+                values->emplace_back(pair.first, pair.second.cmt2.c_str());
             }
         }
         else if(id == "proj") {
             auto& v = *values;
             for(auto& m : _modules) {
                 // if(m->enable) {
-                    v[(int)m] = m->name.c_str();
+                    // 这个索引没使用
+                    // 比较的是 value_name 直接相等
+                    values->emplace_back((int)m, m->name.c_str());
                 // }
             }
         }
@@ -1041,20 +1044,44 @@ LRESULT MainWindow::_on_create()
                 *def = (int)fields->size() - 1;
             };
 
-            auto fnGetValues = [](int idx, std::unordered_map<int, const wchar_t*>* values) {
+            std::vector<std::wstring> friendly_names;
+
+            auto fnGetValues = [&](int idx, ResultFilter::IntStrPairs* values, bool* editable) {
                 values->clear();
+                *editable = false;
+
+                auto& v = *values;
+                auto& c = _columns.avail(idx);
+
+                // 如果是过滤日志的话，则添加已备份
+                // 的过滤器规则到候选列表供选择
+                if(c.id == "log") {
+                    friendly_names.clear();
+                    for(auto fit = _filters.crbegin(), end = _filters.crend(); fit != end; ++fit) {
+                        auto f = *fit;
+                        if(_columns[f->field_index].id == "log") {
+                            friendly_names.emplace_back(f->name +  L'[' + f->value_input + L']');
+                            v.emplace_back(int(f), friendly_names.back().c_str());
+                        }
+                    }
+                    *editable = true;
+                }
             };
 
             AddNewFilter dlg(fnGetFields, fnGetValues);
             if(dlg.domodal(this) == IDOK) {
-                _events.name        = dlg.name;
-                _events.field_index = _columns.avail(dlg.field_index).index;
-                _events.field_name  = dlg.field_name;
-                _events.value_index = dlg.value_index;
-                _events.value_name  = dlg.value_name;
-                _events.value_input = dlg.value_input;
+                auto& c = _columns.avail(dlg.field_index);
 
-                _events.enable_filter(true);
+                // 选择了已经存在的过滤器
+                if(c.id == "log" && dlg.value_index != -1) {
+                    auto f = reinterpret_cast<EventContainer*>(dlg.value_index);
+                    async_call([f] { g_evtsys.trigger(L"filter:set", f); });
+                }
+                else {
+                    auto filter = new EventContainer(dlg.name, c.index, dlg.field_name, dlg.value_index, dlg.value_name, dlg.value_input);
+                    g_evtsys.trigger(L"filter:new", filter);
+                    g_evtsys.trigger(L"filter:set", filter);
+                }
             }
 
             if(!_dbgview.init([&](DWORD pid, const char* str) {

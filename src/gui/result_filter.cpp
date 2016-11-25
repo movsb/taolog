@@ -206,7 +206,10 @@ LPCTSTR AddNewFilter::get_skin_xml() const
                     <container>
                         <edit name="value-input" text="" style="tabstop" exstyle="clientedge" />
                         <vertical name="不加这个，下面的combobox显示不出来">
-                            <combobox name="value-name" style="tabstop" height="200" />
+                            <combobox name="value-name-1" style="tabstop,droplist" height="200" />
+                        </vertical>
+                        <vertical name="不加这个，下面的combobox显示不出来">
+                            <combobox name="value-name-2" style="tabstop,dropdown" height="200" />
                         </vertical>
                     </container>
                 </horizontal>
@@ -232,7 +235,8 @@ LRESULT AddNewFilter::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
     {
         _name        = _root->find<taowin::edit>(L"name");
         _field_name  = _root->find<taowin::combobox>(L"field-name");
-        _value_name  = _root->find<taowin::combobox>(L"value-name");
+        _value_name_1= _root->find<taowin::combobox>(L"value-name-1");
+        _value_name_2= _root->find<taowin::combobox>(L"value-name-2");
         _value_input = _root->find<taowin::edit>(L"value-input");
 
         _save        = _root->find<taowin::button>(L"save");
@@ -274,7 +278,8 @@ LRESULT AddNewFilter::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR
             int sel = _field_name->get_cur_sel();
 
             _values.clear();
-            _get_values(sel, &_values);
+            _get_values(sel, &_values, &_value_editable);
+            _change_value_editable();
 
             _value_input->set_visible(_values.empty());
             _value_name->set_visible(!_values.empty());
@@ -283,8 +288,7 @@ LRESULT AddNewFilter::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR
                 _value_name->reset_content();
 
                 for (auto& pair : _values) {
-                    int i = _value_name->add_string(pair.second);
-                    _value_name->set_item_data(i, (void*)pair.first);
+                    _value_name->add_string(pair.second);
                 }
 
                 _value_name->set_cur_sel(0);
@@ -293,6 +297,17 @@ LRESULT AddNewFilter::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR
             else {
                 _value_input->focus();
             }
+        }
+    }
+    else if(pc == _value_name) {
+        if(code == CBN_SELCHANGE) {
+            DBG("%s", L"selchange");
+        }
+        else if(code == CBN_EDITCHANGE) {
+            DBG("%s", L"editchange");
+        }
+        else if(code == CBN_EDITUPDATE) {
+            DBG("%s", L"editupdate");
         }
     }
 
@@ -309,19 +324,37 @@ bool AddNewFilter::filter_special_key(int vk)
     return __super::filter_special_key(vk);
 }
 
+void AddNewFilter::_change_value_editable()
+{
+    _value_name_1->set_visible(!_value_editable);
+    _value_name_2->set_visible(_value_editable);
+    _value_name = _value_editable ? _value_name_2 : _value_name_1;
+}
+
 int AddNewFilter::_on_save()
 {
     bool iscbo = _value_name->is_visible();
 
     try {
         if (iscbo) {
-            value_input = L"";
-            value_index = (int)_value_name->get_cur_data();
-            value_name = _values[value_index];
+            // 可编辑，并且编辑过
+            auto sel = _value_name->get_cur_sel();
+            if(_value_editable && sel == -1) {
+                value_input = _value_name->get_text();
+                if(value_input.empty()) throw 0;
+                value_index = -1;
+                value_name = L"";
+            }
+            else {
+                value_input = L"";
+                value_index = _values[sel].first;
+                value_name = _values[sel].second;
+            }
         }
         else {
+            value_index = -1;
             value_input = _value_input->get_text();
-            if (value_input == L"") throw 0;
+            if (value_input.empty()) throw 0;
         }
 
         name = _name->get_text();

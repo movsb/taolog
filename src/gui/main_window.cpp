@@ -80,23 +80,24 @@ LRESULT MainWindow::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
 
 LRESULT MainWindow::control_message(taowin::syscontrol* ctl, UINT umsg, WPARAM wparam, LPARAM lparam)
 {
-    if(ctl == _listview) {
-        // TODO static!!
-        static bool mi = false;
+    // TODO static!!
+    static bool mi = false;
 
-        if(umsg == WM_MOUSEMOVE) {
-            if(!mi) {
-                taowin::set_track_mouse(_listview);
-                mi = true;
-            }
+    if(umsg == WM_MOUSEMOVE) {
+        if(!mi) {
+            taowin::set_track_mouse(ctl);
+            mi = true;
         }
-        else if(umsg == WM_MOUSELEAVE) {
-            mi = false;
-        }
-        else if(umsg == WM_MOUSEHOVER) {
-            mi = false;
+    }
+    else if(umsg == WM_MOUSELEAVE) {
+        mi = false;
+    }
+    else if(umsg == WM_MOUSEHOVER) {
+        mi = false;
 
-            POINT pt = {GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam)};
+        POINT pt = {GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam)};
+
+        if(ctl == _listview) {
             const wchar_t* s;
             if(_listview->showtip_needed(pt, &s)) {
                 _tipwnd->popup(s);
@@ -105,15 +106,33 @@ LRESULT MainWindow::control_message(taowin::syscontrol* ctl, UINT umsg, WPARAM w
             // 如果交给默认处理，会出现自动选中鼠标所在行的奇怪现象
             return 0;
         }
+        else if(ctl == _edt_search) {
+            auto tips = 
+LR"(请输入待搜索的文本。
+
+搜索时执行不区分大小写的普通文本搜索。
+搜索上下文为：当前过滤器、当前搜索列。
+
+\b快捷键：
+\b    Ctrl + F        \w100-   聚焦搜索框\w100
+\b    Entre           \w100-   执行搜索\w100
+\b    F3              \w100-   搜索下一个\w100
+\b    Ctrl + F3       \w100-   搜索上一个\w100
+\b    Ctrl + Enter    \w100-   添加过滤器\w100
+)";
+            _tipwnd->format(tips);
+            return 0;
+        }
     }
+
     return __super::control_message(ctl, umsg, wparam, lparam);
 }
 
 LRESULT MainWindow::on_menu(const taowin::MenuIds& m)
 {
     if(m[0] == L"lv") {
-        if(m[1] == L"top")              { msgbox(L"去顶部"); }
-        else if(m[1] == L"bot")         { msgbox(L"去底部"); }
+        if(m[1] == L"top")              { _listview->go_top(); }
+        else if(m[1] == L"bot")         { _listview->go_bottom(); }
         else if(m[1] == L"clear")       { g_evtsys.trigger(L"log:clear"); }
         else if(m[1] == L"full")        { g_evtsys.trigger(L"log:fullscreen"); }
         else if(m[1] == L"copy")        { g_evtsys.trigger(L"log:copy"); }
@@ -1051,6 +1070,8 @@ LRESULT MainWindow::_on_create()
             }
         });
     }
+
+    subclass_control(_edt_search);
 
     return 0;
 }

@@ -7,11 +7,26 @@ class TooltipWindow : public taowin::window_creator
     static const int padding = 5;
     static const int offset = 15;
 
+    struct Div
+    {
+        int                 width;
+        int                 height;
+        std::wstring        text;
+    };
+
+    struct Line
+    {
+        int                 width;
+        int                 height;
+        std::vector<Div>    divs;
+    };
+
 public:
     TooltipWindow()
     {
     }
 
+    void format(const wchar_t* fmt);
     void popup(const wchar_t* str);
     bool showing() const { return !!::IsWindowVisible(_hwnd); }
     void set_font(HFONT font) { _font = font; }
@@ -24,11 +39,17 @@ protected:
 
     void adjust_window_pos(const taowin::Rect& calc);
 
+    void parse(const wchar_t* fmt);
+    taowin::Rect calc_pos();
+    void draw_it(HDC hdc);
+
 protected:
-    HFONT           _font;
-    POINT           _pt;
-    taowin::Rect    _pos;
-    const wchar_t*  _text;
+    HFONT               _font;
+    POINT               _pt;
+    taowin::Rect        _pos;
+    const wchar_t*      _text;
+    std::vector<Line>   _lines;
+
 };
 
 

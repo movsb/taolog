@@ -180,7 +180,7 @@ protected:
     LRESULT _on_init_popupmenu(HMENU hPopup);
 
 protected:
-    void _module_from_guid(const GUID& guid, std::wstring* name, const std::wstring** root);
+    ModuleEntry* _module_from_guid(const GUID& guid);
 };
 
 }

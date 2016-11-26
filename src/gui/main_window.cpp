@@ -1239,13 +1239,13 @@ LRESULT MainWindow::_on_log(LoggerMessage::Value msg, LPARAM lParam)
 
         LogDataUIPtr item(logui);
 
-        // 日志编号
-        _snwprintf(item->id, _countof(item->id), L"%llu", (unsigned long long)_events->size() + 1);
+        ModuleEntry* m = isetw() ? _module_from_guid(item->guid) : nullptr;
 
         if(isetw()) {
             // 项目名称 & 项目根目录
-            const std::wstring* root = nullptr;
-            _module_from_guid(item->guid, &item->strProject, &root);
+            item->strProject = m ? m->name : L"<unknown>";
+
+            const std::wstring* root = m ? &m->root : nullptr;
 
             // 相对路径
             item->offset_of_file = 0;
@@ -1259,21 +1259,30 @@ LRESULT MainWindow::_on_log(LoggerMessage::Value msg, LPARAM lParam)
             item->offset_of_file = 0;
         }
 
+        auto& pair = _projects[m];
+        auto& events = pair.first;
+        auto& filters = pair.second;
+
+        // 日志编号
+        _snwprintf(item->id, _countof(item->id), L"%llu", (unsigned long long)events.size() + 1);
+
         // 字符串形式的日志等级
         item->strLevel = &_level_maps[item->level].cmt1;
+
+        //////////////////////////////////////////////////////////////////////////
 
         bool added_to_current = false;
 
         // 全部事件容器
-        added_to_current = _events->add(item);
+        added_to_current = events.add(item);
 
         // 判断一下当前过滤器是否添加了此事件
         // 如果没有添加，就不必要刷新列表控件了
-        added_to_current = added_to_current && _current_filter == _events;
+        added_to_current = _current_filter == &events && added_to_current;
 
         // 带过滤的事件容器（指针复用）
-        if(!_filters->empty()) {
-            for(auto& f : *_filters) {
+        if(!filters.empty()) {
+            for(auto& f : filters) {
                 bool added = f->add(item);
                 if(f == _current_filter && added && !added_to_current)
                     added_to_current = true;
@@ -1486,27 +1495,24 @@ LRESULT MainWindow::_on_init_popupmenu(HMENU hPopup)
     return 0;
 }
 
-void MainWindow::_module_from_guid(const GUID & guid, std::wstring * name, const std::wstring ** root)
+ModuleEntry* MainWindow::_module_from_guid(const GUID& guid)
 {
-    if (!_guid2mod.count(guid)) {
+    auto it = _guid2mod.find(guid);
+
+    if(it == _guid2mod.cend()) {
+        bool found = false;
         for (auto& item : _modules) {
             if (::IsEqualGUID(item->guid, guid)) {
                 _guid2mod[guid] = item;
+                it = _guid2mod.find(guid);
+                found = true;
                 break;
             }
         }
+        if(!found) return nullptr;
     }
 
-    auto it = _guid2mod.find(guid);
-
-    if (it != _guid2mod.cend()) {
-        *name = it->second->name;
-        *root = &it->second->root;
-    }
-    else {
-        *name = L"<unknown>";
-        *root = nullptr;
-    }
+    return it->second;
 }
 
 }

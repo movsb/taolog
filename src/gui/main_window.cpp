@@ -137,6 +137,8 @@ LRESULT MainWindow::on_menu(const taowin::MenuIds& m)
         else if(m[1] == L"clear")       { g_evtsys.trigger(L"log:clear"); }
         else if(m[1] == L"full")        { g_evtsys.trigger(L"log:fullscreen"); }
         else if(m[1] == L"copy")        { g_evtsys.trigger(L"log:copy"); }
+        else if(m[1] == L"filters")     { g_evtsys.trigger(L"filter:set", (void*)std::stoi(m[2])); }
+        else if(m[1] == L"projects")    { g_evtsys.trigger(L"project:set", (void*)std::stoi(m[2]), true); }
     }
 
     return 0;
@@ -524,21 +526,29 @@ void MainWindow::_init_listview()
     }
 
     // ListView 菜单
-    _lvmenu.create(LR"(
-<menutree i="lv">
-    <item i="clear" s="清空" />
-    <sep />
-    <item i="copy" s="复制" />
-    <sep />
-    <sub i="filters" s="过滤器"></sub>
-    <sep />
-    <item i="top" s="顶部" />
-    <item i="bot" s="底部" />
-    <sep />
-    <item i="full" s="最大化" />
-</menutree>
-)");
+    std::wstring menustr = LR"(<menutree i="lv">
+        <item i="clear" s="清空" />
+        <sep />
+        <item i="copy" s="复制" />
+        <sep />
+    )";
 
+    if(isetw()) {
+        menustr += LR"(<sub i="projects" s="项目"></sub>)";
+    }
+
+    menustr += LR"(
+        <sub i="filters" s="过滤器"></sub>
+        <sep />
+        <item i="top" s="顶部" />
+        <item i="bot" s="底部" />
+        <sep />
+        <item i="full" s="最大化" />
+    )";
+
+    menustr += LR"(</menutree>)";
+
+    _lvmenu.create(menustr.c_str());
     add_menu(&_lvmenu);
 
     // subclass it
@@ -1478,17 +1488,22 @@ LRESULT MainWindow::_on_contextmenu(HWND hSender, int x, int y)
 
 LRESULT MainWindow::_on_init_popupmenu(HMENU hPopup)
 {
-    auto sib = _lvmenu.find_sib(L"filters");
-    if(sib->self == hPopup) {
+    taowin::menu_manager::sibling* sib;
+
+    if((sib = _lvmenu.find_sib(L"filters")) && sib && sib->self ==hPopup) {
         _lvmenu.clear_popup(sib);
         
-        auto append = [&](const wchar_t* s) {
-            ::AppendMenu(hPopup, MF_STRING, 0, s);
-        };
+        _lvmenu.insert_str(sib, std::to_wstring((int)_events), L"全部", true);
+        _lvmenu.insert_sep(sib);
 
-        append(L"全部");
         for(auto& f : *_filters) {
-            append(f->name.c_str());
+            _lvmenu.insert_str(sib, std::to_wstring((int)f), f->name, true);
+        }
+    }
+    else if((sib = _lvmenu.find_sib(L"projects")) && sib && sib->self == hPopup) {
+        _lvmenu.clear_popup(sib);
+        for(auto& m : _modules) {
+            _lvmenu.insert_str(sib, std::to_wstring((int)m), m->name, true);
         }
     }
 

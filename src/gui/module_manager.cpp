@@ -3,6 +3,8 @@
 #include "misc/utils.h"
 #include "misc/config.h"
 
+#include "misc/event_system.hpp"
+
 #include "_module_entry.hpp"
 
 #include "module_manager.h"
@@ -19,7 +21,7 @@ void ModuleManager::get_metas(WindowMeta * metas)
 LPCTSTR ModuleManager::get_skin_xml() const
 {
     LPCTSTR json = LR"tw(
-<window title="模块管理" size="280,300">
+<window title="模块管理" size="280,250">
     <res>
         <font name="default" face="微软雅黑" size="12"/>
         <font name="1" face="微软雅黑" size="12"/>
@@ -306,7 +308,9 @@ void ModuleManager::_delete_items(const std::vector<int>& items)
 {
     // 从后往前删
     for (auto it = items.crbegin(); it != items.crend(); it++) {
+        auto m = _modules[*it];
         _modules.erase(_modules.begin() + *it);
+        g_evtsys.trigger(L"project:del", m);
     }
 
     // just in case
@@ -327,7 +331,8 @@ void ModuleManager::_add_item()
         _listview->ensure_visible(index);   // 确保可见
         _listview->set_item_state(-1, LVIS_SELECTED, 0); //取消选中其它的
         _listview->set_item_state(index, LVIS_SELECTED, LVIS_SELECTED); //选中当前新增的
-        async_call([&]() {_listview->focus(); }); // 之前有窗口处于处于正在关闭状态，所以异步调
+        async_call([&]() {_listview->focus(); }); // 之前有窗口处于正在关闭状态，所以异步调
+        g_evtsys.trigger(L"project:new", entry);
     };
 
     auto onguid = [&](const GUID& guid, std::wstring* err) {
@@ -460,6 +465,7 @@ bool ModuleManager::_paste_items(bool test)
             // 默认都是不开启的
             m->enable = false;
             _modules.push_back(m);
+            g_evtsys.trigger(L"project:new", m);
         }
         else {
             delete m;

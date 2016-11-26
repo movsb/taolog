@@ -38,12 +38,13 @@ LPCTSTR MainWindow::get_skin_xml() const
                 <button name="filter-result" text="结果过滤" width="60" style="tabstop"/>
                 <control width="5" />
                 <button name="export-to-file" text="导出日志" width="60" style="tabstop"/>
-                <control width="5" />
-                <control />
+                <control minwidth="30"/>
+                <label name="select-project-label" text="模块：" width="38" style="centerimage"/>
+                <combobox name="select-project" style="tabstop" height="200" width="64" padding="0,0,4,0"/>
                 <label text="过滤：" width="38" style="centerimage"/>
-                <combobox name="select-filter" style="tabstop" height="400" width="64" padding="0,0,4,0"/>
+                <combobox name="select-filter" style="tabstop" height="200" width="64" padding="0,0,4,0"/>
                 <label text="查找：" width="38" style="centerimage"/>
-                <combobox name="s-filter" style="tabstop" height="400" width="64" padding="0,0,4,0"/>
+                <combobox name="s-filter" style="tabstop" height="200" width="64" padding="0,0,4,0"/>
                 <edit name="s" width="80" style="tabstop" exstyle="clientedge"/>
                 <control width="10" />
                 <button name="color-settings" text="颜色配置" width="60" style="tabstop"/>
@@ -117,7 +118,7 @@ LR"(请输入待搜索的文本。
 \b    Ctrl + F        \w100-   聚焦搜索框\w100
 \b    Enter           \w100-   执行搜索\w100
 \b    F3              \w100-   搜索下一个\w100
-\b    Ctrl + F3       \w100-   搜索上一个\w100
+\b    Shift + F3      \w100-   搜索上一个\w100
 \b    Ctrl + Enter    \w100-   添加过滤器\w100
 )";
             _tipwnd->format(tips);
@@ -253,7 +254,7 @@ LRESULT MainWindow::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR *
             _clear_results();
         }
     }
-    else if (pc == _cbo_filter) {
+    else if (pc == _cbo_search_filter) {
         if (code == CBN_SELCHANGE) {
             _edt_search->set_sel(0, -1);
             _edt_search->focus();
@@ -261,7 +262,15 @@ LRESULT MainWindow::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR *
     }
     else if(pc == _cbo_sel_flt) {
         if(code == CBN_SELCHANGE) {
-            _set_current_filter((EventContainer*)_cbo_sel_flt->get_cur_data());
+            auto f = (EventContainer*)_cbo_sel_flt->get_cur_data();
+            g_evtsys.trigger(L"filter:set", f, false);
+            return 0;
+        }
+    }
+    else if(pc == _cbo_prj) {
+        if(code == CBN_SELCHANGE) {
+            auto m = (ModuleEntry*)_cbo_prj->get_cur_data();
+            g_evtsys.trigger(L"project:set", m, false);
             return 0;
         }
     }
@@ -308,7 +317,7 @@ bool MainWindow::filter_special_key(int vk)
                 // 如果有搜索结果，并且按住了CTRL键，则自动创建新的过滤器
                 if(::GetAsyncKeyState(VK_CONTROL) & 0x8000) {
                     // 当前选择的列（绝对索引）
-                    int col = (int)_cbo_filter->get_cur_data();
+                    int col = (int)_cbo_search_filter->get_cur_data();
                     if(col == -1) {
                         msgbox(L"新建过滤器不能指定为 <全部> 列。", MB_ICONINFORMATION);
                     }
@@ -378,7 +387,7 @@ bool MainWindow::_start()
     }
 
     if (opend == 0) {
-        msgbox(L"没有模块启用记录。", MB_ICONEXCLAMATION);
+        msgbox(L"没有模块或没有模块开启记录。", MB_ICONEXCLAMATION);
         _controller.stop();
         _consumer.stop();
         return false;
@@ -556,7 +565,10 @@ void MainWindow::_init_config()
 
     // 窗口置顶与否
     _set_top_most(_config["topmost"].bool_value());
+}
 
+void MainWindow::_init_projects()
+{
     if(isetw()) {
         // the modules
         auto modules = g_config->arr("modules");
@@ -564,26 +576,78 @@ void MainWindow::_init_config()
             if(mod.is_object()) {
                 if(auto m = ModuleEntry::from_json(mod)) {
                     _modules.push_back(m);
+                    _projects[m] = EventPair();
                 }
                 else {
                     msgbox(L"无效模块配置。", MB_ICONERROR);
                 }
             }
         }
+
+        // 这样的话，当前过滤器就一直不为空了，少作些判断
+        _projects[nullptr] = EventPair();
     }
+    else {
+        _projects[nullptr] = EventPair();
+    }
+}
+
+void MainWindow::_init_project_events()
+{
+    g_evtsys.attach(L"project:set", [&] {
+        auto m = static_cast<ModuleEntry*>(g_evtsys[0].ptr_value());
+        bool bUpdateUI = g_evtsys[1].bool_value();
+        _current_project = m;
+        _update_project_list(m);
+        _events = &_projects[m].first;
+        _filters = &_projects[m].second;
+        g_evtsys.trigger(L"filter:set", _events, true);
+        _update_filter_list(_events);
+    });
+
+    g_evtsys.attach(L"project:new", [&] {
+        auto m = static_cast<ModuleEntry*>(g_evtsys[0].ptr_value());
+        _projects[m] = EventPair();
+        _update_project_list(nullptr);
+    });
+
+    g_evtsys.attach(L"project:del", [&] {
+        auto m = static_cast<ModuleEntry*>(g_evtsys[0].ptr_value());
+        _update_project_list(nullptr);
+        if(m == _current_project) {
+            g_evtsys.trigger(L"project:set", nullptr);
+        }
+        _projects.erase(m);
+    });
 }
 
 void MainWindow::_init_filters()
 {
-    if(g_config->has_arr("filters")) {
-        auto filters = g_config->arr("filters");
-        for(auto& fo : filters.as_arr()) {
-            if(fo.is_object()) {
-                if(auto fp = EventContainer::from_json(fo)) {
-                    _filters.emplace_back(fp);
-                }
-                else {
-                    msgbox(L"无效的过滤器配置。", MB_ICONERROR);
+    auto guid2mod = [&](const GUID& guid) {
+        ModuleEntry* p = nullptr;
+        for(auto& m : _modules) {
+            if(::IsEqualGUID(m->guid, guid)) {
+                p = m;
+                break;
+            }
+        }
+        return p;
+    };
+
+    auto name = isetw() ? "filters(etwlog)" : "filters(dbgview)";
+    if(g_config->has_obj(name)) {
+        auto& guids2filters = g_config->obj(name).as_obj();
+        for(auto& pair : guids2filters) {
+            GUID guid;
+            if(SUCCEEDED(::CLSIDFromString(g_config.ws(pair.first).c_str(), &guid))) {
+                auto& filters = pair.second.array_items();
+                for(auto& f : filters) {
+                    if(auto fp = EventContainer::from_json(f)) {
+                        ModuleEntry* mod = isdbg() ? nullptr : guid2mod(guid);
+                        if(isdbg() && mod == nullptr || isetw() && mod != nullptr) {
+                            _projects[mod].second.emplace_back(fp);
+                        }
+                    }
                 }
             }
         }
@@ -594,30 +658,35 @@ void MainWindow::_init_filter_events()
 {
     g_evtsys.attach(L"filter:new", [&] {
         auto filter = static_cast<EventContainer*>(g_evtsys[0].ptr_value());
-        _filters.push_back(filter);
+        _filters->push_back(filter);
         _current_filter->filter_results(filter);
         _update_filter_list(nullptr);
     });
 
     g_evtsys.attach(L"filter:set", [&] {
         auto p = static_cast<EventContainer*>(g_evtsys[0].ptr_value());
-        if(!p) p = &_events;
-        _set_current_filter(p);
+        if(!p) p = _events;
+        bool eq = _current_filter == p;
+        _current_filter = p ? p : _events;
+        if(!eq) {
+            _listview->set_item_count(_current_filter->size(), 0);
+            _listview->redraw_items(0, _listview->get_item_count() -1);
+        }
         _update_filter_list(p);
     });
     
     g_evtsys.attach(L"filter:del", [&] {
         int i = g_evtsys[0].int_value();
-        auto it = _filters.begin() + i;
+        auto it = _filters->begin() + i;
 
         if (*it == _current_filter) {
-            _current_filter = &_events;
+            _current_filter = _events;
             _listview->set_item_count(_current_filter->size(), 0);
             _listview->redraw_items(0, _listview->get_item_count() -1);
         }
 
         delete *it;
-        _filters.erase(it);
+        _filters->erase(it);
 
         _update_filter_list(nullptr);
     });
@@ -679,6 +748,11 @@ void MainWindow::_manage_modules()
 
 void MainWindow::_show_filters()
 {
+    if(isetw() && !_current_project) {
+        msgbox(L"没有模块可用（增加或选择项目）。", MB_ICONEXCLAMATION);
+        return;
+    }
+
     auto get_base = [&](std::vector<std::wstring>* bases, int* def) {
         _columns.for_each(ColumnManager::ColumnFlags::Available, [&](int i, Column& c) {
             bases->push_back(c.name);
@@ -716,7 +790,7 @@ void MainWindow::_show_filters()
         g_evtsys.trigger(L"filter:new", filter);
     };
 
-    auto dlg = new ResultFilter(_filters, get_base, _current_filter, ongetvalues, onok);
+    auto dlg = new ResultFilter(*_filters, get_base, _current_project, _current_filter, ongetvalues, onok);
     dlg->domodal(this);
 }
 
@@ -733,7 +807,7 @@ bool MainWindow::_do_search(const std::wstring& s, int line, int)
     bool valid = false;
 
     // 搜索哪一列：-1：全部
-    int fltcol = (int)_cbo_filter->get_cur_data();
+    int fltcol = (int)_cbo_search_filter->get_cur_data();
 
     // 重置列匹配结果标记
     for (auto& b : _last_search_matched_cols)
@@ -809,7 +883,7 @@ void MainWindow::_clear_results()
     // 但它目前不会修改事件记录（仅初始化使用，所以先不管它）
 
     // 各事件过滤器应该清空了（它们只是引用）
-    for (auto& f : _filters)
+    for (auto& f : *_filters)
         f->clear();
 
     // 主事件拥有日志事件，由它删除
@@ -819,7 +893,7 @@ void MainWindow::_clear_results()
     // for (auto& evt : _events.events())
     //    delete evt;
 
-    _events.clear();
+    _events->clear();
 
     // 更新界面
     _listview->set_item_count(0, 0);
@@ -838,23 +912,23 @@ void MainWindow::_update_search_filter()
     // 保存的是真实索引
     int cur_real_index = -1;
 
-    if (_cbo_filter->get_cur_sel() != -1) {
-        int ud = (int)_cbo_filter->get_cur_data();
+    if (_cbo_search_filter->get_cur_sel() != -1) {
+        int ud = (int)_cbo_search_filter->get_cur_data();
         if (ud != -1) {
             cur_real_index = ud;
         }
     }
 
     // 重置内容
-    _cbo_filter->reset_content();
-    _cbo_filter->add_string(L"全部", (void*)-1);
+    _cbo_search_filter->reset_content();
+    _cbo_search_filter->add_string(L"全部", (void*)-1);
 
     std::vector<const wchar_t*> strs {L"全部"};
 
     // 只添加已经显示的列
     int new_cur = 0;
     _columns.for_each(ColumnManager::ColumnFlags::Showing, [&](int i, Column& c) {
-        _cbo_filter->add_string(c.name.c_str(), (void*)c.index);
+        _cbo_search_filter->add_string(c.name.c_str(), (void*)c.index);
         strs.push_back(c.name.c_str());
         if(c.index == cur_real_index) {
             new_cur = i + 1;
@@ -866,9 +940,9 @@ void MainWindow::_update_search_filter()
     }
 
     // 保持选中原来的项
-    _cbo_filter->set_cur_sel(new_cur);
+    _cbo_search_filter->set_cur_sel(new_cur);
 
-    _cbo_filter->adjust_droplist_width(strs);
+    _cbo_search_filter->adjust_droplist_width(strs);
 }
 
 void MainWindow::_update_filter_list(EventContainer* p)
@@ -882,12 +956,12 @@ void MainWindow::_update_filter_list(EventContainer* p)
 
     // 重置内容
     _cbo_sel_flt->reset_content();
-    _cbo_sel_flt->add_string(L"全部", &_events);
+    _cbo_sel_flt->add_string(L"全部", _events);
 
     std::vector<const wchar_t*> strs {L"全部"};
     int new_cur = 0;
-    for(size_t i = 0, j = 0; i < _filters.size(); i++) {
-        auto flt = _filters[i];
+    for(size_t i = 0, j = 0; i < _filters->size(); i++) {
+        auto flt = (*_filters)[i];
         _cbo_sel_flt->add_string(flt->name.c_str(), (void*)flt);
         strs.push_back(flt->name.c_str());
         j++;
@@ -899,6 +973,36 @@ void MainWindow::_update_filter_list(EventContainer* p)
     // 保持选中原来的项
     _cbo_sel_flt->set_cur_sel(new_cur);
     _cbo_sel_flt->adjust_droplist_width(strs);
+}
+
+void MainWindow::_update_project_list(ModuleEntry* m)
+{
+    // 保留当前选中的项（如果有的话）
+    ModuleEntry* cur = m;
+    if(!m && _cbo_prj->get_cur_sel() != -1) {
+        void* ud = _cbo_prj->get_cur_data();
+        cur = (ModuleEntry*)ud;
+    }
+
+    // 重置内容
+    _cbo_prj->reset_content();
+
+    // 添加列表
+    std::vector<const wchar_t*> strs;
+    int new_cur = -1;
+    int j = -1;
+    for(auto& m : _modules) {
+        _cbo_prj->add_string(m->name.c_str(), m);
+        strs.push_back(m->name.c_str());
+        j++;
+        if(cur == m) {
+            new_cur = j;
+        }
+    }
+
+    // 保持选中原来的项
+    _cbo_prj->set_cur_sel(new_cur);
+    _cbo_prj->adjust_droplist_width(strs);
 }
 
 void MainWindow::_export2file()
@@ -950,18 +1054,6 @@ td:nth-child(10) {
     }
 }
 
-void MainWindow::_set_current_filter(EventContainer* p)
-{
-    bool eq = _current_filter == p;
-
-    _current_filter = p ? p : &_events;
-
-    if(!eq) {
-        _listview->set_item_count(_current_filter->size(), 0);
-        _listview->redraw_items(0, _listview->get_item_count() -1);
-    }
-}
-
 void MainWindow::_copy_selected_item()
 {
     int i = _listview->get_next_item(-1, LVNI_SELECTED);
@@ -982,12 +1074,20 @@ void MainWindow::_copy_selected_item()
 
 void MainWindow::_save_filters()
 {
-    auto& filters = g_config->arr("filters").as_arr();
+    auto name = isetw() ? "filters(etwlog)" : "filters(dbgview)";
+    auto guid2filters = g_config->obj(name);
 
-    filters.clear();
+    guid2filters.as_obj().clear();
 
-    for(auto& f : _filters) {
-        filters.push_back(*f);
+    for(auto& pair : _projects) {
+        auto m = pair.first;
+        if(isetw() && m || isdbg()) {
+            auto guid = g_config.us(m ? m->guid_str : L"{00000000-0000-0000-0000-000000000000}");
+            auto& filters = guid2filters.arr(guid.c_str()).as_arr();
+            for(auto f : pair.second.second) {
+                filters.emplace_back(*f);
+            }
+        }
     }
 }
 
@@ -1002,37 +1102,42 @@ LRESULT MainWindow::_on_create()
     _btn_filter         = _root->find<taowin::button>(L"filter-result");
     _btn_topmost        = _root->find<taowin::button>(L"topmost");
     _edt_search         = _root->find<taowin::edit>(L"s");
-    _cbo_filter         = _root->find<taowin::combobox>(L"s-filter");
+    _cbo_search_filter         = _root->find<taowin::combobox>(L"s-filter");
     _btn_colors         = _root->find<taowin::button>(L"color-settings");
     _btn_export2file    = _root->find<taowin::button>(L"export-to-file");
     _cbo_sel_flt        = _root->find<taowin::combobox>(L"select-filter");
+    _cbo_prj            = _root->find<taowin::combobox>(L"select-project");
 
     if(isdbg()) {
         _btn_start->set_visible(false);
         _btn_modules->set_visible(false);
+        _cbo_prj->set_visible(false);
+        _root->find<taowin::control>(L"select-project-label")->set_visible(false);
     }
 
     _accels = ::LoadAccelerators(nullptr, MAKEINTRESOURCE(IDR_ACCELERATOR_MAINWINDOW));
 
     _init_config();
 
-    _init_listview();
+    _init_projects();
+    _init_project_events();
 
     _init_filters();
     _init_filter_events();
 
     _init_logger_events();
 
-    _current_filter = &_events;
-    
-    _level_maps.try_emplace(TRACE_LEVEL_VERBOSE,     L"Verbose",      L"详细 - TRACE_LEVEL_VERBOSE" );
-    _level_maps.try_emplace(TRACE_LEVEL_INFORMATION, L"Information",  L"信息 - TRACE_LEVEL_INFORMATION");
-    _level_maps.try_emplace(TRACE_LEVEL_WARNING,     L"Warning",      L"警告 - TRACE_LEVEL_WARNING" );
-    _level_maps.try_emplace(TRACE_LEVEL_ERROR,       L"Error",        L"错误 - TRACE_LEVEL_ERROR" );
-    _level_maps.try_emplace(TRACE_LEVEL_CRITICAL,    L"Critical",     L"严重 - TRACE_LEVEL_CRITICAL" );
+    _init_listview();
+
+    g_evtsys.trigger(L"project:set", isetw() && !_modules.empty() ? _modules[0] : nullptr, true);
+
+    _level_maps.try_emplace(TRACE_LEVEL_VERBOSE,     L"Verbose",      L"详细(Verbose)"    );
+    _level_maps.try_emplace(TRACE_LEVEL_INFORMATION, L"Information",  L"信息(Information)");
+    _level_maps.try_emplace(TRACE_LEVEL_WARNING,     L"Warning",      L"警告(Warning)"    );
+    _level_maps.try_emplace(TRACE_LEVEL_ERROR,       L"Error",        L"错误(Error)"      );
+    _level_maps.try_emplace(TRACE_LEVEL_CRITICAL,    L"Critical",     L"严重(Critical)"   );
 
     _update_search_filter();
-    _update_filter_list(nullptr);
 
     if(isdbg()) {
         async_call([&] {
@@ -1057,7 +1162,7 @@ LRESULT MainWindow::_on_create()
                 // 的过滤器规则到候选列表供选择
                 if(c.id == "log") {
                     friendly_names.clear();
-                    for(auto fit = _filters.crbegin(), end = _filters.crend(); fit != end; ++fit) {
+                    for(auto fit = _filters->crbegin(), end = _filters->crend(); fit != end; ++fit) {
                         auto f = *fit;
                         if(_columns[f->field_index].id == "log") {
                             friendly_names.emplace_back(f->name +  L'[' + f->value_input + L']');
@@ -1139,7 +1244,7 @@ LRESULT MainWindow::_on_log(LoggerMessage::Value msg, LPARAM lParam)
         });
 
         // 日志编号
-        _snwprintf(item->id, _countof(item->id), L"%llu", (unsigned long long)_events.size() + 1);
+        _snwprintf(item->id, _countof(item->id), L"%llu", (unsigned long long)_events->size() + 1);
 
         if(isetw()) {
             // 项目名称 & 项目根目录
@@ -1164,15 +1269,15 @@ LRESULT MainWindow::_on_log(LoggerMessage::Value msg, LPARAM lParam)
         bool added_to_current = false;
 
         // 全部事件容器
-        added_to_current = _events.add(item);
+        added_to_current = _events->add(item);
 
         // 判断一下当前过滤器是否添加了此事件
         // 如果没有添加，就不必要刷新列表控件了
-        added_to_current = added_to_current && _current_filter == &_events;
+        added_to_current = added_to_current && _current_filter == _events;
 
         // 带过滤的事件容器（指针复用）
-        if(!_filters.empty()) {
-            for(auto& f : _filters) {
+        if(!_filters->empty()) {
+            for(auto& f : *_filters) {
                 bool added = f->add(item);
                 if(f == _current_filter && added && !added_to_current)
                     added_to_current = true;
@@ -1377,7 +1482,7 @@ LRESULT MainWindow::_on_init_popupmenu(HMENU hPopup)
         };
 
         append(L"全部");
-        for(auto& f : _filters) {
+        for(auto& f : *_filters) {
             append(f->name.c_str());
         }
     }

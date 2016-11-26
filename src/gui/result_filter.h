@@ -11,10 +11,11 @@ public:
     typedef std::function<void(const std::wstring& name, int field_index, const std::wstring& field_name, int value_index, const std::wstring& value_name, const std::wstring& value_input)> fnOnNewFilter;
 
 public:
-    ResultFilter(EventContainerS& filters, fnOnGetFields getfields, EventContainer* curflt, fnGetValueList getvalues, fnOnNewFilter onnewfilter)
+    ResultFilter(EventContainerS& filters, fnOnGetFields getfields, ModuleEntry* curprj, EventContainer* curflt, fnGetValueList getvalues, fnOnNewFilter onnewfilter)
         : _filters(filters)
         , _on_get_fields(getfields)
         , _current_filter(curflt)
+        , _currnet_project(curprj)
         , _get_value_list(getvalues)
         , _onnewfilter(onnewfilter)
     {
@@ -30,6 +31,7 @@ protected:
     EventContainerS&    _filters;
     fnOnGetFields       _on_get_fields;
     EventContainer*     _current_filter;
+    ModuleEntry*        _currnet_project;
     fnGetValueList      _get_value_list;
     fnOnNewFilter       _onnewfilter;
 

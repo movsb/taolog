@@ -76,10 +76,11 @@ protected:
     taowin::button*     _btn_filter;
     taowin::button*     _btn_topmost;
     taowin::edit*       _edt_search;
-    taowin::combobox*   _cbo_filter;
+    taowin::combobox*   _cbo_search_filter;
     taowin::button*     _btn_colors;
     taowin::button*     _btn_export2file;
     taowin::combobox*   _cbo_sel_flt;
+    taowin::combobox*   _cbo_prj;
 
     TooltipWindow*      _tipwnd;
 
@@ -90,9 +91,14 @@ protected:
     ColumnManager       _columns;
 
     ModuleContainer     _modules;
-    EventContainer      _events;
-    EventContainerS     _filters;
+    ModuleEntry*        _current_project;
+
+    std::map<ModuleEntry*, EventPair> _projects;
+
+    EventContainer*     _events;
+    EventContainerS*    _filters;
     EventContainer*     _current_filter;
+
     ModuleLevelMap      _level_maps;
 
     int                 _last_search_line;
@@ -124,7 +130,14 @@ protected:
 
     void _init_listview();
     void _init_config();
+
+    // 从配置文件初始化模块，并映射空的过滤器
+    void _init_projects();
+
+    // 从配置文件初始化模块过滤器
     void _init_filters();
+
+    void _init_project_events();
     void _init_filter_events();
     void _init_logger_events();
     void _view_detail(int i);
@@ -140,11 +153,12 @@ protected:
     // 导出当前过滤器内容到文件
     void _export2file();
 
-    // 设置当前使用的过滤器
-    void _set_current_filter(EventContainer* p);
-
     // 更新主界面过滤器列表
     void _update_filter_list(EventContainer* p);
+
+    // 更新项目列表
+    void _update_project_list(ModuleEntry* m);
+
 
     // 复制当前选中的行内容到剪贴板
     // 只复制第 1 个选中的行

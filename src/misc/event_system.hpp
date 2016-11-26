@@ -146,6 +146,7 @@ public:
 
 public:
     int size() const { return (int)_argv.size(); }
+
     const EventArg& operator[](int i) const
     {
         if(i >= 0 && i < size()) {
@@ -158,14 +159,14 @@ public:
     }
 
     template<typename F, typename ...T>
-    void add(const F& f, T ...args)
+    void operator()(const F& f, T ...args)
     {
         _argv.emplace_back(f);
 
-        add(std::forward<T>(args)...);
+        operator()(std::forward<T>(args)...);
     }
 
-    void add() {}
+    void operator()() {}
 
 protected:
     EventArg    _nothing;
@@ -199,12 +200,13 @@ public:
     void trigger(const wchar_t* name, T ...args)
     {
         EventArguments arguments;
-        arguments.add(std::forward<T>(args)...);
+
+        arguments(std::forward<T>(args)...);
 
         _argstk.emplace(&arguments);
 
         for(const auto& pair : _events[name]) {
-            pair.second(/* arguments */);
+            pair.second();
         }
 
         _argstk.pop();

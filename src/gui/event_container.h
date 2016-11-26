@@ -60,4 +60,5 @@ protected:
 
 typedef std::vector<EventContainer*> EventContainerS;
 
+typedef std::pair<EventContainer, EventContainerS> EventPair;
 }

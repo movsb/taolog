@@ -1,8 +1,10 @@
 #include "stdafx.h"
 
 #include "misc/event_system.hpp"
+#include "misc/config.h"
 
 #include "_logdata_define.hpp"
+#include "_module_entry.hpp"
 #include "event_container.h"
 #include "result_filter.h"
 
@@ -55,6 +57,12 @@ LRESULT ResultFilter::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
     {
     case WM_CREATE:
     {
+        if(_currnet_project) {
+            std::wstring t(L"结果过滤");
+            t += L"（项目：" + _currnet_project->name + L"）";
+            ::SetWindowText(_hwnd, t.c_str());
+        }
+
         _listview   = _root->find<taowin::listview>(L"list");
         _btn_add    = _root->find<taowin::button>(L"add");
         _btn_delete = _root->find<taowin::button>(L"delete");

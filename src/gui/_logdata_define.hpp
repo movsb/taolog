@@ -249,6 +249,6 @@ struct LogDataUI : LogData
     string* strLevel;
 };
 
-typedef std::shared_ptr<LogDataUI> LogDataUIPtr;
+typedef LogDataUI* LogDataUIPtr;
 
 }

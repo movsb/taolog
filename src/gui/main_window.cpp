@@ -887,11 +887,10 @@ void MainWindow::_clear_results()
         f->clear();
 
     // 主事件拥有日志事件，由它删除
-    // 依据 LogDataUIPtr 的具体实现来决定是否执行 delete
-    // 如果是 raw pointer 则需要手动删除
-    // 如果是 smart pointer 则不必要
-    // for (auto& evt : _events.events())
-    //    delete evt;
+    for(auto& e : _events->events()) {
+        e->~LogDataUI();
+        _log_pool.destroy(e);
+    }
 
     _events->clear();
 
@@ -1065,7 +1064,7 @@ void MainWindow::_copy_selected_item()
                 : L"";
         };
 
-        auto& log = (*_current_filter)[i];
+        auto log = (*_current_filter)[i];
         auto strlog = log->to_string(get_column_name);
 
         utils::set_clipboard_text(strlog);
@@ -1238,10 +1237,7 @@ LRESULT MainWindow::_on_log(LoggerMessage::Value msg, LPARAM lParam)
             assert(0);
         }
 
-        LogDataUIPtr item(logui, [&](LogDataUI* p) {
-            p->~LogDataUI();
-            _log_pool.destroy(p);
-        });
+        LogDataUIPtr item(logui);
 
         // 日志编号
         _snwprintf(item->id, _countof(item->id), L"%llu", (unsigned long long)_events->size() + 1);

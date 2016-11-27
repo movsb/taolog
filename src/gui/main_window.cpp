@@ -1490,7 +1490,7 @@ LRESULT MainWindow::_on_init_popupmenu(HMENU hPopup)
 {
     taowin::menu_manager::sibling* sib;
 
-    if((sib = _lvmenu.find_sib(L"filters")) && sib && sib->self ==hPopup) {
+    if (sib = _lvmenu.match_popup(L"filters", hPopup)){
         _lvmenu.clear_popup(sib);
         
         _lvmenu.insert_str(sib, std::to_wstring((int)_events), L"È«²¿", true);
@@ -1500,7 +1500,7 @@ LRESULT MainWindow::_on_init_popupmenu(HMENU hPopup)
             _lvmenu.insert_str(sib, std::to_wstring((int)f), f->name, true);
         }
     }
-    else if((sib = _lvmenu.find_sib(L"projects")) && sib && sib->self == hPopup) {
+    else if(sib = _lvmenu.match_popup(L"projects", hPopup)) {
         _lvmenu.clear_popup(sib);
         for(auto& m : _modules) {
             _lvmenu.insert_str(sib, std::to_wstring((int)m), m->name, true);

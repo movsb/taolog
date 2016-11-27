@@ -4,6 +4,7 @@
 
 #include "_module_entry.hpp"
 #include "_logdata_define.hpp"
+#include "tooltip_window.h"
 
 #include "listview_color.h"
 #include "column_selection.h"
@@ -11,8 +12,6 @@
 #include "event_detail.h"
 #include "module_manager.h"
 #include "result_filter.h"
-
-#include "tooltip_window.h"
 
 #include "log/controller.h"
 #include "log/consumer.h"

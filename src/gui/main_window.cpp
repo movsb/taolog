@@ -438,7 +438,7 @@ void MainWindow::_init_listview()
         _columns.push(L"时间", true,   86, "time" );
         _columns.push(L"进程", false,  50, "pid"  );
         _columns.push(L"线程", false,  50, "tid"  );
-        _columns.push(L"项目", true,  100, "proj" );
+        _columns.push(L"模块", true,  100, "proj" );
         _columns.push(L"文件", true,  140, "file" );
         _columns.push(L"函数", true,  100, "func" );
         _columns.push(L"行号", true,   50, "line" );
@@ -534,7 +534,7 @@ void MainWindow::_init_listview()
     )";
 
     if(isetw()) {
-        menustr += LR"(<sub i="projects" s="项目"></sub>)";
+        menustr += LR"(<sub i="projects" s="模块"></sub>)";
     }
 
     menustr += LR"(
@@ -759,7 +759,7 @@ void MainWindow::_manage_modules()
 void MainWindow::_show_filters()
 {
     if(isetw() && !_current_project) {
-        msgbox(L"没有模块可用（增加或选择项目）。", MB_ICONEXCLAMATION);
+        msgbox(L"没有模块可用（增加或选择模块）。", MB_ICONEXCLAMATION);
         return;
     }
 

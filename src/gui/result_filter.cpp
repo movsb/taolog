@@ -59,7 +59,7 @@ LRESULT ResultFilter::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
     {
         if(_currnet_project) {
             std::wstring t(L"结果过滤");
-            t += L"（项目：" + _currnet_project->name + L"）";
+            t += L"（模块：" + _currnet_project->name + L"）";
             ::SetWindowText(_hwnd, t.c_str());
         }
 

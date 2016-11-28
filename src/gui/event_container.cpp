@@ -108,7 +108,7 @@ void EventContainer::enable_filter(bool b)
             {
                 return search_value_in_p();
             }
-            // ÏîÄ¿
+            // Ä£¿é
             case 4:
             {
                 return value_name != p;

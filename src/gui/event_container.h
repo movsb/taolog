@@ -56,6 +56,8 @@ protected:
 
     EVENTS          _events;
     FILTER          _filter;
+
+    std::wstring _value_input_lower;
 };
 
 typedef std::vector<EventContainer*> EventContainerS;

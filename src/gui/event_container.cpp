@@ -79,17 +79,20 @@ void EventContainer::enable_filter(bool b)
         return;
     }
     else {
+        auto tolower = [](std::wstring s) {
+            std::transform(s.begin(), s.end(), s.begin(), ::tolower);
+            return s;
+        };
+
+        _value_input_lower = tolower(value_input);
+
         _filter = [&](const EVENT& evt) {
             const auto p = (*evt)[field_index];
 
             auto search_value_in_p = [&] {
-                auto tolower = [](std::wstring& s) {
-                    std::transform(s.begin(), s.end(), s.begin(), ::tolower);
-                    return s;
-                };
 
                 auto haystack = tolower(std::wstring(p));
-                auto needle = tolower(value_input);
+                auto& needle = _value_input_lower;
 
                 return !::wcsstr(haystack.c_str(), needle.c_str());
             };

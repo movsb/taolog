@@ -21,7 +21,7 @@ void DoEtwLog(void* log)
 LPCTSTR MainWindow::get_skin_xml() const
 {
     LPCTSTR json = LR"tw(
-<window title="ETW Log Viewer" size="820,600">
+<window title="ETW Log Viewer" size="900,650">
     <res>
         <font name="default" face="微软雅黑" size="12"/>
         <font name="12" face="微软雅黑" size="12"/>
@@ -937,7 +937,7 @@ void MainWindow::_update_search_filter()
     // 只添加已经显示的列
     int new_cur = 0;
     _columns.for_each(ColumnManager::ColumnFlags::Showing, [&](int i, Column& c) {
-        _cbo_search_filter->add_string(c.name.c_str(), (void*)c.index);
+        _cbo_search_filter->add_string(c.name.c_str(), (void*)i);
         strs.push_back(c.name.c_str());
         if(c.index == cur_real_index) {
             new_cur = i + 1;
@@ -1494,7 +1494,8 @@ LRESULT MainWindow::_on_init_popupmenu(HMENU hPopup)
         _lvmenu.clear_popup(sib);
         
         _lvmenu.insert_str(sib, std::to_wstring((int)_events), L"全部", true);
-        _lvmenu.insert_sep(sib);
+
+        if(!_filters->empty()) _lvmenu.insert_sep(sib);
 
         for(auto& f : *_filters) {
             _lvmenu.insert_str(sib, std::to_wstring((int)f), f->name, true);

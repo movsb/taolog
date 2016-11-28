@@ -1281,31 +1281,26 @@ LRESULT MainWindow::_on_log(LoggerMessage::Value msg, LPARAM lParam)
 
         //////////////////////////////////////////////////////////////////////////
 
-        bool added_to_current = false;
-
-        // 全部事件容器
-        added_to_current = events.add(item);
-
         // 判断一下当前过滤器是否添加了此事件
         // 如果没有添加，就不必要刷新列表控件了
-        added_to_current = _current_filter == &events && added_to_current;
+        auto old_size = _current_filter->size();
+
+        // 全部事件容器
+        events.add(item);
 
         // 带过滤的事件容器（指针复用）
         if(!filters.empty()) {
             for(auto& f : filters) {
-                bool added = f->add(item);
-                if(f == _current_filter && added && !added_to_current)
-                    added_to_current = true;
+                f->add(item);
             }
         }
 
-        if(added_to_current) {
+        if(_current_filter->size() > old_size) {
             // 默认是非自动滚屏到最后一行的
             // 但如果当前焦点行是最后一行，则自动滚屏
             int count = (int)_current_filter->size();
             int sic_flag = LVSICF_NOINVALIDATEALL | LVSICF_NOSCROLL;
-            bool is_last_focused = count > 1 && (_listview->get_item_state(count - 2, LVIS_FOCUSED) & LVIS_FOCUSED)
-                || _listview->get_next_item(-1, LVIS_FOCUSED) == -1;
+            bool is_last_focused = count > 1 && (_listview->get_item_state(count - 2, LVIS_FOCUSED) & LVIS_FOCUSED);
 
             if(is_last_focused) {
                 sic_flag &= ~LVSICF_NOSCROLL;

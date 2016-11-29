@@ -24,6 +24,9 @@ namespace {
     void a2u(const char* a, wchar_t* u, int c) {
         ::MultiByteToWideChar(CP_ACP, 0, a, -1, u, c);
     }
+
+    HWND g_loggerWindow;
+    bool g_loggerOpen;
 }
 
 bool Consumer::start(const wchar_t * session)
@@ -48,6 +51,10 @@ bool Consumer::start(const wchar_t * session)
     }
     ::CloseHandle(thread);
 
+    CreateLoggerWindow();
+
+    g_loggerOpen = true;
+
     return true;
 }
 
@@ -57,6 +64,8 @@ bool Consumer::stop()
         ::CloseTrace(_handle);
         _handle = 0;
     }
+
+    g_loggerOpen = false;
 
     return true;
 }
@@ -71,7 +80,9 @@ void Consumer::ProcessEvents(EVENT_TRACE * pEvent)
     if (!pEvent || !IsEqualGUID(pEvent->Header.Guid, g_clsGuid))
         return;
 
-    DoEtwLog(pEvent->MofData);
+    if(g_loggerOpen) {
+        DoEtwLog(pEvent->MofData);
+    }
 }
 
 unsigned int Consumer::ConsumerThread(void * ud)
@@ -79,6 +90,45 @@ unsigned int Consumer::ConsumerThread(void * ud)
     TRACEHANDLE handle = (TRACEHANDLE)ud;
     ::ProcessTrace(&handle, 1, nullptr, nullptr);
     return 0;
+}
+
+LRESULT CALLBACK Consumer::__WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    if(uMsg == WM_COPYDATA) {
+        auto cds = reinterpret_cast<COPYDATASTRUCT*>(lParam);
+        if(g_loggerOpen) {
+            taoetw::DoEtwLog(cds->lpData);
+        }
+        return 0;
+    }
+
+    return ::DefWindowProc(hWnd, uMsg, wParam, lParam);
+}
+
+void Consumer::CreateLoggerWindow()
+{
+    static bool bRegistered = false;
+
+    if(bRegistered) return;
+
+    WNDCLASSEX wcx = {sizeof(wcx)};
+    wcx.lpszClassName = _T("{6E5E5CBC-8ACF-4fa6-98E4-0C63A075323B}");
+    wcx.lpfnWndProc = __WindowProcedure;
+    wcx.hInstance = ::GetModuleHandle(NULL);
+    wcx.cbWndExtra = sizeof(void*);
+
+    bRegistered = !!::RegisterClassEx(&wcx);
+
+    g_loggerWindow = ::CreateWindowEx(0, 
+        L"{6E5E5CBC-8ACF-4fa6-98E4-0C63A075323B}",
+        L"{6E5E5CBC-8ACF-4fa6-98E4-0C63A075323B}::HostWnd",
+        0, 0, 0, 0, 0, HWND_MESSAGE, nullptr, nullptr, nullptr);
+}
+
+void Consumer::DestroyLoggerWindow()
+{
+    ::DestroyWindow(g_loggerWindow);
+    ::UnregisterClass(L"{6E5E5CBC-8ACF-4fa6-98E4-0C63A075323B}", ::GetModuleHandle(NULL));
 }
 
 }

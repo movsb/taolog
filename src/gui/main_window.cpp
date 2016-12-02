@@ -945,7 +945,7 @@ void MainWindow::_update_search_filter()
     });
 
     if(cur_real_index == -1) {
-        new_cur = 0;
+        new_cur = _cbo_search_filter->get_count() - 1;
     }
 
     // 保持选中原来的项

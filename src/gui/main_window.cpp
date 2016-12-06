@@ -1315,6 +1315,9 @@ LRESULT MainWindow::_on_log(LoggerMessage::Value msg, LPARAM lParam)
             }
         }
     }
+    else if(msg == LoggerMessage::AllocLogUI) {
+        return LRESULT(_log_pool.alloc());
+    }
 
     return 0;
 }

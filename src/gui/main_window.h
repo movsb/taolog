@@ -110,7 +110,8 @@ protected:
 
     Guid2Module         _guid2mod;
 
-    MemPoolT<LogDataUI, 1024> _log_pool;
+    MemPoolT<LogDataUI, 8192>
+                        _log_pool;
 
 protected:
     virtual LPCTSTR get_skin_xml() const override;

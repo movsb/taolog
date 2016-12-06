@@ -19,6 +19,19 @@ json11::Json EventContainer::to_json() const
     };
 }
 
+std::wstring EventContainer::to_tip() const
+{
+    std::wstring str;
+
+    str.reserve(2048);
+
+    str += L"Ãû×Ö£º" + name + L"\\b";
+    str += L"×Ö¶Î£º" + field_name + L"\\b";
+    str += L"ÎÄ±¾£º" + (!value_input.empty() ? value_input : value_name) + L"\\b";
+
+    return std::move(str);
+}
+
 EventContainer* EventContainer::from_json(const json11::Json& obj)
 {
     EventContainer* p = nullptr;

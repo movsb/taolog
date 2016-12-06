@@ -28,6 +28,8 @@ public:
 
     void format(const wchar_t* fmt);
     void popup(const wchar_t* str);
+    void format(const std::wstring& s) { return format(s.c_str()); }
+    void popup(const std::wstring& s) { return popup(s.c_str()); }
     bool showing() const { return !!::IsWindowVisible(_hwnd); }
     void set_font(HFONT font) { _font = font; }
     void hide();

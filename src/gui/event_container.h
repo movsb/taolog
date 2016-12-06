@@ -33,6 +33,7 @@ public:
 
 public:
     json11::Json to_json() const;
+    std::wstring to_tip() const;
     static EventContainer* from_json(const json11::Json& obj);
 
 public:

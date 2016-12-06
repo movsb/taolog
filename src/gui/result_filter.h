@@ -19,6 +19,12 @@ public:
         , _get_value_list(getvalues)
         , _onnewfilter(onnewfilter)
     {
+        _tipwnd = new TooltipWindow;
+    }
+
+    ~ResultFilter()
+    {
+        _tipwnd = nullptr;
     }
 
 protected:
@@ -26,6 +32,8 @@ protected:
     taowin::button*     _btn_add;
     taowin::button*     _btn_delete;
     taowin::button*     _btn_all;
+
+    TooltipWindow*      _tipwnd;
 
 protected:
     EventContainerS&    _filters;
@@ -39,6 +47,7 @@ protected:
     virtual void get_metas(WindowMeta* metas) override;
     virtual LPCTSTR get_skin_xml() const override;
     virtual LRESULT handle_message(UINT umsg, WPARAM wparam, LPARAM lparam) override;
+    virtual LRESULT control_message(taowin::syscontrol* ctl, UINT umsg, WPARAM wparam, LPARAM lparam);
     virtual LRESULT on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR * hdr) override;
     virtual void on_final_message() override { __super::on_final_message(); delete this; }
 };

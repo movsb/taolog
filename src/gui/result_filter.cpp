@@ -6,6 +6,7 @@
 #include "_logdata_define.hpp"
 #include "_module_entry.hpp"
 #include "event_container.h"
+#include "tooltip_window.h"
 #include "result_filter.h"
 
 
@@ -57,6 +58,9 @@ LRESULT ResultFilter::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
     {
     case WM_CREATE:
     {
+        _tipwnd->create(this);
+        _tipwnd->set_font(_mgr.get_font(L"default"));
+
         if(_currnet_project) {
             std::wstring t(L"结果过滤");
             t += L"（模块：" + _currnet_project->name + L"）";
@@ -74,11 +78,44 @@ LRESULT ResultFilter::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
 
         _listview->set_item_count((int)_filters.size(), 0);
 
+        subclass_control(_listview);
+
         return 0;
     }
-
     }
     return __super::handle_message(umsg, wparam, lparam);
+}
+
+LRESULT ResultFilter::control_message(taowin::syscontrol* ctl, UINT umsg, WPARAM wparam, LPARAM lparam)
+{
+    // TODO static!!
+    static bool mi = false;
+
+    if(umsg == WM_MOUSEMOVE) {
+        if(!mi) {
+            taowin::set_track_mouse(ctl);
+            mi = true;
+        }
+    }
+    else if(umsg == WM_MOUSELEAVE) {
+        mi = false;
+    }
+    else if(umsg == WM_MOUSEHOVER) {
+        mi = false;
+
+        POINT pt = {GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam)};
+
+        if(ctl == _listview) {
+            LVHITTESTINFO hti;;
+            hti.pt = pt;
+            if(_listview->subitem_hittest(&hti) != -1) {
+                _tipwnd->format(_filters[hti.iItem]->to_tip());
+            }
+            return 0;
+        }
+    }
+
+    return __super::control_message(ctl, umsg, wparam, lparam);
 }
 
 LRESULT ResultFilter::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR * hdr)

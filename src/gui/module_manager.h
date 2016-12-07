@@ -24,12 +24,22 @@ protected:
     taowin::button*     _btn_copy;
     taowin::button*     _btn_paste;
 
+    TooltipWindow*      _tipwnd;
+
 public:
     ModuleManager(std::vector<ModuleEntry*>& modules, ModuleLevelMap& levels)
         : _modules(modules)
         , _levels(levels)
-    {}
+    {
+        _tipwnd = new TooltipWindow;
+    }
 
+    ~ModuleManager()
+    {
+        _tipwnd = nullptr;
+    }
+
+public:
     void on_toggle_enable(fnOnToggleEnable fn) { _on_toggle = fn; }
     void on_get_is_open(fnIsEtwOpen fn) { _get_is_open = fn; }
 
@@ -37,6 +47,7 @@ protected:
     virtual void get_metas(WindowMeta* metas) override;
     virtual LPCTSTR get_skin_xml() const override;
     virtual LRESULT handle_message(UINT umsg, WPARAM wparam, LPARAM lparam) override;
+    virtual LRESULT control_message(taowin::syscontrol* ctl, UINT umsg, WPARAM wparam, LPARAM lparam);
     virtual LRESULT on_notify(HWND hwnd, taowin::control* pc, int code, NMHDR* hdr) override;
     virtual void on_final_message() override { __super::on_final_message(); delete this; }
 

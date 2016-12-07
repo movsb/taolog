@@ -25,9 +25,9 @@ std::wstring EventContainer::to_tip() const
 
     str.reserve(2048);
 
-    str += L"名字：" + name + L"\\b";
-    str += L"字段：" + field_name + L"\\b";
-    str += L"文本：" + (!value_input.empty() ? value_input : value_name) + L"\\b";
+    str += L"名字：" + name + L"\bn";
+    str += L"字段：" + field_name + L"\bn";
+    str += L"文本：" + (!value_input.empty() ? value_input : value_name) + L"\bn";
 
     return std::move(str);
 }

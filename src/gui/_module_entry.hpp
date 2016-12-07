@@ -22,6 +22,20 @@ struct ModuleEntry
         };
     }
 
+    std::wstring to_tip() const
+    {
+        std::wstring str;
+
+        str.reserve(1024);
+
+        str += L"名字\bw35：\bw{15}" + name + L"\bn";
+        str += L"GUID\bw35：\bw{15}" + guid_str + L"\bn";
+        str += L"目录\bw35：\bw{15}" + root + L"\bn";
+        str += L"等级\bw35：\bw{15}" + std::to_wstring(level) + L"\bn";
+
+        return std::move(str);
+    }
+
     static ModuleEntry* from_json(const json11::Json& obj)
     {
         ModuleEntry* m = nullptr;

@@ -182,18 +182,19 @@ void TooltipWindow::parse(const wchar_t* f)
         for(;;) {
             auto bp = f;
 
-            while(*f && *f != L'\\') {
+            while(*f && *f != L'\b') {
                 ++f;
             }
 
             auto ep = f;
 
-            if(*f == L'\\') {
+            if(*f == L'\b') {
                 ++f;
-                if(*f == L'b') {
+                if(*f == L'n') {
                     ++f;
                     Div d;
                     d.text.assign(bp, ep);
+                    d.width = 0;
                     line.divs.push_back(std::move(d));
                     if(*f == L'\n') {
                         ++f;
@@ -202,6 +203,10 @@ void TooltipWindow::parse(const wchar_t* f)
                 }
                 else if(*f == L'w') {
                     ++f;
+
+                    bool has_brace = *f == L'{';
+                    if(has_brace) ++f;
+
                     auto bbp = f;
                     int width = 0;
                     while('0' <= *f && *f <= '9') {
@@ -217,15 +222,9 @@ void TooltipWindow::parse(const wchar_t* f)
                     d.width = width;
                     line.divs.push_back(std::move(d));
 
-                    if(*f == L'\n') {
+                    if(has_brace && *f == '}') {
                         ++f;
-                        if(*f == L'\\' && *(f+1) == L'b') {
-                            ++f;
-                            ++f;
-                        }
-                        break;
                     }
-
                 }
                 else {
                     assert("bad slash" && 0);
@@ -234,6 +233,7 @@ void TooltipWindow::parse(const wchar_t* f)
             else {
                 Div d;
                 d.text.assign(bp, ep);
+                d.width = 0;
                 line.divs.push_back(std::move(d));
                 break;
             }

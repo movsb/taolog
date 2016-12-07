@@ -7,6 +7,8 @@
 
 #include "_module_entry.hpp"
 
+#include "tooltip_window.h"
+
 #include "module_manager.h"
 #include "module_editor.h"
 
@@ -56,6 +58,9 @@ LRESULT ModuleManager::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
     switch (umsg) {
     case WM_CREATE:
     {
+        _tipwnd->create(this);
+        _tipwnd->set_font(_mgr.get_font(L"default"));
+
         _listview   = _root->find<taowin::listview>(L"list");
         _btn_add    = _root->find<taowin::button>(L"add");
         _btn_enable = _root->find<taowin::button>(L"enable");
@@ -68,6 +73,8 @@ LRESULT ModuleManager::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
         _listview->insert_column(L"״̬", 50, 1);
 
         _listview->set_item_count((int)_modules.size(), 0);
+
+        subclass_control(_listview);
 
         _update_pastebtn_status();
 
@@ -94,6 +101,38 @@ LRESULT ModuleManager::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
 
     }
     return __super::handle_message(umsg, wparam, lparam);
+}
+
+LRESULT ModuleManager::control_message(taowin::syscontrol* ctl, UINT umsg, WPARAM wparam, LPARAM lparam)
+{
+    // TODO static!!
+    static bool mi = false;
+
+    if(umsg == WM_MOUSEMOVE) {
+        if(!mi) {
+            taowin::set_track_mouse(ctl);
+            mi = true;
+        }
+    }
+    else if(umsg == WM_MOUSELEAVE) {
+        mi = false;
+    }
+    else if(umsg == WM_MOUSEHOVER) {
+        mi = false;
+
+        POINT pt = {GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam)};
+
+        if(ctl == _listview) {
+            LVHITTESTINFO hti;;
+            hti.pt = pt;
+            if(_listview->subitem_hittest(&hti) != -1) {
+                _tipwnd->format(_modules[hti.iItem]->to_tip());
+            }
+            return 0;
+        }
+    }
+
+    return __super::control_message(ctl, umsg, wparam, lparam);
 }
 
 LRESULT ModuleManager::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR * hdr)

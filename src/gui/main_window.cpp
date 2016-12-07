@@ -109,18 +109,18 @@ LRESULT MainWindow::control_message(taowin::syscontrol* ctl, UINT umsg, WPARAM w
         }
         else if(ctl == _edt_search) {
             auto tips = 
-LR"(请输入待搜索的文本。
-
-搜索时执行不区分大小写的普通文本搜索。
-搜索上下文为：当前过滤器、当前搜索列。
-
-\b快捷键：
-\b    Ctrl + F        \w100-   聚焦搜索框\w100
-\b    Enter           \w100-   执行搜索\w100
-\b    F3              \w100-   搜索下一个\w100
-\b    Shift + F3      \w100-   搜索上一个\w100
-\b    Ctrl + Enter    \w100-   添加过滤器\w100
-)";
+L"请输入待搜索的文本。\n"
+"\n"
+"搜索时执行不区分大小写的普通文本搜索。\n"
+"搜索上下文为：当前过滤器、当前搜索列。\n"
+"\n\bn"
+"快捷键：\bn"
+"    Ctrl + F        \bw100-   聚焦搜索框\bn"
+"    Enter           \bw100-   执行搜索\bn"
+"    F3              \bw100-   搜索下一个\bn"
+"    Shift + F3      \bw100-   搜索上一个\bn"
+"    Ctrl + Enter    \bw100-   添加过滤器\bn"
+;
             _tipwnd->format(tips);
             return 0;
         }

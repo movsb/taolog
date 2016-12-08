@@ -29,14 +29,10 @@ LPCTSTR MainWindow::get_skin_xml() const
     <root>
         <vertical padding="5,5,5,5">
             <horizontal name="toolbar" height="30" padding="0,1,0,4">
-                <button name="start-logging" text="开始记录" width="60" style="tabstop"/>
-                <control width="5" />
-                <button name="clear-logging" text="清空记录" width="60" style="tabstop"/>
-                <control width="5" />
-                <button name="module-manager" text="模块管理" width="60" style="tabstop"/>
-                <control width="5" />
-                <button name="filter-result" text="结果过滤" width="60" style="tabstop"/>
-                <control width="5" />
+                <button name="start-logging" text="开始记录" width="60" style="tabstop" padding="0,0,5,0" />
+                <button name="clear-logging" text="清空记录" width="60" style="tabstop" padding="0,0,5,0"/>
+                <button name="module-manager" text="模块管理" width="60" style="tabstop" padding="0,0,5,0"/>
+                <button name="filter-result" text="结果过滤" width="60" style="tabstop" padding="0,0,5,0"/>
                 <button name="export-to-file" text="导出日志" width="60" style="tabstop"/>
                 <control minwidth="30"/>
                 <label name="select-project-label" text="模块：" width="38" style="centerimage"/>
@@ -47,8 +43,7 @@ LPCTSTR MainWindow::get_skin_xml() const
                 <combobox name="s-filter" style="tabstop" height="200" width="64" padding="0,0,4,0"/>
                 <edit name="s" width="80" style="tabstop" exstyle="clientedge"/>
                 <control width="10" />
-                <button name="color-settings" text="颜色配置" width="60" style="tabstop"/>
-                <control width="5" />
+                <button name="color-settings" text="颜色配置" width="60" style="tabstop" padding="0,0,5,0"/>
                 <button name="topmost" text="窗口置顶" width="60" style="tabstop"/>
             </horizontal>
             <listview name="lv" style="showselalways,ownerdata,tabstop" exstyle="clientedge,doublebuffer,headerdragdrop"/>
@@ -1121,6 +1116,7 @@ LRESULT MainWindow::_on_create()
         _btn_start->set_visible(false);
         _btn_modules->set_visible(false);
         _cbo_prj->set_visible(false);
+        _btn_colors->set_visible(false);
         _root->find<taowin::control>(L"select-project-label")->set_visible(false);
     }
 

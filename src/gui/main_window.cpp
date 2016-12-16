@@ -1106,7 +1106,7 @@ LRESULT MainWindow::_on_create()
     _btn_filter         = _root->find<taowin::button>(L"filter-result");
     _btn_topmost        = _root->find<taowin::button>(L"topmost");
     _edt_search         = _root->find<taowin::edit>(L"s");
-    _cbo_search_filter         = _root->find<taowin::combobox>(L"s-filter");
+    _cbo_search_filter  = _root->find<taowin::combobox>(L"s-filter");
     _btn_colors         = _root->find<taowin::button>(L"color-settings");
     _btn_export2file    = _root->find<taowin::button>(L"export-to-file");
     _cbo_sel_flt        = _root->find<taowin::combobox>(L"select-filter");

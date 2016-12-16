@@ -13,7 +13,7 @@
 #include <guiddef.h>
 #include <Evntrace.h>
 #include <process.h>
-#include <list>
+#include <vector>
 
 #define WIDEN2(x) L ## x
 #define WIDEN(x) WIDEN2(x)
@@ -33,6 +33,10 @@
 #endif
 
 #define ETW_LOGGER_MAX_LOG_SIZE (50*1024)
+
+#if !defined(ETW_LOGGER_METHOD_COPYDATA) && !defined(ETW_LOGGER_METHOD_EVENTTRACING)
+  #define ETW_LOGGER_METHOD_EVENTTRACING
+#endif
 
 class ETWLogger
 {
@@ -61,13 +65,28 @@ public:
     #pragma pack(pop)
 
 protected:
+#ifdef ETW_LOGGER_METHOD_COPYDATA
     union LogDataMsg
     {
         LogDataMsg* next;
-        LogData log;
+        struct {
+            LogData log;
+        } s;
     };
+#endif
 
-    typedef std::list<LogDataMsg*> LogList;
+#ifdef ETW_LOGGER_METHOD_EVENTTRACING
+    union LogDataMsg
+    {
+        LogDataMsg* next;
+        struct {
+            EVENT_TRACE_HEADER hdr;
+            LogData log;
+        } s;
+    };
+#endif
+
+    typedef std::vector<LogDataMsg*> LogList;
 
     struct WndMsg
     {
@@ -75,6 +94,7 @@ protected:
         {
             __Start = WM_USER,
             Alloc,
+            Dealloc,
             Trace,
         };
     };
@@ -98,6 +118,8 @@ public:
 		m_clsGuid = clsGuid;
 
         m_version = 0x0000;
+
+        m_logs.reserve(1024);
 
 		RegisterProvider();
         RegisterLoggerWindowClass();
@@ -238,7 +260,7 @@ public:
 
         LogDataMsg* logmsg = (LogDataMsg*)::SendMessage(m_hWnd, WndMsg::Alloc, 0, 0);
 
-        LogData& data = logmsg->log;
+        LogData& data = logmsg->s.log;
 
         data.version = m_version;
         data.pid = ::GetCurrentProcessId();
@@ -282,8 +304,28 @@ public:
             data.text[0] = 0;
         }
 
-        LRESULT lr = ::PostMessage(m_hWnd, WndMsg::Trace, 0, reinterpret_cast<LPARAM>(logmsg));
-        lr = lr;
+#ifdef ETW_LOGGER_METHOD_COPYDATA
+        ::PostMessage(m_hWnd, WndMsg::Trace, 0, reinterpret_cast<LPARAM>(logmsg));
+#endif
+
+#ifdef ETW_LOGGER_METHOD_EVENTTRACING
+        // the header
+        EVENT_TRACE_HEADER& hdr = logmsg->s.hdr;
+        memset(&hdr, 0, sizeof(hdr));
+
+        // 还没搞懂 MSDN 上下面这句话的意思
+        // On input, the size must be less than the size of the event tracing session's buffer minus 72 (0x48)
+        hdr.Size            = (USHORT)(sizeof(hdr) + offsetof(LogData, text) + data.cch * sizeof(data.text[0]));
+        hdr.Class.Type      = EVENT_TRACE_TYPE_INFO;
+        hdr.Class.Level     = level;
+        hdr.Class.Version   = m_version;
+        hdr.Guid            = m_clsGuid;
+        hdr.Flags           = WNODE_FLAG_TRACED_GUID;
+
+        // Trace it!
+        ::TraceEvent(m_sessionHandle, &hdr);
+        ::PostMessage(m_hWnd, WndMsg::Dealloc, 0, reinterpret_cast<LPARAM>(logmsg));
+#endif
 	}
 
     LRESULT CALLBACK WindowProcedure(UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -300,10 +342,16 @@ public:
             LogDataMsg* logmsg = reinterpret_cast<LogDataMsg*>(lParam);
             COPYDATASTRUCT cds;
             cds.dwData = 0;
-            cds.cbData = offsetof(LogData, text) + logmsg->log.cch * sizeof(logmsg->log.text[0]);
+            cds.cbData = offsetof(LogData, text) + logmsg->s.log.cch * sizeof(logmsg->s.log.text[0]);
             cds.lpData = static_cast<void*>(logmsg);
 
             ::SendMessage(m_HostWnd, WM_COPYDATA, WPARAM(m_hWnd), LPARAM(&cds));
+            Dealloc(logmsg);
+            return 0;
+        }
+        case WndMsg::Dealloc:
+        {
+            LogDataMsg* logmsg = reinterpret_cast<LogDataMsg*>(lParam);
             Dealloc(logmsg);
             return 0;
         }

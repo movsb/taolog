@@ -107,6 +107,9 @@
     <ClCompile Include="..\3rd\taowin\src\tw_menu.cpp">
       <Filter>Source Files\3rd\taowin</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\gui\json_visual.cpp">
+      <Filter>Source Files\gui</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\3rd\taowin\src\tw_control.h">
@@ -198,6 +201,9 @@
     </ClInclude>
     <ClInclude Include="..\3rd\taowin\src\tw_menu.h">
       <Filter>Source Files\3rd\taowin</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\gui\json_visual.h">
+      <Filter>Source Files\gui</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

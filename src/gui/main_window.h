@@ -12,6 +12,7 @@
 #include "event_detail.h"
 #include "module_manager.h"
 #include "result_filter.h"
+#include "json_visual.h"
 
 #include "log/controller.h"
 #include "log/consumer.h"
@@ -80,11 +81,13 @@ protected:
     taowin::button*     _btn_export2file;
     taowin::combobox*   _cbo_sel_flt;
     taowin::combobox*   _cbo_prj;
+    taowin::button*     _btn_tools;
 
     TooltipWindow*      _tipwnd;
 
     HACCEL              _accels;
     taowin::menu_manager _lvmenu;
+    taowin::menu_manager _tools_menu;
 
     MapColors           _colors;
     ColumnManager       _columns;

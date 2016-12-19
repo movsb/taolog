@@ -171,6 +171,7 @@
     <ClCompile Include="..\src\gui\column_selection.cpp" />
     <ClCompile Include="..\src\gui\event_container.cpp" />
     <ClCompile Include="..\src\gui\event_detail.cpp" />
+    <ClCompile Include="..\src\gui\json_visual.cpp" />
     <ClCompile Include="..\src\gui\listview_color.cpp" />
     <ClCompile Include="..\src\gui\main_window.cpp" />
     <ClCompile Include="..\src\gui\module_editor.cpp" />
@@ -245,6 +246,7 @@
     <ClInclude Include="..\src\gui\column_selection.h" />
     <ClInclude Include="..\src\gui\event_container.h" />
     <ClInclude Include="..\src\gui\event_detail.h" />
+    <ClInclude Include="..\src\gui\json_visual.h" />
     <ClInclude Include="..\src\gui\listview_color.h" />
     <ClInclude Include="..\src\gui\main_window.h" />
     <ClInclude Include="..\src\gui\module_editor.h" />

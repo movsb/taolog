@@ -21,7 +21,7 @@ void DoEtwLog(void* log)
 LPCTSTR MainWindow::get_skin_xml() const
 {
     LPCTSTR json = LR"tw(
-<window title="ETW Log Viewer" size="900,650">
+<window title="ETW Log Viewer" size="1000,650">
     <res>
         <font name="default" face="Î¢ÈíÑÅºÚ" size="12"/>
         <font name="12" face="Î¢ÈíÑÅºÚ" size="12"/>
@@ -44,7 +44,8 @@ LPCTSTR MainWindow::get_skin_xml() const
                 <edit name="s" width="80" style="tabstop" exstyle="clientedge"/>
                 <control width="10" />
                 <button name="color-settings" text="ÑÕÉ«ÅäÖÃ" width="60" style="tabstop" padding="0,0,5,0"/>
-                <button name="topmost" text="´°¿ÚÖÃ¶¥" width="60" style="tabstop"/>
+                <button name="topmost" text="´°¿ÚÖÃ¶¥" width="60" style="tabstop" padding="0,0,5,0"/>
+                <button name="tools" text="¹¤¾ß" width="60" style="tabstop"/>
             </horizontal>
             <listview name="lv" style="showselalways,ownerdata,tabstop" exstyle="clientedge,doublebuffer,headerdragdrop"/>
         </vertical>
@@ -134,6 +135,13 @@ LRESULT MainWindow::on_menu(const taowin::MenuIds& m)
         else if(m[1] == L"copy")        { g_evtsys.trigger(L"log:copy"); }
         else if(m[1] == L"filters")     { g_evtsys.trigger(L"filter:set", (void*)std::stoi(m[2])); }
         else if(m[1] == L"projects")    { g_evtsys.trigger(L"project:set", (void*)std::stoi(m[2]), true); }
+    }
+    else if(m[0] == L"tools") {
+        if(m[1] == L"json_visual") {
+            auto jv = new JsonVisual;
+            jv->create(this);
+            jv->show();
+        }
     }
 
     return 0;
@@ -295,6 +303,12 @@ LRESULT MainWindow::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR *
     else if(pc == _btn_export2file) {
         if(code == BN_CLICKED) {
             _export2file();
+            return 0;
+        }
+    }
+    else if(pc == _btn_tools) {
+        if(code == BN_CLICKED) {
+            _tools_menu.track();
             return 0;
         }
     }
@@ -545,6 +559,14 @@ void MainWindow::_init_listview()
 
     _lvmenu.create(menustr.c_str());
     add_menu(&_lvmenu);
+
+    // ¹¤¾ß²Ëµ¥
+    _tools_menu.create(LR"(
+<menutree i="tools">
+    <item i="json_visual" s="JSON ¿ÉÊÓ»¯" />
+</menutree>
+)");
+    add_menu(&_tools_menu);
 
     // subclass it
     subclass_control(_listview);
@@ -1111,6 +1133,7 @@ LRESULT MainWindow::_on_create()
     _btn_export2file    = _root->find<taowin::button>(L"export-to-file");
     _cbo_sel_flt        = _root->find<taowin::combobox>(L"select-filter");
     _cbo_prj            = _root->find<taowin::combobox>(L"select-project");
+    _btn_tools          = _root->find<taowin::button>(L"tools");
 
     if(isdbg()) {
         _btn_start->set_visible(false);

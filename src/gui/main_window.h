@@ -13,6 +13,7 @@
 #include "module_manager.h"
 #include "result_filter.h"
 #include "json_visual.h"
+#include "lua_console.h"
 
 #include "log/controller.h"
 #include "log/consumer.h"

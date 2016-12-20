@@ -142,6 +142,11 @@ LRESULT MainWindow::on_menu(const taowin::MenuIds& m)
             jv->create(this);
             jv->show();
         }
+        else if(m[1] == L"lua_console") {
+            auto lc = new LuaConsoleWindow;
+            lc->create();
+            lc->show();
+        }
     }
 
     return 0;
@@ -564,6 +569,7 @@ void MainWindow::_init_listview()
     _tools_menu.create(LR"(
 <menutree i="tools">
     <item i="json_visual" s="JSON 可视化" />
+    <item i="lua_console" s="LUA 控制台" />
 </menutree>
 )");
     add_menu(&_tools_menu);
@@ -1238,7 +1244,7 @@ LRESULT MainWindow::_on_create()
 
 LRESULT MainWindow::_on_close()
 {
-    if(_current_filter->size() && msgbox(L"确定要退出？", MB_ICONQUESTION | MB_YESNO) == IDNO)
+    if(_current_filter->size() && msgbox(L"确定要关闭窗口？", MB_ICONQUESTION | MB_YESNO) == IDNO)
         return 0;
 
     _save_filters();

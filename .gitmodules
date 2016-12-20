@@ -4,3 +4,6 @@
 [submodule "3rd/json11"]
 	path = 3rd/json11
 	url = https://github.com/movsb/json11.git
+[submodule "3rd/lua"]
+	path = 3rd/lua
+	url = https://github.com/lua/lua.git

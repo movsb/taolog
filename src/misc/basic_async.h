@@ -22,13 +22,24 @@ public:
     int get_ret() const { return _ret; }
 
 protected:
-    void set_ret(int ret) { _ret = ret; }
-    virtual int doit() = 0;
-    virtual int done() = 0;
+    virtual int  doit() = 0;
+    virtual int  done() = 0;
+    virtual void update(double ps) {}
+
+protected:
+    void set_ps(double ps);
 
 protected:
     int     _ret;
     void*   _ud;
+
+private:
+    void set_mgr(AsyncTaskManager* mgr) { _mgr = mgr; }
+    void set_ret(int ret) { _ret = ret; }
+
+private:
+    AsyncTaskManager* _mgr;
+    double            _ps;
 };
 
 class AsyncTaskManager
@@ -43,6 +54,7 @@ protected:
             MarkIdle,
             GetTask,
             DoneTask,
+            UpdateProgress,
         };
     };
 
@@ -64,6 +76,7 @@ public:
     }
 
     void AddTask(AsyncTask* pTask);
+    void UpdateProgress(AsyncTask* pTask);
 
 protected:
     LRESULT SendMsg(UINT uMsg, WPARAM wParam = 0, LPARAM lParam = 0);

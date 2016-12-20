@@ -6,6 +6,12 @@
 namespace taoetw
 {
 
+void AsyncTask::set_ps(double ps)
+{
+    _ps = ps;
+    _mgr->UpdateProgress(this);
+}
+
 void AsyncTaskManager::AddTask(AsyncTask* pTask)
 {
     if(_nIdleThread <= 0) {
@@ -14,6 +20,7 @@ void AsyncTaskManager::AddTask(AsyncTask* pTask)
         _threads.emplace_back(hThread);
     }
 
+    pTask->set_mgr(this);
     _tasks.emplace_back(pTask);
     ::SetEvent(_hEvtGetTask);
 }
@@ -64,6 +71,11 @@ void AsyncTaskManager::DoneTask(AsyncTask* pTask, int ret = 0)
     SendMsg(MGRMSG::DoneTask, ret, LPARAM(pTask));
 }
 
+void AsyncTaskManager::UpdateProgress(AsyncTask* pTask)
+{
+    SendMsg(MGRMSG::UpdateProgress, 0, LPARAM(pTask));
+}
+
 LRESULT AsyncTaskManager::SendMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     return ::SendMessage(_hwnd, uMsg, wParam, lParam);
@@ -100,6 +112,12 @@ LRESULT AsyncTaskManager::ProcessMessage(UINT uMsg, WPARAM wParam, LPARAM lParam
         int ret = static_cast<int>(wParam);
         pTask->set_ret(ret);
         pTask->done();
+        return 0;
+    }
+    case MGRMSG::UpdateProgress:
+    {
+        auto pTask = reinterpret_cast<AsyncTask*>(lParam);
+        pTask->update(pTask->_ps);
         return 0;
     }
     }

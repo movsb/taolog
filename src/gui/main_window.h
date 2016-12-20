@@ -117,6 +117,11 @@ protected:
     MemPoolT<LogDataUI, 8192>
                         _log_pool;
 
+    // 表示当前正在导出的模块（当前过滤器）
+    // 正在导出时不能清空数据，也不能关闭窗口
+    std::map<ModuleEntry*, bool>
+                        _results_expoting;
+
 protected:
     virtual LPCTSTR get_skin_xml() const override;
     virtual LRESULT handle_message(UINT umsg, WPARAM wparam, LPARAM lparam) override;

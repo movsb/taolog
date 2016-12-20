@@ -966,6 +966,11 @@ bool MainWindow::_do_search(const std::wstring& s, int line, int)
 
 void MainWindow::_clear_results()
 {
+    if(_results_expoting.count(_current_project) && _results_expoting[_current_project]) {
+        msgbox(L"当前模块的日志正在被导出，不能被清空，请稍候再试。", MB_ICONEXCLAMATION);
+        return;
+    }
+
     // 需要先关闭引用了日志记录的某某些（因为当前的日志记录没有引用计数功能）
 
     // 包括：查看详情窗口
@@ -1095,9 +1100,36 @@ void MainWindow::_update_project_list(ModuleEntry* m)
 
 void MainWindow::_export2file()
 {
-    std::wostringstream s;
+    if(_current_filter->size() == 0)
+        return;
 
-    s << LR"(<!doctype html>
+    class ExportResult : public AsyncTask
+    {
+    public:
+        ExportResult(ModuleEntry* mod, LogDataUIPtr logs[], int n)
+            : _m(mod)
+            , _logs(logs)
+            , _n(n)
+        { 
+        }
+
+        void ondone(std::function<void(ModuleEntry* m, int ret)> f)
+        {
+            _ondone = f;
+        }
+
+        void onupdate(std::function<void(double ps)> f)
+        {
+            _onupdate = f;
+        }
+
+    protected:
+        virtual int doit() override
+        {
+            std::wostringstream s;
+
+            s <<
+LR"(<!doctype html>
 <html>
 <head>
 <meta charset="utf-8" />
@@ -1120,26 +1152,177 @@ td:nth-child(10) {
 <table>
 )";
 
-    for(const auto& log : _current_filter->events()) {
-        log->to_html_tr(s);
-    }
+            set_ps(0.);
 
-    s << LR"(
+            for(int i = 0; i < _n; ++i) {
+                auto& log = *_logs[i];
+                log.to_html_tr(s);
+                if(i % 16 == 0) {
+                    set_ps((double)i / _n * 100);
+                }
+            }
+
+            set_ps(100.);
+
+            s <<
+LR"(
 </table>
 </body>
 </html>
 )";
 
-    std::ofstream file(L"export.html", std::ios::binary|std::ios::trunc);
-    if(file.is_open()) {
-        auto us = g_config.us(s.str());
-        file << us;
-        file.close();
-        msgbox(L"已保存到 export.html。");
-    }
-    else {
-        msgbox(L"没能正确导出。");
-    }
+            std::ofstream file(L"export.html", std::ios::binary|std::ios::trunc);
+            if(file.is_open()) {
+                auto us = g_config.us(s.str());
+                file << us;
+                file.close();
+                return 0;
+            }
+            else {
+                return -1;
+            }
+        }
+
+        virtual int done() override
+        {
+            _ondone(_m, get_ret());
+            delete[] _logs;
+            delete this;
+            return 0;
+        }
+
+        virtual void update(double ps) override
+        {
+            _onupdate(ps);
+        }
+
+    protected:
+        ModuleEntry* _m;
+        LogDataUIPtr* _logs;
+        int           _n;
+        std::function<void(ModuleEntry*, int)>  _ondone;
+        std::function<void(double)> _onupdate;
+    };
+
+    class ExportProgressDialog: public taowin::window_creator
+    {
+    public:
+        ExportProgressDialog()
+            : _done(false)
+        { }
+
+        void set_ps(double ps)
+        {
+            wchar_t buf[128];
+            _swprintf(buf, L"%.2lf%%", ps);
+            auto lbl = _root->find<taowin::label>(L"progress");
+            lbl->set_text(buf);
+        }
+
+        void done()
+        {
+            _done = true;
+            msgbox(L"导出成功。", MB_ICONINFORMATION);
+            close();
+        }
+
+        void fail()
+        {
+            _done = false;
+            auto lbl = _root->find<taowin::label>(L"progress");
+            lbl->set_text(L"失败！");
+            msgbox(L"导出失败！", MB_ICONERROR);
+            close(1);
+        }
+
+    protected:
+        virtual void get_metas(WindowMeta* metas) override
+        {
+            __super::get_metas(metas);
+            metas->exstyle |= WS_EX_TOOLWINDOW;
+            metas->exstyle &= ~WS_EX_APPWINDOW;
+        }
+
+        virtual LPCTSTR get_skin_xml() const override
+        {
+            LPCTSTR json = LR"tw(
+                <window title="正在导出日志..." size="250,100">
+                    <res>
+                        <font name="default" face="微软雅黑" size="12"/>
+                    </res>
+                    <root>
+                        <vertical padding="5,5,5,5">
+                            <control />
+                            <vertical height="24">
+                                <horizontal>
+                                    <control />
+                                    <horizontal width="100">
+                                        <label text="进度：" width="40" />
+                                        <label name="progress" />
+                                    </horizontal>
+                                    <control />
+                                </horizontal>
+                            </vertical>
+                            <control />
+                        </vertical>
+                    </root>
+                </window>
+                )tw";
+            return json;
+        }
+
+        virtual LRESULT handle_message(UINT umsg, WPARAM wparam, LPARAM lparam) override
+        {
+            if(umsg == WM_CLOSE) {
+                if(!_done && wparam == 0) {
+                    return 0;
+                }
+            }
+
+            return __super::handle_message(umsg, wparam, lparam);
+        }
+
+        virtual void on_final_message() override {
+            __super::on_final_message();
+            delete this;
+        }
+
+    private:
+        bool _done;
+    };
+
+
+    // std::vector 在扩容后指针数组会变无效
+    // 所以这里直接复制指针（并确保此时不能清空日志）
+    auto n = _current_filter->size();
+    auto logs = new LogDataUIPtr[n];
+    auto src = reinterpret_cast<LogDataUIPtr*>(&_current_filter->events()[0]);
+    assert(sizeof(LogDataUIPtr) == sizeof(LogDataUI*));
+    ::memcpy(logs, src, sizeof(LogDataUIPtr) * n);
+
+    auto dlg = new ExportProgressDialog;
+    dlg->create(this);
+    dlg->show();
+
+    auto task = new ExportResult(_current_project, logs, n);
+
+    // TODO 费解，这里为什么要按值传
+    task->ondone([&, dlg](ModuleEntry* m, int ret) {
+        if(ret == 0)
+            dlg->done();
+        else
+            dlg->fail();
+
+        _results_expoting.erase(m);
+    });
+
+    task->onupdate([&, dlg](double ps) {
+        dlg->set_ps(ps);
+    });
+
+    g_async.AddTask(task);
+
+    _results_expoting.emplace(_current_project, true);
 }
 
 void MainWindow::_copy_selected_item()
@@ -1302,8 +1485,14 @@ LRESULT MainWindow::_on_create()
 
 LRESULT MainWindow::_on_close()
 {
-    if(_current_filter->size() && msgbox(L"确定要关闭窗口？", MB_ICONQUESTION | MB_YESNO) == IDNO)
+    if(!_results_expoting.empty()) {
+        msgbox(L"目前尚有日志正在被导出，窗口不能被关闭。", MB_ICONEXCLAMATION);
         return 0;
+    }
+
+    if(_current_filter->size() && msgbox(L"确定要关闭窗口？", MB_ICONQUESTION | MB_YESNO) == IDNO) {
+        return 0;
+    }
 
     _save_filters();
 

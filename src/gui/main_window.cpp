@@ -147,6 +147,11 @@ LRESULT MainWindow::on_menu(const taowin::MenuIds& m)
             lc->create();
             lc->show();
         }
+        else if(m[1][0] == '_') {
+            int i = std::stoi(m[1].c_str() + 1);
+            auto path = g_config.ws(g_config->arr("tools")[i]["path"].string_value());
+            ::ShellExecute(_hwnd, L"open", path.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+        }
     }
 
     return 0;
@@ -573,6 +578,17 @@ void MainWindow::_init_listview()
 </menutree>
 )");
     add_menu(&_tools_menu);
+
+    // 自定义工具
+    const auto& tools = g_config->arr("tools").as_arr();
+    if(!tools.empty()) {
+        _tools_menu.insert_sep(nullptr);
+        int i = 0;
+        for(auto& tool : tools) {
+            _tools_menu.insert_str(nullptr, L"_" + std::to_wstring(i), g_config.ws(tool["name"].string_value()));
+            i++;
+        }
+    }
 
     // subclass it
     subclass_control(_listview);

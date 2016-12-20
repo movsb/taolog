@@ -645,7 +645,6 @@ void MainWindow::_init_project_events()
 {
     g_evtsys.attach(L"project:set", [&] {
         auto m = static_cast<ModuleEntry*>(g_evtsys[0].ptr_value());
-        bool bUpdateUI = g_evtsys[1].bool_value();
         _current_project = m;
         _update_project_list(m);
         _events = &_projects[m].first;

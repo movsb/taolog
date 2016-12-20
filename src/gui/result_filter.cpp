@@ -73,8 +73,9 @@ LRESULT ResultFilter::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
         _btn_all    = _root->find<taowin::button>(L"all");
 
         _listview->insert_column(L"名字", 100, 0);
-        _listview->insert_column(L"字段", 60, 1);
-        _listview->insert_column(L"文本", 180, 2);
+        _listview->insert_column(L"字段", 60,  1);
+        _listview->insert_column(L"文本", 130, 2);
+        _listview->insert_column(L"临时", 50,  3);
 
         _listview->set_item_count((int)_filters.size(), 0);
 
@@ -134,6 +135,7 @@ LRESULT ResultFilter::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR
             case 0: value = flt.name.c_str();  break;
             case 1: value = flt.field_name.c_str();  break;
             case 2: value = !flt.value_input.empty() ? flt.value_input.c_str() : flt.value_name.c_str(); break;
+            case 3: value = flt.is_tmp ? L"是" : L"否";
             }
 
             lit->pszText = const_cast<TCHAR*>(value);

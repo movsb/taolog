@@ -218,6 +218,9 @@
     <ClCompile Include="..\src\gui\lua_console.cpp">
       <Filter>Source Files\gui</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\misc\basic_async.cpp">
+      <Filter>Source Files\misc</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\3rd\taowin\src\tw_control.h">
@@ -393,6 +396,9 @@
     </ClInclude>
     <ClInclude Include="..\src\gui\lua_console.h">
       <Filter>Source Files\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\misc\basic_async.h">
+      <Filter>Source Files\misc</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -2,6 +2,7 @@
 
 #include "misc/event_system.hpp"
 #include "misc/config.h"
+#include "misc/basic_async.h"
 
 #include "gui/main_window.h"
 
@@ -12,6 +13,9 @@ Config& g_config = config;
 
 static EventSystem evtsys;
 EventSystem& g_evtsys = evtsys;
+
+static AsyncTaskManager async_manager;
+AsyncTaskManager& g_async = async_manager;
 
 }
 

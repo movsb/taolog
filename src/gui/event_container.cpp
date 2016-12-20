@@ -28,6 +28,7 @@ std::wstring EventContainer::to_tip() const
     str += L"名字：" + name + L"\bn";
     str += L"字段：" + field_name + L"\bn";
     str += L"文本：" + (!value_input.empty() ? value_input : value_name) + L"\bn";
+    str += L"临时：" + std::wstring(is_tmp ? L"是" : L"否") + L"\bn";
 
     return std::move(str);
 }

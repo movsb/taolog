@@ -12,6 +12,7 @@ protected:
 public:
     EventContainer()
     {
+        is_tmp = false;
         enable_filter(false);
     }
 
@@ -52,6 +53,8 @@ public:
     std::wstring value_name;        // 所选的值的名字
     int          value_index;       // 所选的值的索引
     std::wstring value_input;       // 自定义输入
+
+    bool         is_tmp;            // 临时使用的
 
 protected:
 

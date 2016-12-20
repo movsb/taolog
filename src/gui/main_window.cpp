@@ -3,6 +3,7 @@
 #include "misc/config.h"
 #include "misc/utils.h"
 #include "misc/event_system.hpp"
+#include "misc/basic_async.h"
 
 #include "../res/resource.h"
 
@@ -111,11 +112,12 @@ L"请输入待搜索的文本。\n"
 "搜索上下文为：当前过滤器、当前搜索列。\n"
 "\n\bn"
 "快捷键：\bn"
-"    Ctrl + F        \bw100-   聚焦搜索框\bn"
-"    Enter           \bw100-   执行搜索\bn"
-"    F3              \bw100-   搜索下一个\bn"
-"    Shift + F3      \bw100-   搜索上一个\bn"
-"    Ctrl + Enter    \bw100-   添加过滤器\bn"
+"    Ctrl + F             \bw130-   聚焦搜索框\bn"
+"    Enter                \bw130-   执行搜索\bn"
+"    F3                   \bw130-   搜索下一个\bn"
+"    Shift + F3           \bw130-   搜索上一个\bn"
+"    Ctrl + Enter         \bw130-   添加过滤器（临时）\bn"
+"    Ctrl + Shift + Enter \bw130-   添加过滤器（固定）\bn"
 ;
             _tipwnd->format(tips);
             return 0;
@@ -137,6 +139,34 @@ LRESULT MainWindow::on_menu(const taowin::MenuIds& m)
         else if(m[1] == L"projects")    { g_evtsys.trigger(L"project:set", (void*)std::stoi(m[2]), true); }
     }
     else if(m[0] == L"tools") {
+        auto exec = [](const std::wstring& path)
+        {
+            class ShellExecuteInBackgroud : public AsyncTask
+            {
+            public:
+                ShellExecuteInBackgroud(const std::wstring& path)
+                    : _path(path)
+                { }
+
+            protected:
+                virtual int doit() override
+                {
+                    return (int)::ShellExecute(nullptr, L"open", _path.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+                }
+
+                virtual int done() override
+                {
+                    delete this;
+                    return 0;
+                }
+
+            protected:
+                std::wstring _path;
+            };
+
+            g_async.AddTask(new ShellExecuteInBackgroud(path));
+        };
+
         if(m[1] == L"json_visual") {
             auto jv = new JsonVisual;
             jv->create(this);
@@ -147,10 +177,13 @@ LRESULT MainWindow::on_menu(const taowin::MenuIds& m)
             lc->create();
             lc->show();
         }
+        else if(m[1] == L"calc" || m[1] == L"notepad" || m[1] == L"regedit" || m[1] == L"control" || m[1] == L"cmd") {
+            exec(m[1]);
+        }
         else if(m[1][0] == '_') {
             int i = std::stoi(m[1].c_str() + 1);
             auto path = g_config.ws(g_config->arr("tools")[i]["path"].string_value());
-            ::ShellExecute(_hwnd, L"open", path.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+            exec(path);
         }
     }
 
@@ -348,6 +381,8 @@ bool MainWindow::filter_special_key(int vk)
                         auto& colname   = c.name;
                         auto& value     = _last_search_string;
                         auto p = new EventContainer(_last_search_string, c.index, colname, -1, L"", value);
+                        // 按下了 Shift 键？按下则是固定添加，否则是临时添加
+                        p->is_tmp = !(::GetAsyncKeyState(VK_SHIFT) & 0x8000);
                         g_evtsys.trigger(L"filter:new", p);
                         g_evtsys.trigger(L"filter:set", p);
                     }
@@ -573,8 +608,14 @@ void MainWindow::_init_listview()
     // 工具菜单
     _tools_menu.create(LR"(
 <menutree i="tools">
-    <item i="json_visual" s="JSON 可视化" />
-    <item i="lua_console" s="LUA 控制台" />
+    <item i="json_visual"   s="JSON 可视化" />
+    <item i="lua_console"   s="LUA 控制台" />
+    <sep />
+    <item i="calc"          s="计算器" />
+    <item i="notepad"       s="记事本" />
+    <item i="cmd"           s="命令提示符" />
+    <item i="regedit"       s="注册表" />
+    <item i="control"       s="控制面板" />
 </menutree>
 )");
     add_menu(&_tools_menu);
@@ -848,7 +889,7 @@ bool MainWindow::_do_search(const std::wstring& s, int line, int)
     if (s.empty()) { return false; }
 
     // 得到下一搜索行和列
-    int dir = ::GetAsyncKeyState(VK_SHIFT) & 0x8000 ? -1 : 1;
+    int dir = ::GetAsyncKeyState(VK_SHIFT) & 0x8000 && line != -1 ? -1 : 1;
     int next_line = dir == 1 ? line + 1 : line - 1;
 
     // 此行是否有效
@@ -1132,7 +1173,9 @@ void MainWindow::_save_filters()
             auto guid = g_config.us(m ? m->guid_str : L"{00000000-0000-0000-0000-000000000000}");
             auto& filters = guid2filters.arr(guid.c_str()).as_arr();
             for(auto f : pair.second.second) {
-                filters.emplace_back(*f);
+                if(!f->is_tmp) {
+                    filters.emplace_back(*f);
+                }
             }
         }
     }

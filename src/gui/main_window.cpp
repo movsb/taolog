@@ -1238,6 +1238,9 @@ LRESULT MainWindow::_on_create()
 
 LRESULT MainWindow::_on_close()
 {
+    if(_current_filter->size() && msgbox(L"确定要退出？", MB_ICONQUESTION | MB_YESNO) == IDNO)
+        return 0;
+
     _save_filters();
 
     _stop();

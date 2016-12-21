@@ -1106,10 +1106,11 @@ void MainWindow::_export2file()
     class ExportResult : public AsyncTask
     {
     public:
-        ExportResult(ModuleEntry* mod, LogDataUIPtr logs[], int n)
+        ExportResult(ModuleEntry* mod, LogDataUIPtr logs[], int n, const std::wstring& file)
             : _m(mod)
             , _logs(logs)
             , _n(n)
+            , _f(file)
         { 
         }
 
@@ -1126,6 +1127,11 @@ void MainWindow::_export2file()
     protected:
         virtual int doit() override
         {
+            std::ofstream file(_f, std::ios::binary|std::ios::trunc);
+            if(!file.is_open()) {
+                return -1;
+            }
+
             std::wostringstream s;
 
             s <<
@@ -1171,16 +1177,10 @@ LR"(
 </html>
 )";
 
-            std::ofstream file(L"export.html", std::ios::binary|std::ios::trunc);
-            if(file.is_open()) {
-                auto us = g_config.us(s.str());
-                file << us;
-                file.close();
-                return 0;
-            }
-            else {
-                return -1;
-            }
+            auto us = g_config.us(s.str());
+            file << us;
+            file.close();
+            return 0;
         }
 
         virtual int done() override
@@ -1200,6 +1200,7 @@ LR"(
         ModuleEntry* _m;
         LogDataUIPtr* _logs;
         int           _n;
+        std::wstring _f;
         std::function<void(ModuleEntry*, int)>  _ondone;
         std::function<void(double)> _onupdate;
     };
@@ -1291,6 +1292,28 @@ LR"(
         bool _done;
     };
 
+    std::wstring file([&] {
+        OPENFILENAME ofn = {0};
+        ofn.lStructSize = sizeof(ofn);
+        ofn.Flags = OFN_PATHMUSTEXIST | OFN_ENABLESIZING | OFN_EXPLORER | OFN_NOREADONLYRETURN 
+            | OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT | OFN_NOCHANGEDIR;
+        ofn.hInstance = ::GetModuleHandle(nullptr);
+        ofn.hwndOwner = _hwnd;
+        
+        wchar_t buf[1024];
+        buf[0] = L'\0';
+        ofn.lpstrFile = buf;
+        ofn.nMaxFile = _countof(buf);
+        ofn.lpstrFilter = L"页面文件（*.html）\0*.html\0";
+        ofn.lpstrDefExt = L"html";
+
+        GetSaveFileName(&ofn);
+        return std::move(std::wstring(buf));
+    }());
+
+    if(file.empty()) {
+        return;
+    }
 
     // std::vector 在扩容后指针数组会变无效
     // 所以这里直接复制指针（并确保此时不能清空日志）
@@ -1304,7 +1327,7 @@ LR"(
     dlg->create(this);
     dlg->show();
 
-    auto task = new ExportResult(_current_project, logs, n);
+    auto task = new ExportResult(_current_project, logs, n, file);
 
     // TODO 费解，这里为什么要按值传
     task->ondone([&, dlg](ModuleEntry* m, int ret) {

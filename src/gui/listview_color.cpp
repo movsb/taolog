@@ -43,7 +43,7 @@ void ListviewColor::get_metas(WindowMeta * metas)
 LPCTSTR ListviewColor::get_skin_xml() const
 {
     LPCTSTR json = LR"tw(
-<window title="ÏêÇé" size="380,300">
+<window title="ÑÕÉ«ÅäÖÃ" size="380,300">
     <res>
         <font name="default" face="Î¢ÈíÑÅºÚ" size="12"/>
         <font name="1" face="Consolas" size="16"/>

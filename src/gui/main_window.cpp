@@ -63,6 +63,7 @@ LRESULT MainWindow::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
     case WM_CREATE:         return _on_create();
     case WM_CLOSE:          return _on_close();
     case kDoLog:            return _on_log(LoggerMessage::Value(wparam), lparam);
+    case kLogDbgViewRaw:    return _log_raw_dbg(int(wparam), (std::string*)lparam);
     // case WM_CONTEXTMENU:    return _on_contextmenu(HWND(wparam), GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam));
     case WM_INITMENUPOPUP:  return _on_init_popupmenu(HMENU(wparam));
     case WM_NCACTIVATE:
@@ -1488,9 +1489,15 @@ LRESULT MainWindow::_on_create()
             }
 
             if(!_dbgview.init([&](DWORD pid, const char* str) {
-                auto p = (LogDataUI*)::SendMessage(_hwnd, kDoLog, LoggerMessage::AllocLogUI, 0);
-                p = LogDataUI::from_dbgview(pid, str, p);
-                ::PostMessage(_hwnd, kDoLog, LoggerMessage::LogDbgMsg, LPARAM(p));
+                if(::IsWindowEnabled(_hwnd)) {
+                    auto p = (LogDataUI*)::SendMessage(_hwnd, kDoLog, LoggerMessage::AllocLogUI, 0);
+                    p = LogDataUI::from_dbgview(pid, str, p);
+                    ::PostMessage(_hwnd, kDoLog, LoggerMessage::LogDbgMsg, LPARAM(p));
+                }
+                else {
+                    auto s = new std::string(str);
+                    ::PostMessage(_hwnd, kLogDbgViewRaw, WPARAM(pid), LPARAM(s));
+                }
             }))
             {
                 async_call([&]() {
@@ -1617,6 +1624,14 @@ LRESULT MainWindow::_on_log(LoggerMessage::Value msg, LPARAM lParam)
         return LRESULT(_log_pool.alloc());
     }
 
+    return 0;
+}
+
+LRESULT MainWindow::_log_raw_dbg(int pid, std::string* s)
+{
+    auto log = LogDataUI::from_dbgview(pid, s->c_str(), _log_pool.alloc());
+    _on_log(LoggerMessage::LogDbgMsg, LPARAM(log));
+    delete s;
     return 0;
 }
 

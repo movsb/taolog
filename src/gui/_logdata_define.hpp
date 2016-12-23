@@ -109,13 +109,13 @@ struct LogDataUI : LogData
         switch(i)
         {
         case 0: value = id;                     break;
-        case 1: value = strTime.c_str();        break;
-        case 2: value = strPid.c_str();         break;
-        case 3: value = strTid.c_str();         break;
-        case 4: value = strProject.c_str();     break;
+        case 1: value = strTime;                break;
+        case 2: value = strPid;                 break;
+        case 3: value = strTid;                 break;
+        case 4: value = strProject->c_str();    break;
         case 5: value = file + offset_of_file;  break;
         case 6: value = func;                   break;
-        case 7: value = strLine.c_str();        break;
+        case 7: value = strLine;                break;
         case 8: value = strLevel->c_str();      break;
         case 9: value = strText.c_str();        break;
         }
@@ -137,7 +137,7 @@ struct LogDataUI : LogData
         logui->level = TRACE_LEVEL_INFORMATION;
         logui->flags |= (int)ETW_LOGGER_FLAG::ETW_LOGGER_FLAG_DBGVIEW;
 
-        logui->strPid = std::to_wstring(logui->pid);
+        _snwprintf(logui->strPid, _countof(logui->strPid), L"%d", logui->pid);
         
         {
             wchar_t buf[4096]; // enough
@@ -153,7 +153,7 @@ struct LogDataUI : LogData
         }
 
         {
-            TCHAR buf[1024];
+            auto& buf = logui->strTime;
             SYSTEMTIME t;
             ::GetLocalTime(&t);
 
@@ -161,8 +161,6 @@ struct LogDataUI : LogData
                 _T("%02d:%02d:%02d:%03d"),
                 t.wHour, t.wMinute, t.wSecond, t.wMilliseconds
             );
-
-            logui->strTime = buf;
         }
 
         return logui;
@@ -215,34 +213,32 @@ struct LogDataUI : LogData
             }
         }
 
-        log_ui->strPid  = std::to_wstring(log_ui->pid);
-        log_ui->strTid  = std::to_wstring(log_ui->tid);
-        log_ui->strLine = std::to_wstring(log_ui->line);
+        _snwprintf(log_ui->strPid, _countof(log_ui->strPid), L"%d", log_ui->pid);
+        _snwprintf(log_ui->strTid, _countof(log_ui->strTid), L"%d", log_ui->tid);
+        _snwprintf(log_ui->strLine, _countof(log_ui->strLine), L"%d", log_ui->line);
 
         {
-            TCHAR buf[1024];
+            auto& buf = log_ui->strTime;
             auto& t = log_ui->time;
 
             _sntprintf(&buf[0], _countof(buf),
                 _T("%02d:%02d:%02d:%03d"),
                 t.wHour, t.wMinute, t.wSecond, t.wMilliseconds
             );
-
-            log_ui->strTime = buf;
         }
 
         return log_ui;
     }
 
-    string          strText;    // 日志，这个比较特殊，和原结构体并不同
+    string          strText;        // 日志，这个比较特殊，和原结构体并不同
 
     TCHAR id[22];
-    string strTime;
-    string strLine;
-    string strPid;
-    string strTid;
+    TCHAR strTime[10+1+12+1];       // 2016-12-23 10:52:28:123
+    TCHAR strLine[11];              // 4294967295
+    TCHAR strPid[11];
+    TCHAR strTid[11];
 
-    string strProject;
+    string* strProject;
 
     int offset_of_file;
 

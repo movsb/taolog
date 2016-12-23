@@ -1558,7 +1558,8 @@ LRESULT MainWindow::_on_log(LoggerMessage::Value msg, LPARAM lParam)
 
         if(isetw()) {
             // 项目名称 & 项目根目录
-            item->strProject = m ? m->name : L"<unknown>";
+            static std::wstring unknown_project(L"<unknown>");
+            item->strProject = m ? &m->name : &unknown_project;
 
             const std::wstring* root = m ? &m->root : nullptr;
 

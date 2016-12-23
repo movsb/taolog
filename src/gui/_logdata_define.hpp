@@ -80,9 +80,9 @@ struct LogDataUI : LogData
 
         ss << strText;
         ss << L"\r\n\r\n" << string(50, L'-') << L"\r\n\r\n";
-        ss << gc(0) << L"：" << id << L"\r\n";
-        ss << gc(2) << L"：" << pid << L"\r\n";
-        ss << gc(3) << L"：" << tid << L"\r\n";
+        ss << gc(0) << L"：" << operator[](0) << L"\r\n";
+        ss << gc(2) << L"：" << operator[](2) << L"\r\n";
+        ss << gc(3) << L"：" << operator[](3) << L"\r\n";
 
         auto& t = time;
         _snwprintf(tmp, _countof(tmp), L"%s：%d-%02d-%02d %02d:%02d:%02d:%03d\r\n",
@@ -93,11 +93,11 @@ struct LogDataUI : LogData
 
         ss << tmp;
 
-        ss << gc(4) << L"：" << strProject   << L"\r\n";
-        ss << gc(5) << L"：" << file         << L"\r\n";
-        ss << gc(6) << L"：" << func         << L"\r\n";
-        ss << gc(7) << L"：" << strLine      << L"\r\n";
-        ss << gc(8) << L"：" << *strLevel    << L"\r\n";
+        ss << gc(4) << L"：" << operator[](4) << L"\r\n";
+        ss << gc(5) << L"：" << file          << L"\r\n"; // 现在完整路径
+        ss << gc(6) << L"：" << operator[](6) << L"\r\n";
+        ss << gc(7) << L"：" << operator[](7) << L"\r\n";
+        ss << gc(8) << L"：" << operator[](8) << L"\r\n";
 
         return std::move(ss.str());
     }

@@ -66,27 +66,103 @@ public:
 
 protected:
 #ifdef ETW_LOGGER_METHOD_COPYDATA
-    union LogDataMsg
+    struct LogDataMsg
     {
-        LogDataMsg* next;
-        struct {
-            LogData log;
-        } s;
+        LogData log;
     };
 #endif
 
 #ifdef ETW_LOGGER_METHOD_EVENTTRACING
-    union LogDataMsg
+    struct LogDataMsg
     {
-        LogDataMsg* next;
-        struct {
-            EVENT_TRACE_HEADER hdr;
-            LogData log;
-        } s;
+        EVENT_TRACE_HEADER hdr;
+        LogData log;
     };
 #endif
 
-    typedef std::vector<LogDataMsg*> LogList;
+    template<typename T>
+    class MemPoolT
+    {
+        union MyT {
+            MyT* next;
+            char data[sizeof(T)];
+        };
+
+        typedef std::vector<MyT*> TS;
+
+    public:
+        MemPoolT()
+        {
+            _ts.reserve(1024);
+        }
+
+        ~MemPoolT()
+        {
+            clear();
+        }
+
+        T* create()
+        {
+            if(!_root) {
+                _root = new MyT;
+                _root->next = NULL;
+                _ts.push_back(_root);
+            }
+
+            T* p = reinterpret_cast<T*>(_root);
+
+            _root = _root->next;
+            _using++;
+
+            return new (p) T;
+        }
+
+        void destroy(T* p)
+        {
+            p->~T();
+
+            MyT* myt = reinterpret_cast<MyT*>(p);
+            myt->next = _root;
+            _root = myt;
+
+            _using--;
+        }
+
+        void clear()
+        {
+            for(TS::const_iterator begin = _ts.begin(), end = _ts.end(); begin != end; ++begin)
+                delete *begin;
+
+            _ts.clear();
+            _root = NULL;
+            _using = 0;
+        }
+
+        bool collect()
+        {
+            bool dirty = false;
+            const int limit = 16;
+
+            if(_ts.size() - _using >= limit)
+            {
+                dirty = true;
+
+                while(_root)
+                {
+                    MyT* next = _root->next;
+                    delete _root;
+                    _root = next;
+                }
+            }
+
+            return dirty;
+        }
+
+    protected:
+        MyT*    _root;
+        TS      _ts;
+        size_t  _using;
+    };
 
     struct WndMsg
     {
@@ -119,8 +195,6 @@ public:
 
         m_version = 0x0000;
 
-        m_logs.reserve(1024);
-
 		RegisterProvider();
         RegisterLoggerWindowClass();
 
@@ -135,35 +209,10 @@ public:
 
         ::SendMessage(m_hWnd, WM_CLOSE, 0, 0);
 
-        for(LogList::const_iterator begin = m_logs.begin(), end = m_logs.end(); begin != end; ++begin)
-            ::operator delete(*begin);
-
         m_logs.clear();
 
         ::CloseHandle(m_Thread);
 	}
-
-protected:
-    LogDataMsg* Alloc()
-    {
-        if(!m_Root) {
-            m_Root = (LogDataMsg*)::operator new(sizeof(LogDataMsg));
-            m_Root->next = NULL;
-            m_logs.push_back(m_Root);
-        }
-
-        LogDataMsg* node = m_Root;
-        m_Root = m_Root->next;
-
-        return new (node) LogDataMsg;
-    }
-
-    void Dealloc(LogDataMsg* p)
-    {
-        p->~LogDataMsg();
-        p->next = m_Root;
-        m_Root = p;
-    }
 
 public:
 	static ULONG WINAPI ControlCallback(WMIDPREQUESTCODE requestCode, PVOID context, ULONG* /* reserved */, PVOID buffer)
@@ -260,7 +309,7 @@ public:
 
         LogDataMsg* logmsg = (LogDataMsg*)::SendMessage(m_hWnd, WndMsg::Alloc, 0, 0);
 
-        LogData& data = logmsg->s.log;
+        LogData& data = logmsg->log;
 
         data.version = m_version;
         data.pid = ::GetCurrentProcessId();
@@ -310,7 +359,7 @@ public:
 
 #ifdef ETW_LOGGER_METHOD_EVENTTRACING
         // the header
-        EVENT_TRACE_HEADER& hdr = logmsg->s.hdr;
+        EVENT_TRACE_HEADER& hdr = logmsg->hdr;
         memset(&hdr, 0, sizeof(hdr));
 
         // 还没搞懂 MSDN 上下面这句话的意思
@@ -324,17 +373,17 @@ public:
 
         // Trace it!
         ::TraceEvent(m_sessionHandle, &hdr);
+
         ::PostMessage(m_hWnd, WndMsg::Dealloc, 0, reinterpret_cast<LPARAM>(logmsg));
 #endif
 	}
 
     LRESULT CALLBACK WindowProcedure(UINT uMsg, WPARAM wParam, LPARAM lParam)
     {
-        switch(uMsg)
-        {
+        switch(uMsg) {
         case WndMsg::Alloc:
         {
-            return reinterpret_cast<LRESULT>(Alloc());
+            return reinterpret_cast<LRESULT>(m_logs.create());
         }
 
         case WndMsg::Trace:
@@ -342,18 +391,37 @@ public:
             LogDataMsg* logmsg = reinterpret_cast<LogDataMsg*>(lParam);
             COPYDATASTRUCT cds;
             cds.dwData = 0;
-            cds.cbData = offsetof(LogData, text) + logmsg->s.log.cch * sizeof(logmsg->s.log.text[0]);
+            cds.cbData = offsetof(LogData, text) + logmsg->log.cch * sizeof(logmsg->log.text[0]);
             cds.lpData = static_cast<void*>(logmsg);
 
             ::SendMessage(m_HostWnd, WM_COPYDATA, WPARAM(m_hWnd), LPARAM(&cds));
-            Dealloc(logmsg);
+
+            m_logs.destroy(logmsg);
+
             return 0;
         }
         case WndMsg::Dealloc:
         {
             LogDataMsg* logmsg = reinterpret_cast<LogDataMsg*>(lParam);
-            Dealloc(logmsg);
+            m_logs.destroy(logmsg);
+
             return 0;
+        }
+        case WM_CREATE:
+        {
+            ::SetTimer(m_hWnd, 0, 10 * 1000, 0);
+            return 0;
+        }
+        case WM_TIMER:
+        {
+            if(wParam == 0) {
+                bool dirty = m_logs.collect();
+                ::KillTimer(m_hWnd, 0);
+                ::SetTimer(m_hWnd, 0, dirty ? 10 * 1000 : 10 * 60 * 1000, NULL);
+                return 0;
+            }
+
+            break;
         }
         }
 
@@ -411,7 +479,7 @@ public:
     }
 
 private:
-    LogList m_logs;
+    MemPoolT<LogDataMsg> m_logs;
     HANDLE m_Thread;
     HWND m_hWnd;
     HWND m_HostWnd;
@@ -437,11 +505,17 @@ extern ETWLogger g_etwLogger;
 #define ETW_LEVEL_ERROR(x, ...)         EtwLogMessage(TRACE_LEVEL_ERROR,        __TFILE__, __TFUNCTION__, __LINE__, x, __VA_ARGS__)
 #define ETW_LEVEL_CRITICAL(x, ...)      EtwLogMessage(TRACE_LEVEL_CRITICAL,     __TFILE__, __TFUNCTION__, __LINE__, x, __VA_ARGS__)
 
+#define ETW_LOG_ENTER                   ETW_LEVEL_INFORMATION(_T("Enter"))
+#define ETW_LOG_EXIT                    ETW_LEVEL_INFORMATION(_T("Exit"))
+
 #define EtwVbs(x, ...)                  EtwLogMessage(TRACE_LEVEL_VERBOSE,      __TFILE__, __TFUNCTION__, __LINE__, x, __VA_ARGS__)
 #define EtwLog(x, ...)                  EtwLogMessage(TRACE_LEVEL_INFORMATION,  __TFILE__, __TFUNCTION__, __LINE__, x, __VA_ARGS__)
 #define EtwWrn(x, ...)                  EtwLogMessage(TRACE_LEVEL_WARNING,      __TFILE__, __TFUNCTION__, __LINE__, x, __VA_ARGS__)
 #define EtwErr(x, ...)                  EtwLogMessage(TRACE_LEVEL_ERROR,        __TFILE__, __TFUNCTION__, __LINE__, x, __VA_ARGS__)
 #define EtwFat(x, ...)                  EtwLogMessage(TRACE_LEVEL_CRITICAL,     __TFILE__, __TFUNCTION__, __LINE__, x, __VA_ARGS__)
+
+#define EtwEnter                        EtwLog(_T("Enter"))
+#define EtwExit                         EtwLog(_T("Exit"))
 
 // winapi last error, level TRACE_LEVEL_WARNING
 #define ETW_LAST_ERROR() \
@@ -466,10 +540,16 @@ do {  																		            \
 #define ETW_LEVEL_VERBOSE(x, ...)           ((void)0)
 #define ETW_LAST_ERROR()                    ((void)0)
 
+#define ETW_LOG_ENTER                       ((void)0)
+#define ETW_LOG_EXIT                        ((void)0)
+
 #define EtwVbs                              ((void)0)
 #define EtwLog                              ((void)0)
 #define EtwWrn                              ((void)0)
 #define EtwErr                              ((void)0)
 #define EtwFat                              ((void)0)
+
+#define EtwEnter                            ((void)0)
+#define EtwExit                             ((void)0)
 
 #endif

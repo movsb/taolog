@@ -431,67 +431,45 @@ extern ETWLogger g_etwLogger;
 
 #define EtwLogMessage (g_etwLogger.WriteEvent)
 
-// Abnormal exit or termination events
-#define ETW_LEVEL_CRITICAL(x, ...) \
-{ \
-     EtwLogMessage(TRACE_LEVEL_CRITICAL, __TFILE__, __TFUNCTION__, __LINE__, x, __VA_ARGS__); \
-}
+#define ETW_LEVEL_VERBOSE(x, ...)       EtwLogMessage(TRACE_LEVEL_VERBOSE,      __TFILE__, __TFUNCTION__, __LINE__, x, __VA_ARGS__)
+#define ETW_LEVEL_INFORMATION(x, ...)   EtwLogMessage(TRACE_LEVEL_INFORMATION,  __TFILE__, __TFUNCTION__, __LINE__, x, __VA_ARGS__)
+#define ETW_LEVEL_WARNING(x, ...)       EtwLogMessage(TRACE_LEVEL_WARNING,      __TFILE__, __TFUNCTION__, __LINE__, x, __VA_ARGS__)
+#define ETW_LEVEL_ERROR(x, ...)         EtwLogMessage(TRACE_LEVEL_ERROR,        __TFILE__, __TFUNCTION__, __LINE__, x, __VA_ARGS__)
+#define ETW_LEVEL_CRITICAL(x, ...)      EtwLogMessage(TRACE_LEVEL_CRITICAL,     __TFILE__, __TFUNCTION__, __LINE__, x, __VA_ARGS__)
 
-// Severe error events
-#define ETW_LEVEL_ERROR(x, ...) \
-{ \
-    EtwLogMessage(TRACE_LEVEL_ERROR, __TFILE__, __TFUNCTION__, __LINE__, x, __VA_ARGS__); \
-}
-
-// Warning events such as allocation failures
-#define ETW_LEVEL_WARNING(x, ...) \
-{ \
-    EtwLogMessage(TRACE_LEVEL_WARNING, __TFILE__, __TFUNCTION__, __LINE__, x, __VA_ARGS__); \
-}
-
-// Non-error events such as entry or exit events
-#define ETW_LEVEL_INFORMATION(x, ...) \
-{ \
-	EtwLogMessage(TRACE_LEVEL_INFORMATION, __TFILE__, __TFUNCTION__, __LINE__, x, __VA_ARGS__); \
-}
-
-// Detailed trace events
-#define ETW_LEVEL_VERBOSE(x, ...) \
-{ \
-	EtwLogMessage(TRACE_LEVEL_VERBOSE, __TFILE__, __TFUNCTION__, __LINE__, x, __VA_ARGS__); \
-}
+#define EtwVbs(x, ...)                  EtwLogMessage(TRACE_LEVEL_VERBOSE,      __TFILE__, __TFUNCTION__, __LINE__, x, __VA_ARGS__)
+#define EtwLog(x, ...)                  EtwLogMessage(TRACE_LEVEL_INFORMATION,  __TFILE__, __TFUNCTION__, __LINE__, x, __VA_ARGS__)
+#define EtwWrn(x, ...)                  EtwLogMessage(TRACE_LEVEL_WARNING,      __TFILE__, __TFUNCTION__, __LINE__, x, __VA_ARGS__)
+#define EtwErr(x, ...)                  EtwLogMessage(TRACE_LEVEL_ERROR,        __TFILE__, __TFUNCTION__, __LINE__, x, __VA_ARGS__)
+#define EtwFat(x, ...)                  EtwLogMessage(TRACE_LEVEL_CRITICAL,     __TFILE__, __TFUNCTION__, __LINE__, x, __VA_ARGS__)
 
 // winapi last error, level TRACE_LEVEL_WARNING
 #define ETW_LAST_ERROR() \
-{  																		    \
-	DWORD errid = ::GetLastError();										    \
-	TCHAR erridBuf[MAX_PATH] = {0};											\
-	_stprintf_s(erridBuf, sizeof(erridBuf)/sizeof(TCHAR), _T("errorid=%u"), errid);	\
-	ETW_LEVEL_WARNING(erridBuf); 													\
-}
+do {  																		            \
+	DWORD errid = ::GetLastError();										                \
+	TCHAR erridBuf[MAX_PATH] = {0};											            \
+	_stprintf_s(erridBuf, sizeof(erridBuf)/sizeof(TCHAR), _T("errorid=%u"), errid);	    \
+	ETW_LEVEL_WARNING(erridBuf); 													    \
+} while((0))
 
-#define EtwVbs(x, ...) ETW_LEVEL_VERBOSE(x, __VA_ARGS__)
-#define EtwLog(x, ...) ETW_LEVEL_INFORMATION(x, __VA_ARGS__)
-#define EtwWrn(x, ...) ETW_LEVEL_WARNING(x, __VA_ARGS__)
-#define EtwErr(x, ...) ETW_LEVEL_ERROR(x, __VA_ARGS__)
-#define EtwFat(x, ...) ETW_LEVEL_CRITICAL(x, __VA_ARGS__)
+
+#define EtwLogAll(file, func, line, fmt, ...)   EtwLogMessage(TRACE_LEVEL_INFORMATION, file, func, line, fmt, __VA_ARGS__)
 
 #pragma warning(pop)
 
-#else 
+#else
 
-#define ETW_LEVEL_CRITICAL(x, ...) 
-#define ETW_LEVEL_ERROR(x, ...)
-#define ETW_LEVEL_WARNING(x, ...)
-#define ETW_LEVEL_INFORMATION(x, ...)
-#define ETW_LEVEL_VERBOSE(x, ...)
+#define ETW_LEVEL_CRITICAL(x, ...)          ((void)0)
+#define ETW_LEVEL_ERROR(x, ...)             ((void)0)
+#define ETW_LEVEL_WARNING(x, ...)           ((void)0)
+#define ETW_LEVEL_INFORMATION(x, ...)       ((void)0)
+#define ETW_LEVEL_VERBOSE(x, ...)           ((void)0)
+#define ETW_LAST_ERROR()                    ((void)0)
 
-#define EtwVbs(x, ...)
-#define EtwLog(x, ...)
-#define EtwWrn(x, ...)
-#define EtwErr(x, ...)
-#define EtwFat(x, ...)
-
-#define ETW_LAST_ERROR()
+#define EtwVbs                              ((void)0)
+#define EtwLog                              ((void)0)
+#define EtwWrn                              ((void)0)
+#define EtwErr                              ((void)0)
+#define EtwFat                              ((void)0)
 
 #endif

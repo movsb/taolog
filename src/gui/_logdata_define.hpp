@@ -106,18 +106,31 @@ struct LogDataUI : LogData
     {
         const wchar_t* value = L"";
 
-        switch(i)
+        if(flags & (int)ETW_LOGGER_FLAG::ETW_LOGGER_FLAG_DBGVIEW)
         {
-        case 0: value = id;                     break;
-        case 1: value = strTime;                break;
-        case 2: value = strPid;                 break;
-        case 3: value = strTid;                 break;
-        case 4: value = strProject->c_str();    break;
-        case 5: value = file + offset_of_file;  break;
-        case 6: value = func;                   break;
-        case 7: value = strLine;                break;
-        case 8: value = strLevel->c_str();      break;
-        case 9: value = strText.c_str();        break;
+            switch(i)
+            {
+            case 0: value = id;                     break;
+            case 1: value = strTime;                break;
+            case 2: value = strPid;                 break;
+            case 9: value = strText.c_str();        break;
+            }
+        }
+        else
+        {
+            switch(i)
+            {
+            case 0: value = id;                     break;
+            case 1: value = strTime;                break;
+            case 2: value = strPid;                 break;
+            case 3: value = strTid;                 break;
+            case 4: value = strProject->c_str();    break;
+            case 5: value = file + offset_of_file;  break;
+            case 6: value = func;                   break;
+            case 7: value = strLine;                break;
+            case 8: value = strLevel->c_str();      break;
+            case 9: value = strText.c_str();        break;
+            }
         }
 
         return value;

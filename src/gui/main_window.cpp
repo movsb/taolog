@@ -851,9 +851,10 @@ void MainWindow::_show_filters()
         *def = (int)bases->size() - 1;
     };
 
-    auto ongetvalues = [&](int baseindex, ResultFilter::IntStrPairs* values, bool* editable) {
+    auto ongetvalues = [&](int baseindex, ResultFilter::IntStrPairs* values, bool* editable, taowin::combobox::OnDraw* ondraw) {
         values->clear();
         *editable = false;
+        *ondraw = nullptr;
 
         const auto& id = _columns.avail(baseindex).id;
 
@@ -1448,11 +1449,12 @@ LRESULT MainWindow::_on_create()
                 *def = (int)fields->size() - 1;
             };
 
-            std::vector<std::wstring> friendly_names;
+            std::vector<EventContainer*> filters_added;
 
-            auto fnGetValues = [&](int idx, ResultFilter::IntStrPairs* values, bool* editable) {
+            auto fnGetValues = [&](int idx, ResultFilter::IntStrPairs* values, bool* editable, taowin::combobox::OnDraw* ondraw) {
                 values->clear();
                 *editable = false;
+                *ondraw = nullptr;
 
                 auto& v = *values;
                 auto& c = _columns.avail(idx);
@@ -1460,15 +1462,40 @@ LRESULT MainWindow::_on_create()
                 // 如果是过滤日志的话，则添加已备份
                 // 的过滤器规则到候选列表供选择
                 if(c.id == "log") {
-                    friendly_names.clear();
+                    filters_added.clear();
                     for(auto fit = _filters->crbegin(), end = _filters->crend(); fit != end; ++fit) {
                         auto f = *fit;
                         if(_columns[f->field_index].id == "log") {
-                            friendly_names.emplace_back(f->name +  L'[' + f->value_input + L']');
-                            v.emplace_back(int(f), friendly_names.back().c_str());
+                            v.emplace_back(int(f), f->value_input.c_str());
+                            filters_added.emplace_back(f);
                         }
                     }
                     *editable = true;
+                    *ondraw = [&] (taowin::combobox* that, DRAWITEMSTRUCT* dis, int i, bool selected) {
+                        const auto& str = filters_added[i]->name;
+                        taowin::Rect rc(dis->rcItem);
+                        COLORREF bgcolor = selected ? ::GetSysColor(COLOR_HIGHLIGHT) : RGB(255, 255, 255);
+                        COLORREF fgcolor = selected ? RGB(255, 255, 255) : RGB(0, 0, 0);
+                        HBRUSH hBrush = ::CreateSolidBrush(bgcolor);
+                        ::FillRect(dis->hDC, &rc, hBrush);
+                        rc.deflate(3, 0);
+                        auto old_fg_color = ::SetTextColor(dis->hDC, fgcolor);
+                        auto old_bg_color = ::SetBkColor(dis->hDC, bgcolor);
+                        taowin::Rect rcText(rc);
+                        rcText.right = rc.left + 90;
+                        ::DrawText(dis->hDC, str.c_str(), str.size(), &rcText, 0);
+                        if(rc.width() > 100) {
+                            taowin::Rect rc(rc);
+                            rc.left += 100;
+                            auto& str = filters_added[i]->value_input;
+                            ::SetTextColor(dis->hDC, RGB(192, 192, 192));
+                            ::DrawText(dis->hDC, str.c_str(), str.size(), &rc, 0);
+                        }
+                        if(selected) ::DrawFocusRect(dis->hDC, &dis->rcItem);
+                        ::SetTextColor(dis->hDC, old_fg_color);
+                        ::SetBkColor(dis->hDC, old_bg_color);
+                        ::DeleteBrush(hBrush);
+                    };
                 }
             };
 

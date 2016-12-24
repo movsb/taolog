@@ -7,7 +7,7 @@ class ResultFilter : public taowin::window_creator
 public:
     typedef std::function<void(std::vector<std::wstring>*, int*)> fnOnGetFields;
     typedef std::vector<std::pair<int, const wchar_t*>> IntStrPairs;
-    typedef std::function<void(int, IntStrPairs*, bool*)> fnGetValueList;
+    typedef std::function<void(int, IntStrPairs*, bool*, taowin::combobox::OnDraw*)> fnGetValueList;
     typedef std::function<void(const std::wstring& name, int field_index, const std::wstring& field_name, int value_index, const std::wstring& value_name, const std::wstring& value_input)> fnOnNewFilter;
 
 public:
@@ -73,12 +73,14 @@ protected:
     ResultFilter::IntStrPairs    _values;
     ResultFilter::fnGetValueList _get_values;
     bool _value_editable;
+    taowin::combobox::OnDraw _draw_value;
 
     taowin::edit*       _name;
     taowin::combobox*   _field_name;
     taowin::combobox*   _value_name;
-    taowin::combobox*   _value_name_1;
-    taowin::combobox*   _value_name_2;
+    taowin::combobox*   _value_name_1;  // 不能编辑的
+    taowin::combobox*   _value_name_2;  // 能编辑的
+    taowin::combobox*   _value_name_3;  // 能编辑、自绘的
     taowin::edit*       _value_input;
     taowin::button*     _save;
     taowin::button*     _cancel;
@@ -90,7 +92,7 @@ protected:
     virtual LRESULT on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR * hdr) override;
     virtual bool filter_special_key(int vk) override;
 
-    void _change_value_editable();
+    void _change_value_control();
 
     int _on_save();
 };

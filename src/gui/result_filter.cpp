@@ -38,7 +38,7 @@ LPCTSTR ResultFilter::get_skin_xml() const
                 <vertical width="50">
                     <control height="18" />
                     <button name="all" text="全部" height="24" style="tabstop" />
-                    <control height="5" />
+                    <control height="10" />
                     <button name="add" text="添加" height="24" style="tabstop"/>
                     <control height="5" />
                     <button name="delete" text="删除" style="disabled,tabstop" height="24"/>
@@ -73,7 +73,7 @@ LRESULT ResultFilter::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
         _btn_all    = _root->find<taowin::button>(L"all");
 
         _listview->insert_column(L"名字", 100, 0);
-        _listview->insert_column(L"字段", 60,  1);
+        _listview->insert_column(L"字段", 50,  1);
         _listview->insert_column(L"文本", 130, 2);
         _listview->insert_column(L"临时", 50,  3);
 
@@ -258,6 +258,9 @@ LPCTSTR AddNewFilter::get_skin_xml() const
                         <vertical name="不加这个，下面的combobox显示不出来">
                             <combobox name="value-name-2" style="tabstop,dropdown" height="200" />
                         </vertical>
+                        <vertical name="不加这个，下面的combobox显示不出来">
+                            <combobox name="value-name-3" style="tabstop,dropdown,vscroll,ownerdrawfixed,hasstrings" height="200" />
+                        </vertical>
                     </container>
                 </horizontal>
             </vertical>
@@ -284,6 +287,7 @@ LRESULT AddNewFilter::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
         _field_name  = _root->find<taowin::combobox>(L"field-name");
         _value_name_1= _root->find<taowin::combobox>(L"value-name-1");
         _value_name_2= _root->find<taowin::combobox>(L"value-name-2");
+        _value_name_3= _root->find<taowin::combobox>(L"value-name-3");
         _value_input = _root->find<taowin::edit>(L"value-input");
 
         _save        = _root->find<taowin::button>(L"save");
@@ -300,6 +304,16 @@ LRESULT AddNewFilter::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
         on_notify(_field_name->hwnd(), _field_name, CBN_SELCHANGE, nullptr);
 
         return 0;
+    }
+    case WM_DRAWITEM:
+    {
+        unsigned int id = unsigned int(wparam);
+        if(id == _value_name_3->get_ctrl_id()) {
+            auto dis = (DRAWITEMSTRUCT*)lparam;
+            _value_name_3->drawit(dis);
+            return TRUE;
+        }
+        break;
     }
     }
 
@@ -325,8 +339,9 @@ LRESULT AddNewFilter::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR
             int sel = _field_name->get_cur_sel();
 
             _values.clear();
-            _get_values(sel, &_values, &_value_editable);
-            _change_value_editable();
+            _get_values(sel, &_values, &_value_editable, &_draw_value);
+            _value_name_3->set_ondraw(_draw_value);
+            _change_value_control();
 
             _value_input->set_visible(_values.empty());
             _value_name->set_visible(!_values.empty());
@@ -348,7 +363,7 @@ LRESULT AddNewFilter::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR
     }
     else if(pc == _value_name) {
         if(code == CBN_SELCHANGE) {
-            DBG("%s", L"selchange");
+            DBG("%s: %d", L"selchange", _value_name->get_cur_sel());
         }
         else if(code == CBN_EDITCHANGE) {
             DBG("%s", L"editchange");
@@ -371,11 +386,12 @@ bool AddNewFilter::filter_special_key(int vk)
     return __super::filter_special_key(vk);
 }
 
-void AddNewFilter::_change_value_editable()
+void AddNewFilter::_change_value_control()
 {
     _value_name_1->set_visible(!_value_editable);
-    _value_name_2->set_visible(_value_editable);
-    _value_name = _value_editable ? _value_name_2 : _value_name_1;
+    _value_name_2->set_visible(_value_editable && !_draw_value);
+    _value_name_3->set_visible(_value_editable && _draw_value);
+    _value_name = !_value_editable ? _value_name_1 : ( !_draw_value ? _value_name_2 : _value_name_3);
 }
 
 int AddNewFilter::_on_save()

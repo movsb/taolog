@@ -140,19 +140,20 @@ LRESULT MainWindow::on_menu(const taowin::MenuIds& m)
         else if(m[1] == L"projects")    { g_evtsys.trigger(L"project:set", (void*)std::stoi(m[2]), true); }
     }
     else if(m[0] == L"tools") {
-        auto exec = [](const std::wstring& path)
+        auto exec = [](const std::wstring& path, const std::wstring& args = std::wstring())
         {
             class ShellExecuteInBackgroud : public AsyncTask
             {
             public:
-                ShellExecuteInBackgroud(const std::wstring& path)
+                ShellExecuteInBackgroud(const std::wstring& path, const std::wstring& args)
                     : _path(path)
+                    , _args(args)
                 { }
 
             protected:
                 virtual int doit() override
                 {
-                    return (int)::ShellExecute(nullptr, L"open", _path.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+                    return (int)::ShellExecute(nullptr, L"open", _path.c_str(), _args.c_str(), nullptr, SW_SHOWNORMAL);
                 }
 
                 virtual int done() override
@@ -163,9 +164,10 @@ LRESULT MainWindow::on_menu(const taowin::MenuIds& m)
 
             protected:
                 std::wstring _path;
+                std::wstring _args;
             };
 
-            g_async.AddTask(new ShellExecuteInBackgroud(path));
+            g_async.AddTask(new ShellExecuteInBackgroud(path, args));
         };
 
         if(m[1] == L"json_visual") {
@@ -178,13 +180,18 @@ LRESULT MainWindow::on_menu(const taowin::MenuIds& m)
             lc->create();
             lc->show();
         }
-        else if(m[1] == L"calc" || m[1] == L"notepad" || m[1] == L"regedit" || m[1] == L"control" || m[1] == L"cmd") {
+        else if(m[1] == L"calc" || m[1] == L"notepad" || m[1] == L"regedit" || m[1] == L"control" || m[1] == L"cmd"
+            || m[1] == L"mstsc"
+            )
+        {
             exec(m[1]);
         }
         else if(m[1][0] == '_') {
             int i = std::stoi(m[1].c_str() + 1);
-            auto path = g_config.ws(g_config->arr("tools")[i]["path"].string_value());
-            exec(path);
+            const auto& tool = g_config->arr("tools")[i];
+            auto path = g_config.ws(tool["path"].string_value());
+            auto args = g_config.ws(tool["args"].string_value());
+            exec(path, args);
         }
     }
 
@@ -617,6 +624,7 @@ void MainWindow::_init_listview()
     <item i="cmd"           s="命令提示符" />
     <item i="regedit"       s="注册表" />
     <item i="control"       s="控制面板" />
+    <item i="mstsc"         s="远程桌面" />
 </menutree>
 )");
     add_menu(&_tools_menu);

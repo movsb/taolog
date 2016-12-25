@@ -44,7 +44,16 @@ void LuaConsoleWindow::execute()
     int ret = luaL_dostring(_L, script.c_str());
 
     if(ret != LUA_OK) {
-        auto err = g_config.ws(lua_tostring(_L, -1));
+        std::wstring err;
+        // lua 的 luaO_chunkid 函数会截取脚本的部分用作错误提示
+        // 然而其不支持 utf-8，可能导致一个完整的字符被截断
+        // 不完整的字符调用 codecvt 会抛异常。
+        try {
+            err = g_config.ws(lua_tostring(_L, -1));
+        }
+        catch(...) {
+            err = L"LUA解码错误（内部错误）。";
+        }
         _root->find<taowin::control>(L"bot")->set_visible(false);
         _root->find<taowin::control>(L"stabar")->set_visible(true);
         _lbl_status->set_text(err.c_str());

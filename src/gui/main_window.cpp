@@ -22,7 +22,7 @@ void DoEtwLog(void* log)
 LPCTSTR MainWindow::get_skin_xml() const
 {
     LPCTSTR json = LR"tw(
-<window title="ETW Log Viewer" size="1000,650">
+<window title="ETW Log Viewer" size="870,650">
     <res>
         <font name="default" face="微软雅黑" size="12"/>
         <font name="12" face="微软雅黑" size="12"/>
@@ -44,9 +44,8 @@ LPCTSTR MainWindow::get_skin_xml() const
                 <combobox name="s-filter" style="tabstop" height="200" width="64" padding="0,0,4,0"/>
                 <edit name="s" width="80" style="tabstop" exstyle="clientedge"/>
                 <control width="10" />
-                <button name="color-settings" text="颜色配置" width="60" style="tabstop" padding="0,0,5,0"/>
-                <button name="topmost" text="窗口置顶" width="60" style="tabstop" padding="0,0,5,0"/>
-                <button name="tools" text="工具" width="60" style="tabstop"/>
+                <button name="tools" text="工具" width="60" style="tabstop" padding="0,0,5,0"/>
+                <button name="settings" text="设置" width="60" style="tabstop"/>
             </horizontal>
             <listview name="lv" style="showselalways,ownerdata,tabstop" exstyle="clientedge,doublebuffer,headerdragdrop"/>
         </vertical>
@@ -194,6 +193,33 @@ LRESULT MainWindow::on_menu(const taowin::MenuIds& m)
             exec(path, args);
         }
     }
+    else if(m[0] == L"settings") {
+        if(m[1] == L"topmost") {
+            bool totop = !(::GetWindowLongPtr(_hwnd, GWL_EXSTYLE) & WS_EX_TOPMOST);
+            _set_top_most(totop);
+            _settings_menu.set_check(L"topmost", totop);
+            _config["topmost"] = totop;
+        }
+        else if(m[1] == L"colors") {
+            auto set = [&](int i, bool fg) {
+                auto& colors = _config.obj("listview").arr("colors").as_arr();
+                for(auto& jc : colors) {
+                    auto& c = JsonWrapper(jc).as_obj();
+                    if(c["level"] == i) {
+                        char buf[12];
+                        unsigned char* p = fg ? (unsigned char*)&_colors[i].fg : (unsigned char*)&_colors[i].bg;
+                        sprintf(&buf[0], "%d,%d,%d", p[0], p[1], p[2]);
+                        if(fg) c["fgc"] = buf;
+                        else c["bgc"] = buf;
+                        _listview->redraw_items(0, _listview->get_item_count());
+                        break;
+                    }
+                }
+            };
+
+            (new ListviewColor(&_colors, &_level_maps, set))->domodal(this);
+        }
+    }
 
     return 0;
 }
@@ -248,6 +274,10 @@ LRESULT MainWindow::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR *
             return 0;
         }
         else if(code == NM_RCLICK) {
+            bool empty = !_listview->get_item_count();
+            bool hassel = !empty && _listview->get_selected_count() > 0;
+            _lvmenu.enable(L"clear", !empty);
+            _lvmenu.enable(L"copy", hassel);
             _lvmenu.track();
             return 0;
         }
@@ -298,13 +328,6 @@ LRESULT MainWindow::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR *
             _show_filters();
         }
     }
-    else if (pc == _btn_topmost) {
-        if(code == BN_CLICKED) {
-            bool totop = !(::GetWindowLongPtr(_hwnd, GWL_EXSTYLE) & WS_EX_TOPMOST);
-            _set_top_most(totop);
-            _config["topmost"] = totop;
-        }
-    }
     else if (pc == _btn_clear) {
         if(code == BN_CLICKED) {
             _clear_results();
@@ -330,27 +353,6 @@ LRESULT MainWindow::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR *
             return 0;
         }
     }
-    else if(pc == _btn_colors) {
-        if(code == BN_CLICKED) {
-            auto set = [&](int i, bool fg) {
-                auto& colors = _config.obj("listview").arr("colors").as_arr();
-                for(auto& jc : colors) {
-                    auto& c = JsonWrapper(jc).as_obj();
-                    if(c["level"] == i) {
-                        char buf[12];
-                        unsigned char* p = fg ? (unsigned char*)&_colors[i].fg : (unsigned char*)&_colors[i].bg;
-                        sprintf(&buf[0], "%d,%d,%d", p[0], p[1], p[2]);
-                        if(fg) c["fgc"] = buf;
-                        else c["bgc"] = buf;
-                        _listview->redraw_items(0, _listview->get_item_count());
-                        break;
-                    }
-                }
-            };
-
-            (new ListviewColor(&_colors, &_level_maps, set))->domodal(this);
-        }
-    }
     else if(pc == _btn_export2file) {
         if(code == BN_CLICKED) {
             _export2file();
@@ -360,6 +362,12 @@ LRESULT MainWindow::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR *
     else if(pc == _btn_tools) {
         if(code == BN_CLICKED) {
             _tools_menu.track();
+            return 0;
+        }
+    }
+    else if(pc == _btn_settings) {
+        if(code == BN_CLICKED) {
+            _settings_menu.track();
             return 0;
         }
     }
@@ -613,33 +621,6 @@ void MainWindow::_init_listview()
     _lvmenu.create(menustr.c_str());
     add_menu(&_lvmenu);
 
-    // 工具菜单
-    _tools_menu.create(LR"(
-<menutree i="tools">
-    <item i="json_visual"   s="JSON 可视化" />
-    <item i="lua_console"   s="LUA 控制台" />
-    <sep />
-    <item i="calc"          s="计算器" />
-    <item i="notepad"       s="记事本" />
-    <item i="cmd"           s="命令提示符" />
-    <item i="regedit"       s="注册表" />
-    <item i="control"       s="控制面板" />
-    <item i="mstsc"         s="远程桌面" />
-</menutree>
-)");
-    add_menu(&_tools_menu);
-
-    // 自定义工具
-    const auto& tools = g_config->arr("tools").as_arr();
-    if(!tools.empty()) {
-        _tools_menu.insert_sep(nullptr);
-        int i = 0;
-        for(auto& tool : tools) {
-            _tools_menu.insert_str(nullptr, L"_" + std::to_wstring(i), g_config.ws(tool["name"].string_value()));
-            i++;
-        }
-    }
-
     // subclass it
     subclass_control(_listview);
 }
@@ -752,6 +733,49 @@ void MainWindow::_init_filters()
     }
 }
 
+void MainWindow::_init_menus()
+{
+    // 工具菜单
+    _tools_menu.create(LR"(
+<menutree i="tools">
+    <item i="json_visual"   s="JSON 可视化" />
+    <item i="lua_console"   s="LUA 控制台" />
+    <sep />
+    <item i="calc"          s="计算器" />
+    <item i="notepad"       s="记事本" />
+    <item i="cmd"           s="命令提示符" />
+    <item i="regedit"       s="注册表" />
+    <item i="control"       s="控制面板" />
+    <item i="mstsc"         s="远程桌面" />
+</menutree>
+)");
+    add_menu(&_tools_menu);
+
+    // 自定义工具
+    const auto& tools = g_config->arr("tools").as_arr();
+    if(!tools.empty()) {
+        _tools_menu.insert_sep(nullptr);
+        int i = 0;
+        for(auto& tool : tools) {
+            _tools_menu.insert_str(nullptr, L"_" + std::to_wstring(i), g_config.ws(tool["name"].string_value()));
+            i++;
+        }
+    }
+
+    // 设置菜单
+    _settings_menu.create(LR"(
+<menutree i="settings">
+  <item i="topmost"     s="窗口置顶" />
+</menutree>
+)");
+
+    if(isetw()) {
+        _settings_menu.insert_str(nullptr, L"colors", L"颜色配置");
+    }
+
+    add_menu(&_settings_menu);
+}
+
 void MainWindow::_init_filter_events()
 {
     g_evtsys.attach(L"filter:new", [&] {
@@ -796,8 +820,10 @@ void MainWindow::_init_logger_events()
 
     g_evtsys.attach(L"log:fullscreen", [&] {
         auto toolbar = _root->find<taowin::container>(L"toolbar");
-        toolbar->set_visible(!toolbar->is_visible());
-        _listview->show_header(toolbar->is_visible());
+        bool full = toolbar->is_visible();
+        toolbar->set_visible(!full);
+        _listview->show_header(!full);
+        _lvmenu.set_check(L"full", full);
     });
 
     g_evtsys.attach(L"log:copy", [&] {
@@ -976,7 +1002,7 @@ bool MainWindow::_do_search(const std::wstring& s, int line, int)
 
 void MainWindow::_clear_results()
 {
-    if(_results_expoting.count(_current_project) && _results_expoting[_current_project]) {
+    if(_results_exporting.count(_current_project) && _results_exporting[_current_project]) {
         msgbox(L"当前模块的日志正在被导出，不能被清空，请稍候再试。", MB_ICONEXCLAMATION);
         return;
     }
@@ -1004,7 +1030,6 @@ void MainWindow::_clear_results()
 
 void MainWindow::_set_top_most(bool top)
 {
-    _btn_topmost->set_text(top ? L"取消置顶" : L"窗口置顶");
     ::SetWindowPos(_hwnd, top ? HWND_TOPMOST : HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
 }
 
@@ -1346,7 +1371,7 @@ LR"(
         else
             dlg->fail();
 
-        _results_expoting.erase(m);
+        _results_exporting.erase(m);
     });
 
     task->onupdate([&, dlg](double ps) {
@@ -1355,7 +1380,7 @@ LR"(
 
     g_async.AddTask(task);
 
-    _results_expoting.emplace(_current_project, true);
+    _results_exporting.emplace(_current_project, true);
 }
 
 void MainWindow::_copy_selected_item()
@@ -1406,10 +1431,9 @@ LRESULT MainWindow::_on_create()
     _btn_clear          = _root->find<taowin::button>(L"clear-logging");
     _btn_modules        = _root->find<taowin::button>(L"module-manager");
     _btn_filter         = _root->find<taowin::button>(L"filter-result");
-    _btn_topmost        = _root->find<taowin::button>(L"topmost");
     _edt_search         = _root->find<taowin::edit>(L"s");
     _cbo_search_filter  = _root->find<taowin::combobox>(L"s-filter");
-    _btn_colors         = _root->find<taowin::button>(L"color-settings");
+    _btn_settings       = _root->find<taowin::button>(L"settings");
     _btn_export2file    = _root->find<taowin::button>(L"export-to-file");
     _cbo_sel_flt        = _root->find<taowin::combobox>(L"select-filter");
     _cbo_prj            = _root->find<taowin::combobox>(L"select-project");
@@ -1419,7 +1443,6 @@ LRESULT MainWindow::_on_create()
         _btn_start->set_visible(false);
         _btn_modules->set_visible(false);
         _cbo_prj->set_visible(false);
-        _btn_colors->set_visible(false);
         _root->find<taowin::control>(L"select-project-label")->set_visible(false);
     }
 
@@ -1436,6 +1459,8 @@ LRESULT MainWindow::_on_create()
     _init_logger_events();
 
     _init_listview();
+
+    _init_menus();
 
     g_evtsys.trigger(L"project:set", isetw() && !_modules.empty() ? _modules[0] : nullptr, true);
 
@@ -1550,7 +1575,7 @@ LRESULT MainWindow::_on_create()
 
 LRESULT MainWindow::_on_close()
 {
-    if(!_results_expoting.empty()) {
+    if(!_results_exporting.empty()) {
         msgbox(L"目前尚有日志正在被导出，窗口不能被关闭。", MB_ICONEXCLAMATION);
         return 0;
     }

@@ -77,10 +77,9 @@ protected:
     taowin::button*     _btn_clear;
     taowin::button*     _btn_modules;
     taowin::button*     _btn_filter;
-    taowin::button*     _btn_topmost;
     taowin::edit*       _edt_search;
     taowin::combobox*   _cbo_search_filter;
-    taowin::button*     _btn_colors;
+    taowin::button*     _btn_settings;
     taowin::button*     _btn_export2file;
     taowin::combobox*   _cbo_sel_flt;
     taowin::combobox*   _cbo_prj;
@@ -91,6 +90,7 @@ protected:
     HACCEL              _accels;
     taowin::menu_manager _lvmenu;
     taowin::menu_manager _tools_menu;
+    taowin::menu_manager _settings_menu;
 
     MapColors           _colors;
     ColumnManager       _columns;
@@ -122,7 +122,7 @@ protected:
     // 表示当前正在导出的模块（当前过滤器）
     // 正在导出时不能清空数据，也不能关闭窗口
     std::map<ModuleEntry*, bool>
-                        _results_expoting;
+                        _results_exporting;
 
 protected:
     virtual LPCTSTR get_skin_xml() const override;
@@ -148,6 +148,7 @@ protected:
     // 从配置文件初始化模块过滤器
     void _init_filters();
 
+    void _init_menus();
     void _init_project_events();
     void _init_filter_events();
     void _init_logger_events();

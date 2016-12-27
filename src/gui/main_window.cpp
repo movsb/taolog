@@ -425,7 +425,11 @@ bool MainWindow::_start()
     auto& etwobj = _config.obj("etw").as_obj();
     auto it= etwobj.find("session");
     if(it == etwobj.cend() || it->second.string_value().empty()) {
+#ifdef THUNDER_RELEASE
+        session = L"thunder-etw-session";
+#else
         session = L"taoetw-session";
+#endif
         etwobj["session"] = g_config.us(session);
     }
     else {

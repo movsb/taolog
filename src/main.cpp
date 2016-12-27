@@ -36,7 +36,11 @@ int __stdcall wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR lpCmdline, int nSh
 
     test();
 
+#ifdef THUNDER_RELEASE
+    taoetw::config.load(L"logview.json");
+#else
     taoetw::config.load(L"taoetw.json");
+#endif
 
     int what = ::MessageBox(nullptr, L"¡¾ÊÇ¡¿Æô¶¯ EtwLog£»\n¡¾·ñ¡¿Æô¶¯ DebugView¡£", L"", MB_ICONQUESTION | MB_YESNOCANCEL);
     if(what != IDCANCEL) {

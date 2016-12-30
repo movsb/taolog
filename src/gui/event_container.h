@@ -62,6 +62,7 @@ protected:
     FILTER          _filter;
 
     std::wstring _value_input_lower;
+    std::wregex  _regex_input;
 };
 
 typedef std::vector<EventContainer*> EventContainerS;

@@ -405,6 +405,17 @@ int AddNewFilter::_on_save()
             if(_value_editable && sel == -1) {
                 value_input = _value_name->get_text();
                 if(value_input.empty()) throw 0;
+                if(value_input[0] == L'~') {
+                    try {
+                        auto re = value_input;
+                        re = re.erase(0, 1);
+                        std::wregex regex(re, std::regex_constants::icase);
+                    }
+                    catch(...) {
+                        msgbox(L"无效的正则表达式。", MB_ICONERROR);
+                        throw 0;
+                    }
+                }
                 value_index = -1;
                 value_name = L"";
             }
@@ -418,6 +429,17 @@ int AddNewFilter::_on_save()
             value_index = -1;
             value_input = _value_input->get_text();
             if (value_input.empty()) throw 0;
+            if(value_input[0] == L'~') {
+                try {
+                    auto re = value_input;
+                    re = re.erase(0, 1);
+                    std::wregex regex(re, std::regex_constants::icase);
+                }
+                catch(...) {
+                    msgbox(L"无效的正则表达式。", MB_ICONERROR);
+                    throw 0;
+                }
+            }
         }
 
         name = _name->get_text();

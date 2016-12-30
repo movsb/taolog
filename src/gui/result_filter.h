@@ -8,7 +8,9 @@ public:
     typedef std::function<void(std::vector<std::wstring>*, int*)> fnOnGetFields;
     typedef std::vector<std::pair<int, const wchar_t*>> IntStrPairs;
     typedef std::function<void(int, IntStrPairs*, bool*, taowin::combobox::OnDraw*)> fnGetValueList;
-    typedef std::function<void(const std::wstring& name, int field_index, const std::wstring& field_name, int value_index, const std::wstring& value_name, const std::wstring& value_input)> fnOnNewFilter;
+    typedef std::function<void(const std::wstring& name,
+        int field_index, const std::wstring& field_name, int value_index,
+        const std::wstring& value_name, const std::wstring& value_input)> fnOnNewFilter;
 
 public:
     ResultFilter(EventContainerS& filters, fnOnGetFields getfields, ModuleEntry* curprj, EventContainer* curflt, fnGetValueList getvalues, fnOnNewFilter onnewfilter)

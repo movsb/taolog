@@ -100,15 +100,25 @@ void EventContainer::enable_filter(bool b)
 
         _value_input_lower = tolower(value_input);
 
+        if(value_input[0] == L'~') {
+            auto s = value_input;
+            s.erase(0, 1);
+            _regex_input = std::wregex(s, std::regex_constants::icase);
+        }
+
         _filter = [&](const EVENT& evt) {
             const auto p = (*evt)[field_index];
 
             auto search_value_in_p = [&] {
+                if(value_input[0] != L'~') {
+                    auto haystack = tolower(std::wstring(p));
+                    auto& needle = _value_input_lower;
 
-                auto haystack = tolower(std::wstring(p));
-                auto& needle = _value_input_lower;
-
-                return !::wcsstr(haystack.c_str(), needle.c_str());
+                    return !!::wcsstr(haystack.c_str(), needle.c_str());
+                }
+                else {
+                    return std::regex_search(p, _regex_input);
+                }
             };
 
             switch(field_index)
@@ -123,7 +133,7 @@ void EventContainer::enable_filter(bool b)
             // 执行不区分大小写的搜索
             case 5: case 6: case 9:
             {
-                return search_value_in_p();
+                return !search_value_in_p();
             }
             // 模块
             case 4:

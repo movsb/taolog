@@ -942,16 +942,37 @@ bool MainWindow::_do_search(const std::wstring& s, int line, int)
     for (auto& b : _last_search_matched_cols)
         b = false;
 
+    bool is_regex = false;
+
     // 均转换成小写来搜索
     std::wstring needle = s;
     std::transform(needle.begin(), needle.end(), needle.begin(), ::tolower);
 
+    // 如果是正则表达式匹配
+    std::wregex regex;
+    if(s[0] == L'~') {
+        try {
+            auto rs = s;
+            rs.erase(0, 1);
+            regex = std::wregex(rs, std::regex_constants::icase);
+            is_regex = true;
+        }
+        catch(...) {
+            msgbox(L"错误的正则表达式。", MB_ICONERROR);
+            return false;
+        }
+    }
+
     // 搜索函数
     auto search_text = [&](std::wstring /* 非引用 */heystack) {
-        // 同样转换成小写来被搜索
-        std::transform(heystack.begin(), heystack.end(), heystack.begin(), ::tolower);
-
-        return ::wcsstr(heystack.c_str(), needle.c_str()) != nullptr;
+        if(!is_regex) {
+            // 同样转换成小写来被搜索
+            std::transform(heystack.begin(), heystack.end(), heystack.begin(), ::tolower);
+            return ::wcsstr(heystack.c_str(), needle.c_str()) != nullptr;
+        }
+        else {
+            return std::regex_search(heystack, regex);
+        }
     };
 
     for (; next_line >= 0 && next_line < (int)_current_filter->size();) {

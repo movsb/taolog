@@ -4,7 +4,7 @@
 
 #include "column_selection.h"
 
-namespace taoetw {
+namespace taolog {
 
 void ColumnSelection::get_metas(WindowMeta * metas)
 {
@@ -182,4 +182,4 @@ void ColumnManager::hide(bool is_listview_index, int index, int* listview_delete
     _showing_indices.erase(_showing_indices.cbegin() + show_index);
 }
 
-} // namespace taoetw
+} // namespace taolog

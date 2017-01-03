@@ -29,7 +29,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{83BB38C8-036A-4780-92FA-C1CD577B537B}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>taoetw</RootNamespace>
+    <RootNamespace>taolog</RootNamespace>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -564,14 +564,14 @@
     <ClInclude Include="../res/resource.h" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="../res/taoetw.rc" />
+    <ResourceCompile Include="../res/taolog.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties RESOURCE_FILE="../res/taoetw.rc" />
+      <UserProperties RESOURCE_FILE="../res/taolog.rc" />
     </VisualStudio>
   </ProjectExtensions>
 </Project>

@@ -8,7 +8,7 @@
 #include <stack>
 #include <functional>
 
-namespace taoetw {
+namespace taolog {
 
 class EventArg
 {

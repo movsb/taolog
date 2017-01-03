@@ -1,6 +1,6 @@
 #pragma once
 
-namespace taoetw {
+namespace taolog {
 
 class TooltipWindow : public taowin::window_creator
 {

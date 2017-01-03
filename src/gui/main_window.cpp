@@ -9,7 +9,7 @@
 
 #include "main_window.h"
 
-namespace taoetw {
+namespace taolog {
 
 static HWND g_logger_hwnd;
 static UINT g_logger_message;
@@ -428,7 +428,7 @@ bool MainWindow::_start()
 #ifdef THUNDER_RELEASE
         session = L"thunder-etw-session";
 #else
-        session = L"taoetw-session";
+        session = L"taolog-session";
 #endif
         etwobj["session"] = g_config.us(session);
     }

@@ -10,7 +10,7 @@
 #include "result_filter.h"
 
 
-namespace taoetw {
+namespace taolog {
 
 void ResultFilter::get_metas(WindowMeta * metas)
 {

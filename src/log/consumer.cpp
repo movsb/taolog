@@ -13,7 +13,7 @@
 
 #include "consumer.h"
 
-namespace taoetw {
+namespace taolog {
 
 // This GUID defines the event trace class. 	
 // {6E5E5CBC-8ACF-4fa6-98E4-0C63A075323B}
@@ -97,7 +97,7 @@ LRESULT CALLBACK Consumer::__WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam
     if(uMsg == WM_COPYDATA) {
         auto cds = reinterpret_cast<COPYDATASTRUCT*>(lParam);
         if(g_loggerOpen) {
-            taoetw::DoEtwLog(cds->lpData);
+            taolog::DoEtwLog(cds->lpData);
         }
         return 0;
     }

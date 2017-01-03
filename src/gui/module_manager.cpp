@@ -12,7 +12,7 @@
 #include "module_manager.h"
 #include "module_editor.h"
 
-namespace taoetw {
+namespace taolog {
 
 void ModuleManager::get_metas(WindowMeta * metas)
 {

@@ -1,6 +1,6 @@
 #pragma once
 
-namespace taoetw {
+namespace taolog {
 
 struct Column {
 	std::string id;		// 用于内部识别列
@@ -95,4 +95,4 @@ protected:
     ColumnManager&      _columns;
 };
 
-} // namespace taoetw
+} // namespace taolog

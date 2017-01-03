@@ -19,7 +19,7 @@
 #include "log/consumer.h"
 #include "log/dbgview.h"
 
-namespace taoetw {
+namespace taolog {
 
 struct LoggerMessage {
     enum Value {

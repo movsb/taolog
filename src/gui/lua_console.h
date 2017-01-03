@@ -2,7 +2,7 @@
 
 struct lua_State;
 
-namespace taoetw {
+namespace taolog {
 
 class LuaConsoleWindow : public taowin::window_creator
 {

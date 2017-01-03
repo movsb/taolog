@@ -5,7 +5,7 @@
 #include <json11/json11.hpp>
 #include <codecvt>
 
-namespace taoetw {
+namespace taolog {
 
 
 class JsonWrapper

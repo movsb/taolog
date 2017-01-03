@@ -6,7 +6,7 @@
 
 #include "listview_color.h"
 
-namespace taoetw {
+namespace taolog {
 
 namespace {
     COLORREF last_colors[16];

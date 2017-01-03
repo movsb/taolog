@@ -11,7 +11,7 @@ extern "C" {
 
 #include "lua_console.h"
 
-namespace taoetw {
+namespace taolog {
 
 LuaConsoleWindow* __this;
 

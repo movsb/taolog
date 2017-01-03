@@ -6,7 +6,7 @@
 
 #include "controller.h"
 
-namespace taoetw {
+namespace taolog {
 
 bool Controller::start(const wchar_t* session)
 {
@@ -58,4 +58,4 @@ bool Controller::started()
     return _handle && _handle != INVALID_PROCESSTRACE_HANDLE;
 }
 
-} // namespace taoetw
+} // namespace taolog

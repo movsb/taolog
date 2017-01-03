@@ -2,7 +2,7 @@
 
 #include "utils.h"
 
-namespace taoetw {
+namespace taolog {
 
 namespace utils {
 

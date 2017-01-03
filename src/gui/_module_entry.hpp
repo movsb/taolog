@@ -1,6 +1,6 @@
 #pragma once
 
-namespace taoetw {
+namespace taolog {
 
 struct ModuleEntry
 {

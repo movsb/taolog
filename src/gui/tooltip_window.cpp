@@ -2,7 +2,7 @@
 
 #include "tooltip_window.h"
 
-namespace taoetw {
+namespace taolog {
 
 void TooltipWindow::format(const wchar_t* fmt)
 {

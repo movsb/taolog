@@ -402,7 +402,7 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="../res/taoetw.rc">
+    <ResourceCompile Include="../res/taolog.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
   </ItemGroup>

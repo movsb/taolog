@@ -5,7 +5,7 @@
 #include "_module_entry.hpp"
 #include "module_editor.h"
 
-namespace taoetw {
+namespace taolog {
 
 void ModuleEntryEditor::get_metas(WindowMeta * metas)
 {

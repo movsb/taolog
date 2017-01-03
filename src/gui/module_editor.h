@@ -1,6 +1,6 @@
 #pragma once
 
-namespace taoetw {
+namespace taolog {
 
 class ModuleEntryEditor : public taowin::window_creator
 {

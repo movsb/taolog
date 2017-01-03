@@ -4,7 +4,7 @@
 
 #include "config.h"
 
-namespace taoetw {
+namespace taolog {
 
 bool Config::load(const std::wstring& file_)
 {

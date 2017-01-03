@@ -10,7 +10,7 @@
 
 #include "dbgview.h"
 
-namespace taoetw
+namespace taolog
 {
 
 bool DebugView::init(OnNotify notify)

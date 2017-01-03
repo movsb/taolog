@@ -6,7 +6,7 @@
 
 #include "event_detail.h"
 
-namespace taoetw {
+namespace taolog {
 
 void EventDetail::get_metas(WindowMeta * metas)
 {

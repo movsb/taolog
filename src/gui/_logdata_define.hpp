@@ -1,6 +1,6 @@
 #pragma once
 
-namespace taoetw {
+namespace taolog {
 
 // #define ETW_LOGGER_MAX_LOG_SIZE (50*1024)
 

@@ -4,7 +4,7 @@
 
 #include <Windows.h>
 
-namespace taoetw {
+namespace taolog {
 
 class DebugView
 {

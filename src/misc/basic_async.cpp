@@ -3,7 +3,7 @@
 #include <assert.h>
 #include <process.h>
 
-namespace taoetw
+namespace taolog
 {
 
 void AsyncTask::set_ps(double ps)

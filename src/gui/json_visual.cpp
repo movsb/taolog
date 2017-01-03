@@ -5,7 +5,7 @@
 
 #include "json_visual.h"
 
-namespace taoetw {
+namespace taolog {
 
 void JsonVisual::get_metas(WindowMeta * metas)
 {

@@ -1,6 +1,6 @@
 #pragma once
 
-namespace taoetw {
+namespace taolog {
 
 class Consumer;
 
@@ -40,4 +40,4 @@ protected:
 };
 
 
-} // namespace taoetw
+} // namespace taolog

@@ -5,7 +5,7 @@
 
 #include "event_container.h"
 
-namespace taoetw {
+namespace taolog {
 
 json11::Json EventContainer::to_json() const
 {

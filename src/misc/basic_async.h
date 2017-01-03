@@ -6,7 +6,7 @@
 #include <list>
 #include <functional>
 
-namespace taoetw
+namespace taolog
 {
 
 class AsyncTask

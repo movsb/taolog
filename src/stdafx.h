@@ -21,6 +21,12 @@
 #include <json11/json11.hpp>
 #include <taowin/src/tw_taowin.h>
 
+extern "C" {
+#include <lua/lua.h>
+#include <lua/luaconf.h>
+#include <lua/lauxlib.h>
+}
+
 #ifdef _DEBUG
     #define DBG(f, ...) wprintf(f L"\n", __VA_ARGS__)
 #else

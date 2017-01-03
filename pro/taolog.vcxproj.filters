@@ -221,6 +221,9 @@
     <ClCompile Include="..\src\misc\basic_async.cpp">
       <Filter>Source Files\misc</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\gui\logdata_define.cpp">
+      <Filter>Source Files\gui</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\3rd\taowin\src\tw_control.h">
@@ -264,9 +267,6 @@
     </ClInclude>
     <ClInclude Include="..\src\log\dbgview.h">
       <Filter>Source Files\log</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\gui\_logdata_define.hpp">
-      <Filter>Source Files\gui</Filter>
     </ClInclude>
     <ClInclude Include="..\src\gui\_module_entry.hpp">
       <Filter>Source Files\gui</Filter>
@@ -399,6 +399,9 @@
     </ClInclude>
     <ClInclude Include="..\src\misc\basic_async.h">
       <Filter>Source Files\misc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\gui\logdata_define.h">
+      <Filter>Source Files\gui</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

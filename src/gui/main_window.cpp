@@ -382,32 +382,55 @@ bool MainWindow::filter_special_key(int vk)
         _last_search_line = -1;
         _last_search_string = _edt_search->get_text();
 
-        if (!_last_search_string.empty()) {
-            if(_do_search(_last_search_string, _last_search_line, -1)) {
-                // 如果有搜索结果，并且按住了CTRL键，则自动创建新的过滤器
-                if(::GetAsyncKeyState(VK_CONTROL) & 0x8000) {
-                    // 当前选择的列（绝对索引）
-                    int col = (int)_cbo_search_filter->get_cur_data();
-                    if(col == -1) {
-                        msgbox(L"新建过滤器不能指定为 <全部> 列。", MB_ICONINFORMATION);
-                    }
-                    else {
-                        auto& c         = _columns.showing(col);
-                        auto& name      = _last_search_string;
-                        auto& colname   = c.name;
-                        auto& value     = _last_search_string;
-                        auto p = new EventContainer(_last_search_string, c.index, colname, -1, L"", value);
-                        // 按下了 Shift 键？按下则是固定添加，否则是临时添加
-                        p->is_tmp = !(::GetAsyncKeyState(VK_SHIFT) & 0x8000);
-                        g_evtsys.trigger(L"filter:new", p);
-                        g_evtsys.trigger(L"filter:set", p);
-                    }
+        if(_last_search_string.empty()) return true;
+
+        if(_last_search_string[0] == L'`') {
+            auto lua = g_config.us(_last_search_string.substr(1));
+
+            try {
+                if(luaL_loadstring(_lua, lua.c_str()) != LUA_OK) {
+                    throw L"错误的脚本。";
+                }
+
+                if(lua_pcall(_lua, 0, 0, 0) != LUA_OK) {
+                    throw L"错误的脚本。";
+                }
+
+                auto tt = lua_getglobal(_lua, "filter");
+                lua_pop(_lua, 1);
+                if(tt != LUA_TFUNCTION) {
+                    throw L"未找到全局函数 `filter'。";
                 }
             }
-            else {
-                _edt_search->focus();
+            catch(const wchar_t* e) {
+                msgbox(e, MB_ICONERROR);
+                return true;
             }
-            return true;
+        }
+
+        if(_do_search(_last_search_string, _last_search_line, -1)) {
+            // 如果有搜索结果，并且按住了CTRL键，则自动创建新的过滤器
+            if(::GetAsyncKeyState(VK_CONTROL) & 0x8000) {
+                // 当前选择的列（绝对索引）
+                int col = (int)_cbo_search_filter->get_cur_data();
+                if(col == -1) {
+                    msgbox(L"新建过滤器不能指定为 <全部> 列。", MB_ICONINFORMATION);
+                }
+                else {
+                    auto& c         = _columns.showing(col);
+                    auto& name      = _last_search_string;
+                    auto& colname   = c.name;
+                    auto& value     = _last_search_string;
+                    auto p = new EventContainer(_last_search_string, c.index, colname, -1, L"", value);
+                    // 按下了 Shift 键？按下则是固定添加，否则是临时添加
+                    p->is_tmp = !(::GetAsyncKeyState(VK_SHIFT) & 0x8000);
+                    g_evtsys.trigger(L"filter:new", p);
+                    g_evtsys.trigger(L"filter:set", p);
+                }
+            }
+        }
+        else {
+            _edt_search->focus();
         }
     }
 
@@ -943,6 +966,7 @@ bool MainWindow::_do_search(const std::wstring& s, int line, int)
         b = false;
 
     bool is_regex = false;
+    bool is_lua = false;
 
     // 均转换成小写来搜索
     std::wstring needle = s;
@@ -962,6 +986,9 @@ bool MainWindow::_do_search(const std::wstring& s, int line, int)
             return false;
         }
     }
+    else if(s[0] == L'`') {
+        is_lua = true;
+    }
 
     // 搜索函数
     auto search_text = [&](std::wstring /* 非引用 */heystack) {
@@ -978,28 +1005,62 @@ bool MainWindow::_do_search(const std::wstring& s, int line, int)
     for (; next_line >= 0 && next_line < (int)_current_filter->size();) {
         auto& evt = *(*_current_filter)[next_line];
 
-        // 搜索每一列
-        if (fltcol == -1) {
-            // 是否至少有一列已经能够匹配
-            bool has_col_match = false;
+        if(is_lua) {
+            int top = lua_gettop(_lua);
 
-            // 一次性匹配整行
-            _columns.for_each(ColumnManager::ColumnFlags::Showing, [&](int i, Column& c) {
-                int real_index = c.index;
-                if(search_text(evt[real_index])) {
-                    _last_search_matched_cols[i] = true;
-                    has_col_match = true;
+            lua_getglobal(_lua, "filter");
+            evt.to_luaobj(_lua);
+
+            if(lua_pcall(_lua, 1, LUA_MULTRET, 0) == LUA_OK) {
+                int nret = lua_gettop(_lua) - top;
+                if(nret > 0) {
+                    if(lua_isboolean(_lua, -nret)) {
+                        valid = !!lua_toboolean(_lua, -nret);
+                        if(valid) {
+                            for(int i = -nret + 1; i <= -1; ++i) {
+                                if(lua_isinteger(_lua, i)) {
+                                    int cid = (int)lua_tointeger(_lua, i);
+                                    if(cid >= 0 && cid <= LogDataUI::cols()) {
+                                        _last_search_matched_cols[cid] = true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    lua_pop(_lua, nret);
                 }
-            });
-
-            valid = has_col_match;
+            }
+            else {
+                auto err = g_config.ws(lua_tostring(_lua, -1));
+                msgbox(err, MB_ICONERROR, L"脚本错误");
+                lua_pop(_lua, 1);
+                return false;
+            }
         }
-        // 仅搜索指定列
         else {
-            int real_index = _columns.showing(fltcol).index;
-            if (search_text(evt[real_index])) {
-                _last_search_matched_cols[fltcol] = true;
-                valid = true;
+            // 搜索每一列
+            if(fltcol == -1) {
+                // 是否至少有一列已经能够匹配
+                bool has_col_match = false;
+
+                // 一次性匹配整行
+                _columns.for_each(ColumnManager::ColumnFlags::Showing, [&](int i, Column& c) {
+                    int real_index = c.index;
+                    if(search_text(evt[real_index])) {
+                        _last_search_matched_cols[i] = true;
+                        has_col_match = true;
+                    }
+                });
+
+                valid = has_col_match;
+            }
+            // 仅搜索指定列
+            else {
+                int real_index = _columns.showing(fltcol).index;
+                if(search_text(evt[real_index])) {
+                    _last_search_matched_cols[fltcol] = true;
+                    valid = true;
+                }
             }
         }
 
@@ -1452,6 +1513,9 @@ LRESULT MainWindow::_on_create()
     _tipwnd->create();
     _tipwnd->set_font(_mgr.get_font(L"default"));
 
+    _lua = luaL_newstate();
+    logdata_openlua(_lua);
+
     _btn_start          = _root->find<taowin::button>(L"start-logging");
     _btn_clear          = _root->find<taowin::button>(L"clear-logging");
     _btn_modules        = _root->find<taowin::button>(L"module-manager");
@@ -1614,6 +1678,8 @@ LRESULT MainWindow::_on_close()
     _stop();
 
     ::DestroyWindow(_tipwnd->hwnd());
+
+    lua_close(_lua);
 
     DestroyWindow(_hwnd);
 

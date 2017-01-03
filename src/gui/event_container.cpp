@@ -1,7 +1,7 @@
 #include "stdafx.h"
 
 #include "misc/config.h"
-#include "_logdata_define.hpp"
+#include "logdata_define.h"
 
 #include "event_container.h"
 

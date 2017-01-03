@@ -3,7 +3,7 @@
 #include "misc/mem_pool.hpp"
 
 #include "_module_entry.hpp"
-#include "_logdata_define.hpp"
+#include "logdata_define.h"
 #include "tooltip_window.h"
 
 #include "listview_color.h"
@@ -123,6 +123,8 @@ protected:
     // 正在导出时不能清空数据，也不能关闭窗口
     std::map<ModuleEntry*, bool>
                         _results_exporting;
+
+    lua_State*          _lua;
 
 protected:
     virtual LPCTSTR get_skin_xml() const override;

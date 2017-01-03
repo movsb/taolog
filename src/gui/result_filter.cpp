@@ -3,7 +3,7 @@
 #include "misc/event_system.hpp"
 #include "misc/config.h"
 
-#include "_logdata_define.hpp"
+#include "logdata_define.h"
 #include "_module_entry.hpp"
 #include "event_container.h"
 #include "tooltip_window.h"

@@ -424,6 +424,7 @@
     <ClCompile Include="..\src\gui\event_detail.cpp" />
     <ClCompile Include="..\src\gui\json_visual.cpp" />
     <ClCompile Include="..\src\gui\listview_color.cpp" />
+    <ClCompile Include="..\src\gui\logdata_define.cpp" />
     <ClCompile Include="..\src\gui\lua_console.cpp" />
     <ClCompile Include="..\src\gui\main_window.cpp" />
     <ClCompile Include="..\src\gui\module_editor.cpp" />
@@ -550,7 +551,7 @@
     <ClInclude Include="..\src\gui\module_manager.h" />
     <ClInclude Include="..\src\gui\result_filter.h" />
     <ClInclude Include="..\src\gui\tooltip_window.h" />
-    <ClInclude Include="..\src\gui\_logdata_define.hpp" />
+    <ClInclude Include="..\src\gui\logdata_define.h" />
     <ClInclude Include="..\src\gui\_module_entry.hpp" />
     <ClInclude Include="..\src\log\consumer.h" />
     <ClInclude Include="..\src\log\controller.h" />

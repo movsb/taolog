@@ -158,6 +158,8 @@ bool LuaConsoleWindow::filter_message(MSG* msg) {
         case VK_TAB:
             if(::GetFocus() == _edt_script->hwnd() || ::GetFocus() == _edt_result->hwnd())
                 return false;
+            if(::IsDialogMessage(_hwnd, msg))
+                return true;
             break;
         case 'A':
             if(::GetAsyncKeyState(VK_CONTROL) & 0x8000) {
@@ -171,12 +173,6 @@ bool LuaConsoleWindow::filter_message(MSG* msg) {
         case VK_ESCAPE:
         case VK_RETURN:
             if (filter_special_key(msg->wParam))
-                return true;
-            // pass through
-        default:
-            // I don't want IsDialogMessage to process VK_ESCAPE, because it produces a WM_COMMAND
-            // menu message with id == 2. It is undocumented.
-            if(::IsDialogMessage(_hwnd, msg))
                 return true;
             break;
         }

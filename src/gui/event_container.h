@@ -68,4 +68,31 @@ protected:
 typedef std::vector<EventContainer*> EventContainerS;
 
 typedef std::pair<EventContainer, EventContainerS> EventPair;
-}
+
+class EventSearcher
+{
+public:
+    EventSearcher()
+        : _last(-1)
+        , _valid(false)
+    { }
+
+public:
+    void reset(EventContainer* haystack, const std::vector<int>& cols, const std::wstring& s) throw(...);
+    int  next(bool forward = true);
+    int last(int i);
+    int  last() const;
+    void invalid();
+    const std::wstring& s() const;
+    const bool (&match_cols() const)[LogDataUI::cols()];
+
+protected:
+    bool                _valid;
+    std::vector<int>    _cols;
+    bool                _match_cols[LogDataUI::cols()];
+    int                 _last;
+    EventContainer*     _haystack;
+    EventContainer      _needle;
+};
+
+} // namespace taolog

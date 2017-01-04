@@ -108,9 +108,13 @@ LRESULT MainWindow::control_message(taowin::syscontrol* ctl, UINT umsg, WPARAM w
             auto tips = 
 L"请输入待搜索的文本。\n"
 "\n"
-"搜索时执行不区分大小写的普通文本搜索。\n"
 "搜索上下文为：当前过滤器、当前搜索列。\n"
-"\n\bn"
+"\n"
+"   1、搜索文本若以 ~ 开头，执行正则表达式搜索；\n"
+"   2、搜索文本若以 ` 开头，执行 LUA 脚本搜索；\n"
+"   3、其它情况执行不区分大小写的普通文本搜索。\n"
+"\n"
+"\bn"
 "快捷键：\bn"
 "    Ctrl + F             \bw130-   聚焦搜索框\bn"
 "    Enter                \bw130-   执行搜索\bn"
@@ -288,7 +292,7 @@ LRESULT MainWindow::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR *
                 return 0;
             }
             else if (nmlv->wVKey == VK_F3) {
-                _do_search(_last_search_string, _last_search_line, -1);
+                _do_search(false);
             }
             else if(nmlv->wVKey == 'C') {
                 if(::GetAsyncKeyState(VK_CONTROL) & 0x8000) {
@@ -300,8 +304,8 @@ LRESULT MainWindow::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR *
         else if (code == LVN_ITEMCHANGED) {
             int i = _listview->get_next_item(-1, LVNI_SELECTED);
             if (i != -1) {
-                _listview->redraw_items(_last_search_line, _last_search_line);
-                _last_search_line = i;
+                _listview->redraw_items(_searcher.last(), _searcher.last());
+                _searcher.last(i);
             }
         }
     }
@@ -378,37 +382,10 @@ LRESULT MainWindow::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR *
 bool MainWindow::filter_special_key(int vk)
 {
     if (vk == VK_RETURN && ::GetFocus() == _edt_search->hwnd()) {
-        _listview->redraw_items(_last_search_line, _last_search_line);
-        _last_search_line = -1;
-        _last_search_string = _edt_search->get_text();
+        _listview->redraw_items(_searcher.last(), _searcher.last());
+        _searcher.last(-1);
 
-        if(_last_search_string.empty()) return true;
-
-        if(_last_search_string[0] == L'`') {
-            auto lua = g_config.us(_last_search_string.substr(1));
-
-            try {
-                if(luaL_loadstring(_lua, lua.c_str()) != LUA_OK) {
-                    throw L"错误的脚本。";
-                }
-
-                if(lua_pcall(_lua, 0, 0, 0) != LUA_OK) {
-                    throw L"错误的脚本。";
-                }
-
-                auto tt = lua_getglobal(_lua, "filter");
-                lua_pop(_lua, 1);
-                if(tt != LUA_TFUNCTION) {
-                    throw L"未找到全局函数 `filter'。";
-                }
-            }
-            catch(const wchar_t* e) {
-                msgbox(e, MB_ICONERROR);
-                return true;
-            }
-        }
-
-        if(_do_search(_last_search_string, _last_search_line, -1)) {
+        if(_do_search(true)) {
             // 如果有搜索结果，并且按住了CTRL键，则自动创建新的过滤器
             if(::GetAsyncKeyState(VK_CONTROL) & 0x8000) {
                 // 当前选择的列（绝对索引）
@@ -418,10 +395,10 @@ bool MainWindow::filter_special_key(int vk)
                 }
                 else {
                     auto& c         = _columns.showing(col);
-                    auto& name      = _last_search_string;
+                    auto& name      = _searcher.s();
                     auto& colname   = c.name;
-                    auto& value     = _last_search_string;
-                    auto p = new EventContainer(_last_search_string, c.index, colname, -1, L"", value);
+                    auto& value     = _searcher.s();
+                    auto p = new EventContainer(_searcher.s(), c.index, colname, -1, L"", value);
                     // 按下了 Shift 键？按下则是固定添加，否则是临时添加
                     p->is_tmp = !(::GetAsyncKeyState(VK_SHIFT) & 0x8000);
                     g_evtsys.trigger(L"filter:new", p);
@@ -432,6 +409,8 @@ bool MainWindow::filter_special_key(int vk)
         else {
             _edt_search->focus();
         }
+
+        return true;
     }
 
     return __super::filter_special_key(vk);
@@ -839,6 +818,10 @@ void MainWindow::_init_filter_events()
 
         _update_filter_list(nullptr);
     });
+
+    g_evtsys.attach(L"filter:set", [&] {
+        _searcher.invalid();
+    });
 }
 
 void MainWindow::_init_logger_events()
@@ -946,142 +929,52 @@ void MainWindow::_show_filters()
     dlg->domodal(this);
 }
 
-bool MainWindow::_do_search(const std::wstring& s, int line, int)
+bool MainWindow::_do_search(bool first)
 {
-    // 搜索行/列的判断在后面（因为有提示框）
-    if (s.empty()) { return false; }
+    if(first) {
+        auto s = _edt_search->get_text();
+        if(s.empty()) { return false; }
 
-    // 得到下一搜索行和列
-    int dir = ::GetAsyncKeyState(VK_SHIFT) & 0x8000 && line != -1 ? -1 : 1;
-    int next_line = dir == 1 ? line + 1 : line - 1;
-
-    // 此行是否有效
-    bool valid = false;
-
-    // 搜索哪一列：-1：全部
-    int fltcol = (int)_cbo_search_filter->get_cur_data();
-
-    // 重置列匹配结果标记
-    for (auto& b : _last_search_matched_cols)
-        b = false;
-
-    bool is_regex = false;
-    bool is_lua = false;
-
-    // 均转换成小写来搜索
-    std::wstring needle = s;
-    std::transform(needle.begin(), needle.end(), needle.begin(), ::tolower);
-
-    // 如果是正则表达式匹配
-    std::wregex regex;
-    if(s[0] == L'~') {
-        try {
-            auto rs = s;
-            rs.erase(0, 1);
-            regex = std::wregex(rs, std::regex_constants::icase);
-            is_regex = true;
+        // 搜索哪一列：-1：全部
+        std::vector<int> cols;
+        int col = (int)_cbo_search_filter->get_cur_data();
+        if(col == -1) {
+            _columns.for_each(ColumnManager::ColumnFlags::Showing, [&](int i, Column& c) {
+                cols.emplace_back(c.index);
+            });
         }
-        catch(...) {
-            msgbox(L"错误的正则表达式。", MB_ICONERROR);
+        else {
+            cols.emplace_back(_columns.showing(col).index);
+        }
+
+        // 重置搜索引擎参数
+        try {
+            _searcher.reset(_current_filter, cols, s);
+        }
+        catch(const std::wstring& err) {
+            msgbox(err, MB_ICONERROR, L"错误");
             return false;
         }
     }
-    else if(s[0] == L'`') {
-        is_lua = true;
-    }
 
-    // 搜索函数
-    auto search_text = [&](std::wstring /* 非引用 */heystack) {
-        if(!is_regex) {
-            // 同样转换成小写来被搜索
-            std::transform(heystack.begin(), heystack.end(), heystack.begin(), ::tolower);
-            return ::wcsstr(heystack.c_str(), needle.c_str()) != nullptr;
-        }
-        else {
-            return std::regex_search(heystack, regex);
-        }
-    };
+    // 是向前还是向后搜索
+    bool forward = !(::GetAsyncKeyState(VK_SHIFT) & 0x8000 && _searcher.last() != -1);
 
-    for (; next_line >= 0 && next_line < (int)_current_filter->size();) {
-        auto& evt = *(*_current_filter)[next_line];
+    // 执行搜索
+    int last = _searcher.last();
+    int next = _searcher.next(forward);
+    DBG(L"搜索结果列: %d", next);
 
-        if(is_lua) {
-            int top = lua_gettop(_lua);
-
-            lua_getglobal(_lua, "filter");
-            evt.to_luaobj(_lua);
-
-            if(lua_pcall(_lua, 1, LUA_MULTRET, 0) == LUA_OK) {
-                int nret = lua_gettop(_lua) - top;
-                if(nret > 0) {
-                    if(lua_isboolean(_lua, -nret)) {
-                        valid = !!lua_toboolean(_lua, -nret);
-                        if(valid) {
-                            for(int i = -nret + 1; i <= -1; ++i) {
-                                if(lua_isinteger(_lua, i)) {
-                                    int cid = (int)lua_tointeger(_lua, i);
-                                    if(cid >= 0 && cid <= LogDataUI::cols()) {
-                                        _last_search_matched_cols[cid] = true;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    lua_pop(_lua, nret);
-                }
-            }
-            else {
-                auto err = g_config.ws(lua_tostring(_lua, -1));
-                msgbox(err, MB_ICONERROR, L"脚本错误");
-                lua_pop(_lua, 1);
-                return false;
-            }
-        }
-        else {
-            // 搜索每一列
-            if(fltcol == -1) {
-                // 是否至少有一列已经能够匹配
-                bool has_col_match = false;
-
-                // 一次性匹配整行
-                _columns.for_each(ColumnManager::ColumnFlags::Showing, [&](int i, Column& c) {
-                    int real_index = c.index;
-                    if(search_text(evt[real_index])) {
-                        _last_search_matched_cols[i] = true;
-                        has_col_match = true;
-                    }
-                });
-
-                valid = has_col_match;
-            }
-            // 仅搜索指定列
-            else {
-                int real_index = _columns.showing(fltcol).index;
-                if(search_text(evt[real_index])) {
-                    _last_search_matched_cols[fltcol] = true;
-                    valid = true;
-                }
-            }
-        }
-
-        if (valid) break;
-
-        // 没找到，继续往下搜索
-        next_line += dir == 1 ? 1 : -1;
-    }
-
-    if (!valid) {
-        msgbox(std::wstring(L"没有") + (dir==1 ? L"下" : L"上") + L"一个了。", MB_ICONINFORMATION);
+    if (next == -1) {
+        msgbox(std::wstring(L"没有") + (forward ? L"下" : L"上") + L"一个了。", MB_ICONINFORMATION);
         _listview->focus();
         return false;
     }
 
     _listview->focus();
-    _listview->ensure_visible(next_line);
-    _listview->redraw_items(line, line);
-    _listview->redraw_items(next_line, next_line);
-
-    _last_search_line = next_line;
+    _listview->ensure_visible(next);
+    _listview->redraw_items(last, last);
+    _listview->redraw_items(next, next);
 
     return true;
 }
@@ -1800,7 +1693,7 @@ LRESULT MainWindow::_on_custom_draw_listview(NMHDR * hdr)
         break;
 
     case CDDS_ITEM | CDDS_PREPAINT:
-        if (_last_search_line != -1 && (int)lvcd->nmcd.dwItemSpec == _last_search_line) {
+        if (_searcher.last() != -1 && (int)lvcd->nmcd.dwItemSpec == _searcher.last()) {
             lr = CDRF_NOTIFYSUBITEMDRAW;
             break;
         }
@@ -1814,7 +1707,7 @@ LRESULT MainWindow::_on_custom_draw_listview(NMHDR * hdr)
 
     case CDDS_ITEM|CDDS_SUBITEM|CDDS_PREPAINT:
     {
-        bool hl = _last_search_matched_cols[lvcd->iSubItem];
+        bool hl = _searcher.match_cols()[_columns.showing(lvcd->iSubItem).index];
 
         if(hl) {
             lvcd->clrTextBk = RGB(0, 0, 255);

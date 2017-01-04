@@ -51,7 +51,6 @@ private:
 public:
     MainWindow(LogSysType::Value type)
         : _logsystype(type)
-        , _last_search_line(-1)
     {
         _tipwnd = new TooltipWindow;
     }
@@ -104,11 +103,9 @@ protected:
     EventContainerS*    _filters;
     EventContainer*     _current_filter;
 
-    ModuleLevelMap      _level_maps;
+    EventSearcher       _searcher;
 
-    int                 _last_search_line;
-    std::wstring        _last_search_string;
-    bool                _last_search_matched_cols[LogDataUI::cols()];
+    ModuleLevelMap      _level_maps;
 
     Controller          _controller;
     Consumer            _consumer;
@@ -157,7 +154,7 @@ protected:
     void _view_detail(int i);
     void _manage_modules();
     void _show_filters();
-    bool _do_search(const std::wstring& s, int line, int col);
+    bool _do_search(bool first);
     void _clear_results();
     void _set_top_most(bool top);
 

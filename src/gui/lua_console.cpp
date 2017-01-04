@@ -37,6 +37,15 @@ int LuaConsoleWindow::LuaPrint(lua_State* L)
   return 0;
 }
 
+int LuaConsoleWindow::LUaOsExit(lua_State* L)
+{
+    if(__this->msgbox(L"È·¶¨¹Ø±Õ´°¿Ú£¿", MB_ICONQUESTION | MB_OKCANCEL) == IDOK) {
+        __this->post_message(WM_CLOSE);
+    }
+
+    return 0;
+}
+
 void LuaConsoleWindow::execute()
 {
     auto script = g_config.us(_edt_script->get_text());
@@ -116,8 +125,14 @@ LRESULT LuaConsoleWindow::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam
     {
         _L = luaL_newstate();
         luaL_openlibs(_L);
+        // Ìæ»»µô print() º¯Êı 
         lua_pushcfunction(_L, LuaConsoleWindow::LuaPrint);
         lua_setglobal(_L, "print");
+        // Ìæ»»µô os.exit() º¯Êı
+        lua_getglobal(_L, "os");
+        lua_pushcfunction(_L, LuaConsoleWindow::LUaOsExit);
+        lua_setfield(_L, -2, "exit");
+        lua_pop(_L, 1);
 
         _edt_script = _root->find<taowin::edit>(L"script");
         _edt_result = _root->find<taowin::edit>(L"result");

@@ -556,6 +556,7 @@
     <ClInclude Include="..\src\log\consumer.h" />
     <ClInclude Include="..\src\log\controller.h" />
     <ClInclude Include="..\src\log\dbgview.h" />
+    <ClInclude Include="..\src\misc\assert.hpp" />
     <ClInclude Include="..\src\misc\basic_async.h" />
     <ClInclude Include="..\src\misc\config.h" />
     <ClInclude Include="..\src\misc\event_system.hpp" />

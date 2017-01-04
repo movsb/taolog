@@ -403,6 +403,9 @@
     <ClInclude Include="..\src\gui\logdata_define.h">
       <Filter>Source Files\gui</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\misc\assert.hpp">
+      <Filter>Source Files\misc</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="../res/taolog.rc">

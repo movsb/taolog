@@ -27,6 +27,8 @@ extern "C" {
 #include <lua/lauxlib.h>
 }
 
+#include "misc/assert.hpp"
+
 #ifdef _DEBUG
     #define DBG(f, ...) wprintf(f L"\n", __VA_ARGS__)
 #else

@@ -398,7 +398,7 @@ bool MainWindow::filter_special_key(int vk)
                     auto& name      = _searcher.s();
                     auto& colname   = c.name;
                     auto& value     = _searcher.s();
-                    auto p = new EventContainer(_searcher.s(), c.index, colname, -1, L"", value);
+                    auto p = new EventContainer(_searcher.s(), c.index, colname, -1, L"", value, true);
                     // 按下了 Shift 键？按下则是固定添加，否则是临时添加
                     p->is_tmp = !(::GetAsyncKeyState(VK_SHIFT) & 0x8000);
                     g_evtsys.trigger(L"filter:new", p);
@@ -727,11 +727,16 @@ void MainWindow::_init_filters()
             if(SUCCEEDED(::CLSIDFromString(g_config.ws(pair.first).c_str(), &guid))) {
                 auto& filters = pair.second.array_items();
                 for(auto& f : filters) {
-                    if(auto fp = EventContainer::from_json(f)) {
-                        ModuleEntry* mod = isdbg() ? nullptr : guid2mod(guid);
-                        if(isdbg() && mod == nullptr || isetw() && mod != nullptr) {
-                            _projects[mod].second.emplace_back(fp);
+                    try {
+                        if(auto fp = EventContainer::from_json(f)) {
+                            ModuleEntry* mod = isdbg() ? nullptr : guid2mod(guid);
+                            if(isdbg() && mod == nullptr || isetw() && mod != nullptr) {
+                                _projects[mod].second.emplace_back(fp);
+                            }
                         }
+                    }
+                    catch(const std::wstring& err) {
+                        msgbox(err, MB_ICONERROR, L"无法构造过滤器");
                     }
                 }
             }
@@ -919,10 +924,21 @@ void MainWindow::_show_filters()
         }
     };
 
-    auto onok = [&](const std::wstring& name, int field_index, const std::wstring& field_name, int value_index, const std::wstring& value_name, const std::wstring& value_input) {
+    auto onok = [&](const std::wstring& name,
+        int field_index, const std::wstring& field_name,
+        int value_index, const std::wstring& value_name,
+        const std::wstring& value_input)
+    {
         auto real_index = _columns.avail(field_index).index;
-        auto filter = new EventContainer(name, real_index, field_name, value_index, value_name, value_input);
-        g_evtsys.trigger(L"filter:new", filter);
+        auto filter = new EventContainer(name, real_index, field_name, value_index, value_name, value_input, false);
+        try {
+            filter->enable_filter(true);
+            g_evtsys.trigger(L"filter:new", filter);
+        }
+        catch(...) {
+            delete filter;
+            throw;
+        }
     };
 
     auto dlg = new ResultFilter(*_filters, get_base, _current_project, _current_filter, ongetvalues, onok);
@@ -1514,21 +1530,34 @@ LRESULT MainWindow::_on_create()
                 }
             };
 
-            AddNewFilter dlg(fnGetFields, fnGetValues);
-            if(dlg.domodal(this) == IDOK) {
-                auto& c = _columns.avail(dlg.field_index);
+            auto onnew = [&](const std::wstring& name,
+                int field_index, const std::wstring& field_name,
+                int value_index, const std::wstring& value_name,
+                const std::wstring& value_input)
+            {
+                auto& c = _columns.avail(field_index);
 
                 // 选择了已经存在的过滤器
-                if(c.id == "log" && dlg.value_index != -1) {
-                    auto f = reinterpret_cast<EventContainer*>(dlg.value_index);
+                if(c.id == "log" && value_index != -1) {
+                    auto f = reinterpret_cast<EventContainer*>(value_index);
                     async_call([f] { g_evtsys.trigger(L"filter:set", f); });
                 }
                 else {
-                    auto filter = new EventContainer(dlg.name, c.index, dlg.field_name, dlg.value_index, dlg.value_name, dlg.value_input);
-                    g_evtsys.trigger(L"filter:new", filter);
-                    g_evtsys.trigger(L"filter:set", filter);
+                    auto filter = new EventContainer(name, c.index, field_name, value_index, value_name, value_input, false);
+                    try {
+                        filter->enable_filter(true);
+                        g_evtsys.trigger(L"filter:new", filter);
+                        g_evtsys.trigger(L"filter:set", filter);
+                    }
+                    catch(...) {
+                        delete filter;
+                        throw;
+                    }
                 }
-            }
+            };
+
+            AddNewFilter dlg(fnGetFields, fnGetValues, onnew);
+            dlg.domodal(this);
 
             if(!_dbgview.init([&](DWORD pid, const char* str) {
                 if(::IsWindowEnabled(_hwnd)) {

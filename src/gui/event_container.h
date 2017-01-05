@@ -20,7 +20,8 @@ public:
         const std::wstring& name,
         int field_index, const std::wstring& field_name,
         int value_index, const std::wstring& value_name,
-        const std::wstring& value_input
+        const std::wstring& value_input,
+        bool enable
         )
         : name(name)
         , field_index(field_index)
@@ -29,13 +30,13 @@ public:
         , value_name(value_name)
         , value_input(value_input)
     {
-        enable_filter(true);
+        enable_filter(enable);
     }
 
 public:
     json11::Json to_json() const;
     std::wstring to_tip() const;
-    static EventContainer* from_json(const json11::Json& obj);
+    static EventContainer* from_json(const json11::Json& obj) throw(...);
 
 public:
     bool add(EVENT& evt);

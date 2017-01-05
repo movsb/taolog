@@ -64,9 +64,10 @@ public:
     std::wstring value_name;
     std::wstring value_input;
 
-    AddNewFilter(ResultFilter::fnOnGetFields getfields, ResultFilter::fnGetValueList getvalues)
+    AddNewFilter(ResultFilter::fnOnGetFields getfields, ResultFilter::fnGetValueList getvalues, ResultFilter::fnOnNewFilter onnew)
         : _on_get_fields(getfields)
         , _get_values(getvalues)
+        , _on_new(onnew)
     { }
 
 protected:
@@ -74,6 +75,7 @@ protected:
     ResultFilter::fnOnGetFields  _on_get_fields;
     ResultFilter::IntStrPairs    _values;
     ResultFilter::fnGetValueList _get_values;
+    ResultFilter::fnOnNewFilter  _on_new;
     bool _value_editable;
     taowin::combobox::OnDraw _draw_value;
 

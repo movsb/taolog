@@ -180,9 +180,12 @@ LRESULT ResultFilter::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR
     }
     else if (pc == _btn_add) {
         if(code == BN_CLICKED) {
-            AddNewFilter dlg(_on_get_fields, _get_value_list);
-            if(dlg.domodal(this) == IDOK) {
-                _onnewfilter(dlg.name, dlg.field_index, dlg.field_name, dlg.value_index, dlg.value_name, dlg.value_input);
+            auto onnew = [&](const std::wstring& name,
+                int field_index, const std::wstring& field_name, int value_index,
+                const std::wstring& value_name, const std::wstring& value_input)
+            {
+                _onnewfilter(name, field_index, field_name, value_index, value_name, value_input);
+
                 _listview->set_item_count(_filters.size(), LVSICF_NOINVALIDATEALL);
 
                 int index = _listview->get_item_count() - 1;
@@ -190,7 +193,10 @@ LRESULT ResultFilter::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR
                 _listview->set_item_state(-1, LVIS_SELECTED, 0); //取消选中其它的
                 _listview->set_item_state(index, LVIS_SELECTED, LVIS_SELECTED); //选中当前新增的
                 _listview->focus();
-            }
+            };
+
+            AddNewFilter dlg(_on_get_fields, _get_value_list, onnew);
+            dlg.domodal(this);
         }
     }
     else if (pc == _btn_delete) {
@@ -398,57 +404,39 @@ int AddNewFilter::_on_save()
 {
     bool iscbo = _value_name->is_visible();
 
-    try {
-        if (iscbo) {
-            // 可编辑，并且编辑过
-            auto sel = _value_name->get_cur_sel();
-            if(_value_editable && sel == -1) {
-                value_input = _value_name->get_text();
-                if(value_input.empty()) throw 0;
-                if(value_input[0] == L'~') {
-                    try {
-                        auto re = value_input;
-                        re = re.erase(0, 1);
-                        std::wregex regex(re, std::regex_constants::icase);
-                    }
-                    catch(...) {
-                        msgbox(L"无效的正则表达式。", MB_ICONERROR);
-                        throw 0;
-                    }
-                }
-                value_index = -1;
-                value_name = L"";
-            }
-            else {
-                value_input = L"";
-                value_index = _values[sel].first;
-                value_name = _values[sel].second;
-            }
+    if (iscbo) {
+        // 可编辑，并且编辑过
+        auto sel = _value_name->get_cur_sel();
+        if(_value_editable && sel == -1) {
+            value_input = _value_name->get_text();
+            if(value_input.empty()) throw 0;
+            value_index = -1;
+            value_name = L"";
         }
         else {
-            value_index = -1;
-            value_input = _value_input->get_text();
-            if (value_input.empty()) throw 0;
-            if(value_input[0] == L'~') {
-                try {
-                    auto re = value_input;
-                    re = re.erase(0, 1);
-                    std::wregex regex(re, std::regex_constants::icase);
-                }
-                catch(...) {
-                    msgbox(L"无效的正则表达式。", MB_ICONERROR);
-                    throw 0;
-                }
-            }
+            value_input = L"";
+            value_index = _values[sel].first;
+            value_name = _values[sel].second;
         }
+    }
+    else {
+        value_index = -1;
+        value_input = _value_input->get_text();
+        if (value_input.empty()) throw 0;
+    }
 
-        name = _name->get_text();
-        field_index = _field_name->get_cur_sel();
-        field_name = _fields[field_index];
+    name = _name->get_text();
+    field_index = _field_name->get_cur_sel();
+    field_name = _fields[field_index];
+
+    try {
+        _on_new(name, field_index, field_name, value_index, value_name, value_input);
         close(IDOK);
     }
-    catch (...) {
-        _value_input->focus();
+    catch(const std::wstring& err) {
+        msgbox(err, MB_ICONERROR, L"错误");
+        if(iscbo) _value_name->focus();
+        else _value_input->focus();
     }
 
     return 0;

@@ -33,7 +33,7 @@ std::wstring EventContainer::to_tip() const
     return std::move(str);
 }
 
-EventContainer* EventContainer::from_json(const json11::Json& obj)
+EventContainer* EventContainer::from_json(const json11::Json& obj) throw(...)
 {
     EventContainer* p = nullptr;
 
@@ -58,8 +58,18 @@ EventContainer* EventContainer::from_json(const json11::Json& obj)
             g_config.ws(field_name.string_value()),
             value_index.int_value(),
             g_config.ws(value_name.string_value()),
-            g_config.ws(value_input.string_value())
+            g_config.ws(value_input.string_value()),
+            false
         );
+
+        try {
+            p->enable_filter(true);
+        }
+        catch(...) {
+            delete p;
+            p = nullptr;
+            throw;
+        }
     }
 
     return p;

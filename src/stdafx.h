@@ -25,6 +25,7 @@ extern "C" {
 #include <lua/lua.h>
 #include <lua/luaconf.h>
 #include <lua/lauxlib.h>
+#include <lua/lualib.h>
 }
 
 #include "misc/assert.hpp"

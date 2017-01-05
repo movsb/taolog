@@ -978,9 +978,16 @@ bool MainWindow::_do_search(bool first)
 
     // 执行搜索
     int last = _searcher.last();
-    int next = _searcher.next(forward);
-    DBG(L"搜索结果列: %d", next);
+    int next;
+    try {
+        next = _searcher.next(forward);
+    }
+    catch(const std::wstring& err) {
+        msgbox(err, MB_ICONERROR, L"错误");
+        return false;
+    }
 
+    DBG(L"搜索结果列: %d", next);
     if (next == -1) {
         msgbox(std::wstring(L"没有") + (forward ? L"下" : L"上") + L"一个了。", MB_ICONINFORMATION);
         _listview->focus();
@@ -1423,7 +1430,13 @@ LRESULT MainWindow::_on_create()
     _tipwnd->set_font(_mgr.get_font(L"default"));
 
     _lua = luaL_newstate();
+    luaL_openlibs(_lua);
     logdata_openlua(_lua);
+
+    g_evtsys.attach(L"get_lua", [&] {
+        auto lua = reinterpret_cast<lua_State**>(g_evtsys[0].ptr_value());
+        *lua = _lua;
+    });
 
     _btn_start          = _root->find<taowin::button>(L"start-logging");
     _btn_clear          = _root->find<taowin::button>(L"clear-logging");
@@ -1670,7 +1683,18 @@ LRESULT MainWindow::_on_log(LoggerMessage::Value msg, LPARAM lParam)
         // 带过滤的事件容器（指针复用）
         if(!filters.empty()) {
             for(auto& f : filters) {
-                f->add(item);
+                if(!f->is_lua()) {
+                    f->add(item);
+                }
+                else {
+                    try {
+                        f->add(item);
+                    }
+                    catch(const std::wstring& err) {
+                        msgbox(err, MB_ICONERROR, L"执行脚本时错误");
+                        f->enable_filter(false);
+                    }
+                }
             }
         }
 

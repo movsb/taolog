@@ -46,6 +46,7 @@ public:
     void clear() { return _events.clear(); }
     EVENTS& events() { return _events; }
     void enable_filter(bool b);
+    bool is_lua() const { return !value_input.empty() && value_input[0] == '`'; }
 
 public:
     std::wstring name;              // 容器的名字
@@ -56,6 +57,9 @@ public:
     std::wstring value_input;       // 自定义输入
 
     bool         is_tmp;            // 临时使用的
+
+    lua_State*   lua;               // LUA
+    int          lua_cookie;
 
 protected:
 

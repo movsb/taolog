@@ -1,6 +1,7 @@
 #include "stdafx.h"
 
 #include "misc/config.h"
+#include "misc/event_system.hpp"
 #include "logdata_define.h"
 
 #include "event_container.h"
@@ -110,58 +111,113 @@ void EventContainer::enable_filter(bool b)
 
         _value_input_lower = tolower(value_input);
 
-        if(value_input[0] == L'~') {
-            try {
-                auto s = value_input.substr(1);
-                _regex_input = std::wregex(s, std::regex_constants::icase);
+        if(!value_input.empty()) {
+            if(value_input[0] == L'~') {
+                try {
+                    auto s = value_input.substr(1);
+                    _regex_input = std::wregex(s, std::regex_constants::icase);
+                }
+                catch(...) {
+                    throw std::wstring(L"错误的正则表达式。");
+                }
             }
-            catch(...) {
-                throw std::wstring(L"错误的正则表达式。");
+            else if(value_input[0] == '`') {
+                // 实在不知道怎么把 lua 传起来，先就这样吧
+                g_evtsys.trigger(L"get_lua", &lua);
+
+                auto script = g_config.us(value_input.substr(1));
+
+                // 先清空 filter 函数
+                lua_pushnil(lua);
+                lua_setglobal(lua, "filter");
+
+                // 执行过滤脚本
+                if(luaL_dostring(lua, script.c_str()) != LUA_OK) {
+                    std::wstring err(g_config.ws(lua_tostring(lua, -1)));
+                    lua_pop(lua, 1);
+                    throw std::wstring(L"LUA脚本错误：") + err;
+                }
+
+                // 判断是否有 filter 函数
+                lua_getglobal(lua, "filter");
+                if(lua_type(lua, -1) != LUA_TFUNCTION) {
+                    lua_pop(lua, 1);
+                    throw std::wstring(L"LUA脚本需要提供一个名为 `filter' 的全局函数。");
+                }
+
+                // 将函数保存起来
+                lua_cookie = luaL_ref(lua, LUA_REGISTRYINDEX);
             }
         }
 
         _filter = [&](const EVENT& evt) {
-            const auto p = (*evt)[field_index];
+            if(!value_input.empty() && value_input[0] == '`') {
+                // 拿到 lua 函数
+                lua_rawgeti(lua, LUA_REGISTRYINDEX, lua_cookie);
 
-            auto search_value_in_p = [&] {
-                if(value_input[0] != L'~') {
-                    auto haystack = tolower(std::wstring(p));
-                    auto& needle = _value_input_lower;
+                // 压入 log 参数
+                evt->to_luaobj(lua);
 
-                    return !!::wcsstr(haystack.c_str(), needle.c_str());
+                // 调用 过滤 函数
+                int ret = lua_pcall(lua, 1, 1, 0);
+                if(ret != LUA_OK) {
+                    std::wstring err(g_config.ws(lua_tostring(lua, -1)));
+                    lua_pop(lua, 1);
+                    throw err;
                 }
-                else {
-                    return std::regex_search(p, _regex_input);
-                }
-            };
 
-            switch(field_index)
-            {
-            // 编号，时间，进程，线程，行号
-            // 直接执行相等性比较（区分大小写）
-            case 0: case 1: case 2: case 3: case 7:
-            {
-                return p != value_input;
+                if(lua_type(lua, -1) != LUA_TBOOLEAN) {
+                    lua_pop(lua, 1);
+                    throw std::wstring(L"过滤函数应当返回布尔类型。");
+                }
+
+                bool add = !!lua_toboolean(lua, -1);
+                lua_pop(lua, 1);
+
+                return !add;
             }
-            // 文件，函数，日志
-            // 执行不区分大小写的搜索
-            case 5: case 6: case 9:
-            {
-                return !search_value_in_p();
-            }
-            // 模块
-            case 4:
-            {
-                return value_name != p;
-            }
-            // 等级
-            case 8:
-            {
-                return value_index != evt->level;
-            }
-            default:
-                assert(0 && L"invalid index");
-                return true;
+            else {
+                const auto p = (*evt)[field_index];
+
+                auto search_value_in_p = [&] {
+                    if(value_input[0] != L'~') {
+                        auto haystack = tolower(std::wstring(p));
+                        auto& needle = _value_input_lower;
+
+                        return !!::wcsstr(haystack.c_str(), needle.c_str());
+                    }
+                    else {
+                        return std::regex_search(p, _regex_input);
+                    }
+                };
+
+                switch(field_index) {
+                    // 编号，时间，进程，线程，行号
+                    // 直接执行相等性比较（区分大小写）
+                case 0: case 1: case 2: case 3: case 7:
+                {
+                    return p != value_input;
+                }
+                // 文件，函数，日志
+                // 执行不区分大小写的搜索
+                case 5: case 6: case 9:
+                {
+                    return !search_value_in_p();
+                }
+                // 模块
+                case 4:
+                {
+                    return value_name != p;
+                }
+                // 等级
+                case 8:
+                {
+                    return value_index != evt->level;
+                }
+                default:
+                    assert(0 && L"invalid index");
+                    return true;
+                }
             }
         };
     }

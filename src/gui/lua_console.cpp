@@ -13,7 +13,16 @@ extern "C" {
 
 namespace taolog {
 
-LuaConsoleWindow* __this;
+static LuaConsoleWindow* get_this(lua_State* L)
+{
+    LuaConsoleWindow* __this;
+    lua_getglobal(L, "__this");
+    __this = (LuaConsoleWindow*)lua_touserdata(L, -1);
+    lua_pop(L, 1);
+    return __this;
+}
+
+#define __this (get_this(L))
 
 int LuaConsoleWindow::LuaPrint(lua_State* L)
 {
@@ -37,7 +46,7 @@ int LuaConsoleWindow::LuaPrint(lua_State* L)
   return 0;
 }
 
-int LuaConsoleWindow::LUaOsExit(lua_State* L)
+int LuaConsoleWindow::LuaOSExit(lua_State* L)
 {
     if(__this->msgbox(L"确定关闭窗口？", MB_ICONQUESTION | MB_OKCANCEL) == IDOK) {
         __this->post_message(WM_CLOSE);
@@ -130,9 +139,12 @@ LRESULT LuaConsoleWindow::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam
         lua_setglobal(_L, "print");
         // 替换掉 os.exit() 函数
         lua_getglobal(_L, "os");
-        lua_pushcfunction(_L, LuaConsoleWindow::LUaOsExit);
+        lua_pushcfunction(_L, LuaConsoleWindow::LuaOSExit);
         lua_setfield(_L, -2, "exit");
         lua_pop(_L, 1);
+        // 注册保存本窗口句柄
+        lua_pushlightuserdata(_L, this);
+        lua_setglobal(_L, "__this");
 
         _edt_script = _root->find<taowin::edit>(L"script");
         _edt_result = _root->find<taowin::edit>(L"result");
@@ -147,11 +159,6 @@ LRESULT LuaConsoleWindow::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam
     }
     case WM_DESTROY:
         lua_close(_L);
-        break;
-    case WM_ACTIVATE:
-        if(wparam != WA_INACTIVE) {
-            __this = this;
-        }
         break;
     }
     return __super::handle_message(umsg, wparam, lparam);

@@ -26,7 +26,7 @@ protected:
     void execute();
     void append_result(const char* s, int len);
     static int LuaPrint(lua_State* L);
-    static int LUaOsExit(lua_State* L);
+    static int LuaOSExit(lua_State* L);
 
 protected:
     virtual LPCTSTR get_skin_xml() const override;

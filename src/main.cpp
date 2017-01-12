@@ -1,5 +1,7 @@
 #include "stdafx.h"
 
+#include <new>
+
 #include "misc/event_system.hpp"
 #include "misc/config.h"
 #include "misc/basic_async.h"
@@ -32,7 +34,11 @@ int main() {
     DBG(L"Running...");
 #else
 int __stdcall wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR lpCmdline, int nShowCmd) {
-#endif 
+#endif
+
+    std::set_new_handler([] {
+        ::MessageBox(nullptr, L"ÄÚ´æ²»×ã¡£", nullptr, MB_ICONEXCLAMATION);
+    });
 
     test();
 

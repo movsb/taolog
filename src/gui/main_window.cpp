@@ -1610,6 +1610,13 @@ LRESULT MainWindow::_on_close()
 
     _save_filters();
 
+    // 记住上一次使用的日志类型
+    auto basic = g_config->obj("basic");
+    if(_current_filter->size() == 0)
+        basic["type"] = 0;
+    else
+        basic["type"] = _logsystype;
+
     _stop();
 
     ::DestroyWindow(_tipwnd->hwnd());

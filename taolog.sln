@@ -18,8 +18,6 @@ Global
 		Debug|x86 = Debug|x86
 		Release|x64 = Release|x64
 		Release|x86 = Release|x86
-		ThunderRelease|x64 = ThunderRelease|x64
-		ThunderRelease|x86 = ThunderRelease|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{83BB38C8-036A-4780-92FA-C1CD577B537B}.Debug|x64.ActiveCfg = Debug|x64
@@ -30,10 +28,6 @@ Global
 		{83BB38C8-036A-4780-92FA-C1CD577B537B}.Release|x64.Build.0 = Release|x64
 		{83BB38C8-036A-4780-92FA-C1CD577B537B}.Release|x86.ActiveCfg = Release|Win32
 		{83BB38C8-036A-4780-92FA-C1CD577B537B}.Release|x86.Build.0 = Release|Win32
-		{83BB38C8-036A-4780-92FA-C1CD577B537B}.ThunderRelease|x64.ActiveCfg = ThunderRelease|x64
-		{83BB38C8-036A-4780-92FA-C1CD577B537B}.ThunderRelease|x64.Build.0 = ThunderRelease|x64
-		{83BB38C8-036A-4780-92FA-C1CD577B537B}.ThunderRelease|x86.ActiveCfg = ThunderRelease|Win32
-		{83BB38C8-036A-4780-92FA-C1CD577B537B}.ThunderRelease|x86.Build.0 = ThunderRelease|Win32
 		{55D41330-012F-4CC7-9C18-9109529CE3CD}.Debug|x64.ActiveCfg = Debug|x64
 		{55D41330-012F-4CC7-9C18-9109529CE3CD}.Debug|x64.Build.0 = Debug|x64
 		{55D41330-012F-4CC7-9C18-9109529CE3CD}.Debug|x86.ActiveCfg = Debug|Win32
@@ -42,10 +36,6 @@ Global
 		{55D41330-012F-4CC7-9C18-9109529CE3CD}.Release|x64.Build.0 = Release|x64
 		{55D41330-012F-4CC7-9C18-9109529CE3CD}.Release|x86.ActiveCfg = Release|Win32
 		{55D41330-012F-4CC7-9C18-9109529CE3CD}.Release|x86.Build.0 = Release|Win32
-		{55D41330-012F-4CC7-9C18-9109529CE3CD}.ThunderRelease|x64.ActiveCfg = ThunderRelease|x64
-		{55D41330-012F-4CC7-9C18-9109529CE3CD}.ThunderRelease|x64.Build.0 = ThunderRelease|x64
-		{55D41330-012F-4CC7-9C18-9109529CE3CD}.ThunderRelease|x86.ActiveCfg = ThunderRelease|Win32
-		{55D41330-012F-4CC7-9C18-9109529CE3CD}.ThunderRelease|x86.Build.0 = ThunderRelease|Win32
 		{F06E625D-3EDD-47A2-A68E-A4422060E7B1}.Debug|x64.ActiveCfg = Debug|x64
 		{F06E625D-3EDD-47A2-A68E-A4422060E7B1}.Debug|x64.Build.0 = Debug|x64
 		{F06E625D-3EDD-47A2-A68E-A4422060E7B1}.Debug|x86.ActiveCfg = Debug|Win32
@@ -54,10 +44,6 @@ Global
 		{F06E625D-3EDD-47A2-A68E-A4422060E7B1}.Release|x64.Build.0 = Release|x64
 		{F06E625D-3EDD-47A2-A68E-A4422060E7B1}.Release|x86.ActiveCfg = Release|Win32
 		{F06E625D-3EDD-47A2-A68E-A4422060E7B1}.Release|x86.Build.0 = Release|Win32
-		{F06E625D-3EDD-47A2-A68E-A4422060E7B1}.ThunderRelease|x64.ActiveCfg = Release|x64
-		{F06E625D-3EDD-47A2-A68E-A4422060E7B1}.ThunderRelease|x64.Build.0 = Release|x64
-		{F06E625D-3EDD-47A2-A68E-A4422060E7B1}.ThunderRelease|x86.ActiveCfg = Release|Win32
-		{F06E625D-3EDD-47A2-A68E-A4422060E7B1}.ThunderRelease|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

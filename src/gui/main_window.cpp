@@ -489,7 +489,7 @@ bool MainWindow::_stop()
 
 void MainWindow::_init_listview()
 {
-    _listview = _root->find<taowin::listview>(L"lv");
+    _listview = _root->find<taowin::ListViewControl>(L"lv");
 
     // ±íÍ·À¸
     if(_config.has_arr("columns")) {
@@ -900,7 +900,7 @@ void MainWindow::_show_filters()
         *def = (int)bases->size() - 1;
     };
 
-    auto ongetvalues = [&](int baseindex, ResultFilter::IntStrPairs* values, bool* editable, taowin::combobox::OnDraw* ondraw) {
+    auto ongetvalues = [&](int baseindex, ResultFilter::IntStrPairs* values, bool* editable, taowin::ComboboxControl::OnDraw* ondraw) {
         values->clear();
         *editable = false;
         *ondraw = nullptr;
@@ -1443,11 +1443,11 @@ LRESULT MainWindow::_on_create()
     _btn_modules        = _root->find<taowin::button>(L"module-manager");
     _btn_filter         = _root->find<taowin::button>(L"filter-result");
     _edt_search         = _root->find<taowin::edit>(L"s");
-    _cbo_search_filter  = _root->find<taowin::combobox>(L"s-filter");
+    _cbo_search_filter  = _root->find<taowin::ComboboxControl>(L"s-filter");
     _btn_settings       = _root->find<taowin::button>(L"settings");
     _btn_export2file    = _root->find<taowin::button>(L"export-to-file");
-    _cbo_sel_flt        = _root->find<taowin::combobox>(L"select-filter");
-    _cbo_prj            = _root->find<taowin::combobox>(L"select-project");
+    _cbo_sel_flt        = _root->find<taowin::ComboboxControl>(L"select-filter");
+    _cbo_prj            = _root->find<taowin::ComboboxControl>(L"select-project");
     _btn_tools          = _root->find<taowin::button>(L"tools");
 
     if(isdbg()) {
@@ -1495,7 +1495,7 @@ LRESULT MainWindow::_on_create()
 
             std::vector<EventContainer*> filters_added;
 
-            auto fnGetValues = [&](int idx, ResultFilter::IntStrPairs* values, bool* editable, taowin::combobox::OnDraw* ondraw) {
+            auto fnGetValues = [&](int idx, ResultFilter::IntStrPairs* values, bool* editable, taowin::ComboboxControl::OnDraw* ondraw) {
                 values->clear();
                 *editable = false;
                 *ondraw = nullptr;
@@ -1515,7 +1515,7 @@ LRESULT MainWindow::_on_create()
                         }
                     }
                     *editable = true;
-                    *ondraw = [&] (taowin::combobox* that, DRAWITEMSTRUCT* dis, int i, bool selected) {
+                    *ondraw = [&] (taowin::ComboboxControl* that, DRAWITEMSTRUCT* dis, int i, bool selected) {
                         const auto& str = filters_added[i]->name;
                         taowin::Rect rc(dis->rcItem);
                         COLORREF bgcolor = selected ? ::GetSysColor(COLOR_HIGHLIGHT) : RGB(255, 255, 255);

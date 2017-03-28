@@ -64,7 +64,7 @@ LRESULT ModuleEntryEditor::handle_message(UINT umsg, WPARAM wparam, LPARAM lpara
 
         _name = _root->find<taowin::edit>(L"name");
         _path = _root->find<taowin::edit>(L"root");
-        _level = _root->find<taowin::combobox>(L"level");
+        _level = _root->find<taowin::ComboboxControl>(L"level");
         _guid = _root->find<taowin::edit>(L"guid");
         _ok = _root->find<taowin::button>(L"ok");
         _cancel = _root->find<taowin::button>(L"cancel");

@@ -7,7 +7,7 @@ class ResultFilter : public taowin::window_creator
 public:
     typedef std::function<void(std::vector<std::wstring>*, int*)> fnOnGetFields;
     typedef std::vector<std::pair<int, const wchar_t*>> IntStrPairs;
-    typedef std::function<void(int, IntStrPairs*, bool*, taowin::combobox::OnDraw*)> fnGetValueList;
+    typedef std::function<void(int, IntStrPairs*, bool*, taowin::ComboboxControl::OnDraw*)> fnGetValueList;
     typedef std::function<void(const std::wstring& name,
         int field_index, const std::wstring& field_name, int value_index,
         const std::wstring& value_name, const std::wstring& value_input)> fnOnNewFilter;
@@ -30,7 +30,7 @@ public:
     }
 
 protected:
-    taowin::listview*   _listview;
+    taowin::ListViewControl*   _listview;
     taowin::button*     _btn_add;
     taowin::button*     _btn_delete;
     taowin::button*     _btn_all;
@@ -77,14 +77,14 @@ protected:
     ResultFilter::fnGetValueList _get_values;
     ResultFilter::fnOnNewFilter  _on_new;
     bool _value_editable;
-    taowin::combobox::OnDraw _draw_value;
+    taowin::ComboboxControl::OnDraw _draw_value;
 
     taowin::edit*       _name;
-    taowin::combobox*   _field_name;
-    taowin::combobox*   _value_name;
-    taowin::combobox*   _value_name_1;  // 不能编辑的
-    taowin::combobox*   _value_name_2;  // 能编辑的
-    taowin::combobox*   _value_name_3;  // 能编辑、自绘的
+    taowin::ComboboxControl*   _field_name;
+    taowin::ComboboxControl*   _value_name;
+    taowin::ComboboxControl*   _value_name_1;  // 不能编辑的
+    taowin::ComboboxControl*   _value_name_2;  // 能编辑的
+    taowin::ComboboxControl*   _value_name_3;  // 能编辑、自绘的
     taowin::edit*       _value_input;
     taowin::button*     _save;
     taowin::button*     _cancel;

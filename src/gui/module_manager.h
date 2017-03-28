@@ -16,7 +16,7 @@ protected:
     fnIsEtwOpen         _get_is_open;
 
 protected:
-    taowin::listview*   _listview;
+    taowin::ListViewControl*   _listview;
     taowin::button*     _btn_enable;
     taowin::button*     _btn_add;
     taowin::button*     _btn_modify;

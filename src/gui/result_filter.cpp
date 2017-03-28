@@ -67,7 +67,7 @@ LRESULT ResultFilter::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
             ::SetWindowText(_hwnd, t.c_str());
         }
 
-        _listview   = _root->find<taowin::listview>(L"list");
+        _listview   = _root->find<taowin::ListViewControl>(L"list");
         _btn_add    = _root->find<taowin::button>(L"add");
         _btn_delete = _root->find<taowin::button>(L"delete");
         _btn_all    = _root->find<taowin::button>(L"all");
@@ -290,10 +290,10 @@ LRESULT AddNewFilter::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
     case WM_CREATE:
     {
         _name        = _root->find<taowin::edit>(L"name");
-        _field_name  = _root->find<taowin::combobox>(L"field-name");
-        _value_name_1= _root->find<taowin::combobox>(L"value-name-1");
-        _value_name_2= _root->find<taowin::combobox>(L"value-name-2");
-        _value_name_3= _root->find<taowin::combobox>(L"value-name-3");
+        _field_name  = _root->find<taowin::ComboboxControl>(L"field-name");
+        _value_name_1= _root->find<taowin::ComboboxControl>(L"value-name-1");
+        _value_name_2= _root->find<taowin::ComboboxControl>(L"value-name-2");
+        _value_name_3= _root->find<taowin::ComboboxControl>(L"value-name-3");
         _value_input = _root->find<taowin::edit>(L"value-input");
 
         _save        = _root->find<taowin::button>(L"save");

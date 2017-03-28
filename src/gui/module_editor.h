@@ -17,7 +17,7 @@ private:
     taowin::edit* _name;
     taowin::edit* _guid;
     taowin::edit* _path;
-    taowin::combobox* _level;
+    taowin::ComboboxControl* _level;
     taowin::button* _ok;
     taowin::button* _cancel;
 

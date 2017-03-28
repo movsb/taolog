@@ -61,7 +61,7 @@ LRESULT ModuleManager::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
         _tipwnd->create(this);
         _tipwnd->set_font(_mgr.get_font(L"default"));
 
-        _listview   = _root->find<taowin::listview>(L"list");
+        _listview   = _root->find<taowin::ListViewControl>(L"list");
         _btn_add    = _root->find<taowin::button>(L"add");
         _btn_enable = _root->find<taowin::button>(L"enable");
         _btn_modify = _root->find<taowin::button>(L"modify");

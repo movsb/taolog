@@ -71,17 +71,17 @@ protected:
     LogSysType::Value   _logsystype;
     JsonWrapper         _config;
 
-    taowin::listview*   _listview;
+    taowin::ListViewControl*   _listview;
     taowin::button*     _btn_start;
     taowin::button*     _btn_clear;
     taowin::button*     _btn_modules;
     taowin::button*     _btn_filter;
     taowin::edit*       _edt_search;
-    taowin::combobox*   _cbo_search_filter;
+    taowin::ComboboxControl*   _cbo_search_filter;
     taowin::button*     _btn_settings;
     taowin::button*     _btn_export2file;
-    taowin::combobox*   _cbo_sel_flt;
-    taowin::combobox*   _cbo_prj;
+    taowin::ComboboxControl*   _cbo_sel_flt;
+    taowin::ComboboxControl*   _cbo_prj;
     taowin::button*     _btn_tools;
 
     TooltipWindow*      _tipwnd;

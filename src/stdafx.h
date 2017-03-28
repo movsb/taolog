@@ -19,7 +19,7 @@
 #include <evntrace.h>
 
 #include <json11/json11.hpp>
-#include <taowin/src/tw_taowin.h>
+#include <taowin/core/tw_taowin.h>
 
 extern "C" {
 #include <lua/lua.h>

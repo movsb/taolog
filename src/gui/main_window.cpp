@@ -264,10 +264,7 @@ LRESULT MainWindow::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR *
         return 0;
     }
     else if (pc == _listview) {
-        if (code == LVN_GETDISPINFO) {
-            return _on_get_dispinfo(hdr);
-        }
-        else if (code == NM_CUSTOMDRAW) {
+        if (code == NM_CUSTOMDRAW) {
             return _on_custom_draw_listview(hdr);
         }
         else if (code == NM_DBLCLK) {
@@ -489,8 +486,6 @@ bool MainWindow::_stop()
 
 void MainWindow::_init_listview()
 {
-    _listview = _root->find<taowin::ListViewControl>(L"lv");
-
     // 表头栏
     if(_config.has_arr("columns")) {
         auto add_col = [&](json11::Json jsoncol) {
@@ -796,14 +791,19 @@ void MainWindow::_init_filter_events()
         _update_filter_list(nullptr);
     });
 
+    // 先放这里吧……
+    _event_source.SetColConv([this](int i) {
+        return _columns.showing(i).index;
+    });
+
     g_evtsys.attach(L"filter:set", [&] {
         auto p = static_cast<EventContainer*>(g_evtsys[0].ptr_value());
         if(!p) p = _events;
         bool eq = _current_filter == p;
         _current_filter = p ? p : _events;
         if(!eq) {
-            _listview->set_item_count(_current_filter->size(), 0);
-            _listview->redraw_items(0, _listview->get_item_count() -1);
+            _event_source.SetEvents(_current_filter);
+            _listview->set_source(&_event_source);
         }
         _update_filter_list(p);
     });
@@ -814,8 +814,7 @@ void MainWindow::_init_filter_events()
 
         if (*it == _current_filter) {
             _current_filter = _events;
-            _listview->set_item_count(_current_filter->size(), 0);
-            _listview->redraw_items(0, _listview->get_item_count() -1);
+            _event_source.SetEvents(_current_filter);
         }
 
         delete *it;
@@ -1027,7 +1026,7 @@ void MainWindow::_clear_results()
     _events->clear();
 
     // 更新界面
-    _listview->set_item_count(0, 0);
+    _listview->update_source();
 }
 
 void MainWindow::_set_top_most(bool top)
@@ -1449,6 +1448,8 @@ LRESULT MainWindow::_on_create()
     _cbo_sel_flt        = _root->find<taowin::ComboboxControl>(L"select-filter");
     _cbo_prj            = _root->find<taowin::ComboboxControl>(L"select-project");
     _btn_tools          = _root->find<taowin::button>(L"tools");
+    _listview           = _root->find<taowin::ListViewControl>(L"lv");
+
 
     if(isdbg()) {
         _btn_start->set_visible(false);
@@ -1785,28 +1786,6 @@ LRESULT MainWindow::_on_custom_draw_listview(NMHDR * hdr)
     }
 
     return lr;
-}
-
-LRESULT MainWindow::_on_get_dispinfo(NMHDR * hdr)
-{
-    auto pdi = reinterpret_cast<NMLVDISPINFO*>(hdr);
-    auto lit = &pdi->item;
-
-    // WTF: 竟然有负数的索引号（拖动鼠标任意乱选会出现）
-    if(lit->iItem < 0) {
-        lit->pszText = L"<listview bug>";
-        return 0;
-    }
-
-    auto& evt = *(*_current_filter)[lit->iItem];
-
-    int listview_col = lit->iSubItem;
-    int evt_col = _columns.showing(listview_col).index;
-    auto field = evt[evt_col];
-
-    lit->pszText = const_cast<LPWSTR>(field);
-
-    return 0;
 }
 
 LRESULT MainWindow::_on_select_column()

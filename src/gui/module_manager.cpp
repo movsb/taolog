@@ -78,6 +78,9 @@ LRESULT ModuleManager::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
 
         _update_pastebtn_status();
 
+        _data_source.SetModules(&_modules);
+        _listview->set_source(&_data_source);
+
         return 0;
     }
 
@@ -140,23 +143,7 @@ LRESULT ModuleManager::on_notify(HWND hwnd, taowin::control * pc, int code, NMHD
     if (!pc) return 0;
 
     if (pc == _listview) {
-        if (code == LVN_GETDISPINFO) {
-            auto pdi = reinterpret_cast<NMLVDISPINFO*>(hdr);
-            auto& mod = _modules[pdi->item.iItem];
-            auto lit = &pdi->item;
-
-            const TCHAR* value = _T("");
-
-            switch (lit->iSubItem) {
-            case 0: value = mod->name.c_str();                   break;
-            case 1: value = mod->enable ? L"已启用" : L"已禁用";  break;
-            }
-
-            lit->pszText = const_cast<TCHAR*>(value);
-
-            return 0;
-        }
-        else if (code == NM_CUSTOMDRAW) {
+        if (code == NM_CUSTOMDRAW) {
             LRESULT lr = CDRF_DODEFAULT;
             ModuleEntry* mod;
 

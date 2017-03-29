@@ -48,6 +48,42 @@ private:
     static const UINT kDoLog = WM_USER + 3;
     static const UINT kLogDbgViewRaw = WM_USER + 4;
 
+    class EventDataSource : public taowin::ListViewControl::IDataSource
+    {
+    public:
+        EventDataSource()
+            : _events(nullptr)
+        { }
+
+        void SetEvents(EventContainer* events)
+        {
+            _events = events;
+        }
+
+        void SetColConv(std::function<int(int)> conv)
+        {
+            _col_conv = conv;
+        }
+
+    public:
+        virtual size_t size() const override
+        {
+            return _events->size();
+        }
+
+        virtual LPCTSTR get(int item, int subitem) const override
+        {
+            auto idx = _col_conv(subitem);
+            auto& evt = *(*_events)[item];
+            auto str = evt[idx];
+            return str;
+        }
+
+    protected:
+        EventContainer* _events;
+        std::function<int(int)> _col_conv;
+    };
+
 public:
     MainWindow(LogSysType::Value type)
         : _logsystype(type)
@@ -102,6 +138,7 @@ protected:
     EventContainer*     _events;
     EventContainerS*    _filters;
     EventContainer*     _current_filter;
+    EventDataSource     _event_source;
 
     EventSearcher       _searcher;
 

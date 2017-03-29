@@ -8,9 +8,44 @@ public:
     typedef std::function<bool(ModuleEntry* module, bool enable, std::wstring* err)> fnOnToggleEnable;
     typedef std::function<bool()> fnIsEtwOpen;
 
+    class ModuleDataSource : public taowin::ListViewControl::IDataSource
+    {
+        typedef std::vector<ModuleEntry*> MODULES;
+
+    public:
+        void SetModules(MODULES* modules)
+        {
+            _modules = modules;
+        }
+
+    protected:
+        virtual size_t size() const override
+        {
+            return _modules->size();
+        }
+
+        virtual LPCTSTR get(int item, int subitem) const override
+        {
+            auto& mod = (*_modules)[item];
+            const TCHAR* value = _T("");
+
+            switch (subitem)
+            {
+            case 0: value = mod->name.c_str();                   break;
+            case 1: value = mod->enable ? L"已启用" : L"已禁用";  break;
+            }
+
+            return value;
+        }
+
+    protected:
+        MODULES* _modules;
+    };
+
 protected:
     std::vector<ModuleEntry*>& _modules;
     ModuleLevelMap&            _levels;
+    ModuleDataSource           _data_source;
 
     fnOnToggleEnable    _on_toggle;
     fnIsEtwOpen         _get_is_open;

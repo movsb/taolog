@@ -12,6 +12,39 @@ public:
         int field_index, const std::wstring& field_name, int value_index,
         const std::wstring& value_name, const std::wstring& value_input)> fnOnNewFilter;
 
+    class FilterDataSource : public taowin::ListViewControl::IDataSource
+    {
+    public:
+        void SetFilters(EventContainerS* filters)
+        {
+            _filters = filters;
+        }
+
+    protected:
+        virtual size_t size() const override
+        {
+            return _filters->size();
+        }
+
+        virtual LPCTSTR get(int item, int subitem) const override
+        {
+            auto& flt = *(*_filters)[item];
+            const TCHAR* value = _T("");
+            switch (subitem)
+            {
+            case 0: value = flt.name.c_str();  break;
+            case 1: value = flt.field_name.c_str();  break;
+            case 2: value = !flt.value_input.empty() ? flt.value_input.c_str() : flt.value_name.c_str(); break;
+            case 3: value = flt.is_tmp ? L"ÊÇ" : L"·ñ";
+            }
+
+            return value;
+        }
+
+    protected:
+        EventContainerS* _filters;
+    };
+
 public:
     ResultFilter(EventContainerS& filters, fnOnGetFields getfields, ModuleEntry* curprj, EventContainer* curflt, fnGetValueList getvalues, fnOnNewFilter onnewfilter)
         : _filters(filters)
@@ -39,6 +72,7 @@ protected:
 
 protected:
     EventContainerS&    _filters;
+    FilterDataSource    _data_source;
     fnOnGetFields       _on_get_fields;
     EventContainer*     _current_filter;
     ModuleEntry*        _currnet_project;

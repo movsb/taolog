@@ -77,9 +77,10 @@ LRESULT ResultFilter::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
         _listview->insert_column(L"文本", 130, 2);
         _listview->insert_column(L"临时", 50,  3);
 
-        _listview->set_item_count((int)_filters.size(), 0);
-
         subclass_control(_listview);
+
+        _data_source.SetFilters(&_filters);
+        _listview->set_source(&_data_source);
 
         return 0;
     }
@@ -124,25 +125,7 @@ LRESULT ResultFilter::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR
     if (!pc) return 0;
 
     if (pc == _listview) {
-        if (code == LVN_GETDISPINFO) {
-            auto pdi = reinterpret_cast<NMLVDISPINFO*>(hdr);
-            auto& flt = *_filters[pdi->item.iItem];
-            auto lit = &pdi->item;
-
-            const TCHAR* value = _T("");
-
-            switch (lit->iSubItem) {
-            case 0: value = flt.name.c_str();  break;
-            case 1: value = flt.field_name.c_str();  break;
-            case 2: value = !flt.value_input.empty() ? flt.value_input.c_str() : flt.value_name.c_str(); break;
-            case 3: value = flt.is_tmp ? L"是" : L"否";
-            }
-
-            lit->pszText = const_cast<TCHAR*>(value);
-
-            return 0;
-        }
-        else if (code == LVN_ITEMCHANGED) {
+        if (code == LVN_ITEMCHANGED) {
             std::vector<int> items;
             _listview->get_selected_items(&items);
 
@@ -186,7 +169,7 @@ LRESULT ResultFilter::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR
             {
                 _onnewfilter(name, field_index, field_name, value_index, value_name, value_input);
 
-                _listview->set_item_count(_filters.size(), LVSICF_NOINVALIDATEALL);
+                _listview->update_source(LVSICF_NOINVALIDATEALL);
 
                 int index = _listview->get_item_count() - 1;
                 _listview->ensure_visible(index);   // 确保可见
@@ -208,7 +191,7 @@ LRESULT ResultFilter::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR
                 g_evtsys.trigger(L"filter:del", *it);
             }
 
-            _listview->set_item_count((int)_filters.size(), 0);
+            _listview->update_source();
             _listview->redraw_items(0, _listview->get_item_count());
 
             items.clear();

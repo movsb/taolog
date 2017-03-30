@@ -115,7 +115,6 @@ protected:
     taowin::edit*       _edt_search;
     taowin::ComboboxControl*   _cbo_search_filter;
     taowin::button*     _btn_settings;
-    taowin::button*     _btn_export2file;
     taowin::ComboboxControl*   _cbo_sel_flt;
     taowin::ComboboxControl*   _cbo_prj;
     taowin::button*     _btn_tools;
@@ -125,7 +124,6 @@ protected:
     HACCEL              _accels;
     taowin::menu_manager _lvmenu;
     taowin::menu_manager _tools_menu;
-    taowin::menu_manager _settings_menu;
 
     MapColors           _colors;
     ColumnManager       _columns;

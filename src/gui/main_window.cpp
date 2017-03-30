@@ -22,7 +22,7 @@ void DoEtwLog(void* log)
 LPCTSTR MainWindow::get_skin_xml() const
 {
     LPCTSTR json = LR"tw(
-<window title="ETW Log Viewer" size="870,650">
+<window title="ETW Log Viewer" size="750,570">
     <res>
         <font name="default" face="微软雅黑" size="12"/>
         <font name="12" face="微软雅黑" size="12"/>
@@ -33,8 +33,7 @@ LPCTSTR MainWindow::get_skin_xml() const
                 <button name="start-logging" text="开始记录" width="60" style="tabstop" padding="0,0,5,0" />
                 <button name="clear-logging" text="清空记录" width="60" style="tabstop" padding="0,0,5,0"/>
                 <button name="module-manager" text="模块管理" width="60" style="tabstop" padding="0,0,5,0"/>
-                <button name="filter-result" text="结果过滤" width="60" style="tabstop" padding="0,0,5,0"/>
-                <button name="export-to-file" text="导出日志" width="60" style="tabstop"/>
+                <button name="filter-result" text="结果过滤" width="60" style="tabstop" />
                 <control minwidth="30"/>
                 <label name="select-project-label" text="模块：" width="38" style="centerimage"/>
                 <combobox name="select-project" style="tabstop" height="200" width="64" padding="0,0,4,0"/>
@@ -44,8 +43,7 @@ LPCTSTR MainWindow::get_skin_xml() const
                 <combobox name="s-filter" style="tabstop" height="200" width="64" padding="0,0,4,0"/>
                 <edit name="s" width="80" style="tabstop" exstyle="clientedge"/>
                 <control width="10" />
-                <button name="tools" text="工具" width="60" style="tabstop" padding="0,0,5,0"/>
-                <button name="settings" text="设置" width="60" style="tabstop"/>
+                <button name="tools" text="菜单" width="60" style="tabstop"/>
             </horizontal>
             <listview name="lv" style="showselalways,ownerdata,tabstop" exstyle="clientedge,doublebuffer,headerdragdrop"/>
         </vertical>
@@ -63,7 +61,6 @@ LRESULT MainWindow::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
     case WM_CLOSE:          return _on_close();
     case kDoLog:            return _on_log(LoggerMessage::Value(wparam), lparam);
     case kLogDbgViewRaw:    return _log_raw_dbg(int(wparam), (std::string*)lparam);
-    // case WM_CONTEXTMENU:    return _on_contextmenu(HWND(wparam), GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam));
     case WM_INITMENUPOPUP:  return _on_init_popupmenu(HMENU(wparam));
     case WM_NCACTIVATE:
     {
@@ -189,8 +186,7 @@ LRESULT MainWindow::on_menu(const taowin::MenuIds& m)
                     "{ 0x%08X, 0x%04X, 0x%04X, { 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X } };\n"
                     "TaoLogger g_taoLogger(providerGuid);",
                     uuid.Data1, uuid.Data2, uuid.Data3,
-                    (uuid.Data4[0] << 8) + uuid.Data4[1],
-                    uuid.Data4[2], uuid.Data4[3], uuid.Data4[4], uuid.Data4[5], uuid.Data4[6], uuid.Data4[7],
+                    (uuid.Data4[0] << 8) + uuid.Data4[1], uuid.Data4[2], uuid.Data4[3], uuid.Data4[4], uuid.Data4[5], uuid.Data4[6], uuid.Data4[7],
                     uuid.Data1, uuid.Data2, uuid.Data3,
                     uuid.Data4[0], uuid.Data4[1], uuid.Data4[2], uuid.Data4[3], uuid.Data4[4], uuid.Data4[5], uuid.Data4[6], uuid.Data4[7]
                 );
@@ -201,6 +197,9 @@ LRESULT MainWindow::on_menu(const taowin::MenuIds& m)
             else {
                 msgbox(L"创建失败。", MB_ICONERROR);
             }
+        }
+        else if(m[1] == L"export") {
+            _export2file();
         }
         else if(m[1] == L"json_visual") {
             auto jv = new JsonVisual;
@@ -225,12 +224,10 @@ LRESULT MainWindow::on_menu(const taowin::MenuIds& m)
             auto args = g_config.ws(tool["args"].string_value());
             exec(path, args);
         }
-    }
-    else if(m[0] == L"settings") {
-        if(m[1] == L"topmost") {
+        else if(m[1] == L"topmost") {
             bool totop = !(::GetWindowLongPtr(_hwnd, GWL_EXSTYLE) & WS_EX_TOPMOST);
             _set_top_most(totop);
-            _settings_menu.set_check(L"topmost", totop);
+            _tools_menu.set_check(L"topmost", totop);
             _config["topmost"] = totop;
         }
         else if(m[1] == L"colors") {
@@ -383,25 +380,12 @@ LRESULT MainWindow::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR *
             return 0;
         }
     }
-    else if(pc == _btn_export2file) {
-        if(code == BN_CLICKED) {
-            _export2file();
-            return 0;
-        }
-    }
     else if(pc == _btn_tools) {
         if(code == BN_CLICKED) {
             _tools_menu.track();
             return 0;
         }
     }
-    else if(pc == _btn_settings) {
-        if(code == BN_CLICKED) {
-            _settings_menu.track();
-            return 0;
-        }
-    }
-
     return 0;
 }
 
@@ -773,7 +757,11 @@ void MainWindow::_init_menus()
     // 工具菜单
     _tools_menu.create(LR"(
 <menutree i="tools">
+    <item i="topmost"     s="窗口置顶" />
+    <item i="colors"      s="颜色配置" />
+    <sep />
     <item i="guid"          s="创建日志实例" />
+    <item i="export"        s="导出日志" />
     <sep />
     <item i="json_visual"   s="JSON 可视化" />
     <item i="lua_console"   s="LUA 控制台" />
@@ -798,19 +786,6 @@ void MainWindow::_init_menus()
             i++;
         }
     }
-
-    // 设置菜单
-    _settings_menu.create(LR"(
-<menutree i="settings">
-  <item i="topmost"     s="窗口置顶" />
-</menutree>
-)");
-
-    if(isetw()) {
-        _settings_menu.insert_str(nullptr, L"colors", L"颜色配置");
-    }
-
-    add_menu(&_settings_menu);
 }
 
 void MainWindow::_init_filter_events()
@@ -1475,7 +1450,6 @@ LRESULT MainWindow::_on_create()
     _edt_search         = _root->find<taowin::edit>(L"s");
     _cbo_search_filter  = _root->find<taowin::ComboboxControl>(L"s-filter");
     _btn_settings       = _root->find<taowin::button>(L"settings");
-    _btn_export2file    = _root->find<taowin::button>(L"export-to-file");
     _cbo_sel_flt        = _root->find<taowin::ComboboxControl>(L"select-filter");
     _cbo_prj            = _root->find<taowin::ComboboxControl>(L"select-project");
     _btn_tools          = _root->find<taowin::button>(L"tools");

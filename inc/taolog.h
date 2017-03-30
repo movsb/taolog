@@ -41,11 +41,16 @@
 
 class TaoLogger
 {
-public:
-
-    enum ETW_LOGGER_FLAG {
-        ETW_LOGGER_FLAG_UNICODE = 1,
+    struct LoggerFlags
+    {
+        enum Value
+        {
+            __Start = 0,
+            Unicode,
+        };
     };
+
+public:
 
     #pragma pack(push,1)
     struct LogData
@@ -319,7 +324,7 @@ public:
 
         // the flags
         data.flags = 0;
-        data.flags |= sizeof(TCHAR) == sizeof(wchar_t) ? ETW_LOGGER_FLAG_UNICODE : 0;
+        data.flags |= sizeof(TCHAR) == sizeof(wchar_t) ? LoggerFlags::Unicode : 0;
 
         // the guid
         data.guid = m_providerGuid;

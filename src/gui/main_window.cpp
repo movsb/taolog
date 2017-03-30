@@ -173,7 +173,36 @@ LRESULT MainWindow::on_menu(const taowin::MenuIds& m)
             g_async.AddTask(new ShellExecuteInBackgroud(path, args));
         };
 
-        if(m[1] == L"json_visual") {
+        if(m[1] == L"guid") {
+            UUID uuid;
+            // http://stackoverflow.com/a/1327160/3628322
+            if(::UuidCreate(&uuid) == RPC_S_OK) {
+                // // {630514B5-7B96-4B74-9DB6-66BD621F9386}
+                // static const GUID providerGuid = 
+                // { 0x630514b5, 0x7b96, 0x4b74, { 0x9d, 0xb6, 0x66, 0xbd, 0x62, 0x1f, 0x93, 0x86 } };
+
+                // TaoLogger g_taoLogger(providerGuid);
+                wchar_t buf[1024];
+                _snwprintf(buf, std::size(buf),
+                    L"// {%08X-%04X-%04X-%04X-%02X%02X%02X%02X%02X%02X}\n"
+                    "static const GUID providerGuid = \n"
+                    "{ 0x%08X, 0x%04X, 0x%04X, { 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X } };\n"
+                    "TaoLogger g_taoLogger(providerGuid);",
+                    uuid.Data1, uuid.Data2, uuid.Data3,
+                    (uuid.Data4[0] << 8) + uuid.Data4[1],
+                    uuid.Data4[2], uuid.Data4[3], uuid.Data4[4], uuid.Data4[5], uuid.Data4[6], uuid.Data4[7],
+                    uuid.Data1, uuid.Data2, uuid.Data3,
+                    uuid.Data4[0], uuid.Data4[1], uuid.Data4[2], uuid.Data4[3], uuid.Data4[4], uuid.Data4[5], uuid.Data4[6], uuid.Data4[7]
+                );
+
+                utils::set_clipboard_text(buf);
+                msgbox(buf, 0, L"已复制到剪贴板");
+            }
+            else {
+                msgbox(L"创建失败。", MB_ICONERROR);
+            }
+        }
+        else if(m[1] == L"json_visual") {
             auto jv = new JsonVisual;
             jv->create(this);
             jv->show();
@@ -744,6 +773,8 @@ void MainWindow::_init_menus()
     // 工具菜单
     _tools_menu.create(LR"(
 <menutree i="tools">
+    <item i="guid"          s="创建日志实例" />
+    <sep />
     <item i="json_visual"   s="JSON 可视化" />
     <item i="lua_console"   s="LUA 控制台" />
     <sep />

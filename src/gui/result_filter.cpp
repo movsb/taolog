@@ -231,7 +231,7 @@ LPCTSTR AddNewFilter::get_skin_xml() const
             <vertical name="container" padding="10,10,10,10" height="108">
                 <horizontal height="30" padding="0,3,0,3">
                     <label style="centerimage" text="Ãû×Ö" width="50"/>
-                    <edit name="name" text="(none)" style="tabstop" exstyle="clientedge"/>
+                    <edit name="name" text="" style="tabstop" exstyle="clientedge"/>
                 </horizontal>
                 <horizontal height="30" padding="0,3,0,3">
                     <label style="centerimage" text="×Ö¶Î" width="50"/>
@@ -387,25 +387,31 @@ int AddNewFilter::_on_save()
 {
     bool iscbo = _value_name->is_visible();
 
-    if (iscbo) {
-        // ¿É±à¼­£¬²¢ÇÒ±à¼­¹ý
-        auto sel = _value_name->get_cur_sel();
-        if(_value_editable && sel == -1) {
-            value_input = _value_name->get_text();
-            if(value_input.empty()) throw 0;
-            value_index = -1;
-            value_name = L"";
+    try {
+        if(iscbo) {
+            // ¿É±à¼­£¬²¢ÇÒ±à¼­¹ý
+            auto sel = _value_name->get_cur_sel();
+            if(_value_editable && sel == -1) {
+                value_input = _value_name->get_text();
+                if(value_input.empty()) throw 0;
+                value_index = -1;
+                value_name = L"";
+            }
+            else {
+                value_input = L"";
+                value_index = _values[sel].first;
+                value_name = _values[sel].second;
+            }
         }
         else {
-            value_input = L"";
-            value_index = _values[sel].first;
-            value_name = _values[sel].second;
+            value_index = -1;
+            value_input = _value_input->get_text();
+            if(value_input.empty()) throw 0;
         }
     }
-    else {
-        value_index = -1;
-        value_input = _value_input->get_text();
-        if (value_input.empty()) throw 0;
+    catch(int) {
+        _value_input->focus();
+        return 0;
     }
 
     name = _name->get_text();

@@ -168,11 +168,14 @@ protected:
     virtual bool filter_special_key(int vk) override;
     virtual void on_final_message() override { __super::on_final_message(); delete this; }
     virtual bool filter_message(MSG* msg) override;
+    virtual taowin::syscontrol* filter_control(HWND hwnd) override;
 
 protected:
     bool _start();
     bool _stop();
 
+    void _init_control_variables();
+    void _init_control_events();
     void _init_listview();
     void _init_config();
 
@@ -219,7 +222,6 @@ protected:
     LRESULT _on_log(LoggerMessage::Value msg, LPARAM lParam);
     LRESULT _log_raw_dbg(int pid, std::string* s);
     LRESULT _on_custom_draw_listview(NMHDR* hdr);
-    LRESULT _on_get_dispinfo(NMHDR* hdr);
     LRESULT _on_select_column();
     LRESULT _on_drag_column(NMHDR* hdr);
 	void	_on_drop_column();

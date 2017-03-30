@@ -269,27 +269,7 @@ LRESULT MainWindow::on_accel(int id)
 
 LRESULT MainWindow::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR * hdr)
 {
-    if (!pc) {
-        if (hwnd == _listview->get_header()) {
-            if (code == NM_RCLICK) {
-                return _on_select_column();
-            }
-            else if (code == HDN_ENDTRACK || code == HDN_DIVIDERDBLCLICK) {
-                return _on_drag_column(hdr);
-            }
-            else if(code == HDN_ENDDRAG) {
-                // 真正的结果要等到此函数返回之后才能
-                // 拿得到，所以异步调用
-                async_call([&] {
-                    _on_drop_column();
-                });
-                return FALSE; // allow drop
-            }
-        }
-
-        return 0;
-    }
-    else if (pc == _listview) {
+    if (pc == _listview) {
         if (code == NM_CUSTOMDRAW) {
             return _on_custom_draw_listview(hdr);
         }
@@ -332,34 +312,6 @@ LRESULT MainWindow::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR *
             }
         }
     }
-    else if (pc == _btn_start) {
-        if(code == BN_CLICKED) {
-            if(!_controller.started()) {
-                if(_start()) {
-                    _btn_start->set_text(L"停止记录");
-                }
-            }
-            else {
-                _stop();
-                _btn_start->set_text(L"开启记录");
-            }
-        }
-    }
-    else if (pc == _btn_modules) {
-        if(code == BN_CLICKED) {
-            _manage_modules();
-        }
-    }
-    else if (pc == _btn_filter) {
-        if(code == BN_CLICKED) {
-            _show_filters();
-        }
-    }
-    else if (pc == _btn_clear) {
-        if(code == BN_CLICKED) {
-            _clear_results();
-        }
-    }
     else if (pc == _cbo_search_filter) {
         if (code == CBN_SELCHANGE) {
             _edt_search->set_sel(0, -1);
@@ -377,12 +329,6 @@ LRESULT MainWindow::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR *
         if(code == CBN_SELCHANGE) {
             auto m = (ModuleEntry*)_cbo_prj->get_cur_data();
             g_evtsys.trigger(L"project:set", m, false);
-            return 0;
-        }
-    }
-    else if(pc == _btn_tools) {
-        if(code == BN_CLICKED) {
-            _tools_menu.track();
             return 0;
         }
     }
@@ -431,18 +377,20 @@ bool MainWindow::filter_message(MSG* msg)
     return (_accels && ::TranslateAccelerator(_hwnd, _accels, msg)) || __super::filter_message(msg);
 }
 
+taowin::syscontrol* MainWindow::filter_control(HWND hwnd)
+{
+    if(_listview && hwnd == _listview->get_header())
+        return _listview;
+    return nullptr;
+}
+
 bool MainWindow::_start()
 {
     std::wstring session;
     auto& etwobj = _config.obj("etw").as_obj();
     auto it= etwobj.find("session");
     if(it == etwobj.cend() || it->second.string_value().empty()) {
-#ifdef THUNDER_RELEASE
-        session = L"thunder-etw-session";
-#else
         session = L"taolog-session";
-#endif
-        etwobj["session"] = g_config.us(session);
     }
     else {
         session = g_config.ws(it->second.string_value());
@@ -497,6 +445,53 @@ bool MainWindow::_stop()
     return true;
 }
 
+void MainWindow::_init_control_variables()
+{
+    _btn_start          = _root->find<taowin::button>(L"start-logging");
+    _btn_clear          = _root->find<taowin::button>(L"clear-logging");
+    _btn_modules        = _root->find<taowin::button>(L"module-manager");
+    _btn_filter         = _root->find<taowin::button>(L"filter-result");
+    _edt_search         = _root->find<taowin::edit>(L"s");
+    _cbo_search_filter  = _root->find<taowin::ComboboxControl>(L"s-filter");
+    _btn_settings       = _root->find<taowin::button>(L"settings");
+    _cbo_sel_flt        = _root->find<taowin::ComboboxControl>(L"select-filter");
+    _cbo_prj            = _root->find<taowin::ComboboxControl>(L"select-project");
+    _btn_tools          = _root->find<taowin::button>(L"tools");
+    _listview           = _root->find<taowin::ListViewControl>(L"lv");
+}
+
+void MainWindow::_init_control_events()
+{
+    _btn_start->on_click([this] {
+        if(!_controller.started()) {
+            if(_start()) {
+                _btn_start->set_text(L"停止记录");
+            }
+        }
+        else {
+            _stop();
+            _btn_start->set_text(L"开启记录");
+        }
+    });
+
+    _btn_modules->on_click([this] { _manage_modules(); });
+    _btn_filter->on_click([this] { _show_filters(); });
+    _btn_clear->on_click([this] { _clear_results(); });
+    _btn_tools->on_click([this] { _tools_menu.track(); });
+    _listview->on_header_rclick([this] { _on_select_column(); return 0; });
+    auto on_drag_column = [this](NMHDR* hdr) { _on_drag_column(hdr); return 0; };
+    _listview->on_header_divider_dblclick(on_drag_column);
+    _listview->on_header_end_track(on_drag_column);
+    _listview->on_header_end_drag([this] {
+        // 真正的结果要等到此函数返回之后才能
+        // 拿得到，所以异步调用
+        async_call([&] {
+            _on_drop_column();
+        });
+        return FALSE; // allow drop
+    });
+}
+
 void MainWindow::_init_listview()
 {
     // 表头栏
@@ -506,7 +501,7 @@ void MainWindow::_init_listview()
             _columns.push(
                 g_config.ws(c["name"].string_value()).c_str(),
                 c["show"].bool_value(),
-                std::max(c["width"].int_value(), 30), 
+                std::min(std::max(c["width"].int_value(), 30), 1000), 
                 c["id"].string_value().c_str()
             );
         };
@@ -1431,6 +1426,9 @@ void MainWindow::_save_filters()
 
 LRESULT MainWindow::_on_create()
 {
+    _init_control_variables();
+    _init_control_events();
+
     _tipwnd->create();
     _tipwnd->set_font(_mgr.get_font(L"default"));
 
@@ -1442,19 +1440,6 @@ LRESULT MainWindow::_on_create()
         auto lua = reinterpret_cast<lua_State**>(g_evtsys[0].ptr_value());
         *lua = _lua;
     });
-
-    _btn_start          = _root->find<taowin::button>(L"start-logging");
-    _btn_clear          = _root->find<taowin::button>(L"clear-logging");
-    _btn_modules        = _root->find<taowin::button>(L"module-manager");
-    _btn_filter         = _root->find<taowin::button>(L"filter-result");
-    _edt_search         = _root->find<taowin::edit>(L"s");
-    _cbo_search_filter  = _root->find<taowin::ComboboxControl>(L"s-filter");
-    _btn_settings       = _root->find<taowin::button>(L"settings");
-    _cbo_sel_flt        = _root->find<taowin::ComboboxControl>(L"select-filter");
-    _cbo_prj            = _root->find<taowin::ComboboxControl>(L"select-project");
-    _btn_tools          = _root->find<taowin::button>(L"tools");
-    _listview           = _root->find<taowin::ListViewControl>(L"lv");
-
 
     if(isdbg()) {
         _btn_start->set_visible(false);

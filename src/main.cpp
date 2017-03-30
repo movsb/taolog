@@ -42,11 +42,7 @@ int __stdcall wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR lpCmdline, int nSh
 
     test();
 
-#ifdef THUNDER_RELEASE
-    taolog::config.load(L"logview.json");
-#else
     taolog::config.load(L"taolog.json");
-#endif
 
     int what = taolog::g_config->obj("basic")["type"].int_value();
     if(what == 0) {

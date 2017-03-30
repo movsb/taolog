@@ -202,9 +202,6 @@
     <ClInclude Include="..\3rd\json11\json11.hpp">
       <Filter>Source Files\3rd\json11</Filter>
     </ClInclude>
-    <ClInclude Include="..\inc\etwlogger.h">
-      <Filter>Source Files\inc</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\stdafx.h">
       <Filter>Source Files</Filter>
     </ClInclude>
@@ -354,6 +351,9 @@
     </ClInclude>
     <ClInclude Include="..\src\misc\assert.hpp">
       <Filter>Source Files\misc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\taolog.h">
+      <Filter>Source Files\inc</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

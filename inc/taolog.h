@@ -1,6 +1,6 @@
 #pragma once
 
-#ifdef ETW_LOGGER
+#ifdef TAOLOG_ENABLED
 
 #pragma warning(push)
 #pragma warning(disable: 4996)
@@ -15,6 +15,7 @@
 #include <process.h>
 #include <vector>
 
+// TODO rename
 #define WIDEN2(x) L ## x
 #define WIDEN(x) WIDEN2(x)
 #define __WFILE__ WIDEN(__FILE__)
@@ -32,13 +33,13 @@
 #define min(a,b) (((a) < (b)) ? (a) : (b))
 #endif
 
-#define ETW_LOGGER_MAX_LOG_SIZE (50*1024)
+#define TAOLOG_MAX_LOG_SIZE (50*1024)
 
-#if !defined(ETW_LOGGER_METHOD_COPYDATA) && !defined(ETW_LOGGER_METHOD_EVENTTRACING)
-  #define ETW_LOGGER_METHOD_EVENTTRACING
+#if !defined(TAOLOG_METHOD_COPYDATA) && !defined(TAOLOG_METHOD_EVENTTRACING)
+  #define TAOLOG_METHOD_EVENTTRACING
 #endif
 
-class ETWLogger
+class TaoLogger
 {
 public:
 
@@ -60,19 +61,19 @@ public:
         unsigned int    cch;                                // 字符数（包含null）
         wchar_t         file[260];                          // 文件
         wchar_t         func[260];                          // 函数
-        wchar_t         text[ETW_LOGGER_MAX_LOG_SIZE];      // 日志
+        wchar_t         text[TAOLOG_MAX_LOG_SIZE];          // 日志
     };
     #pragma pack(pop)
 
 protected:
-#ifdef ETW_LOGGER_METHOD_COPYDATA
+#ifdef TAOLOG_METHOD_COPYDATA
     struct LogDataMsg
     {
         LogData log;
     };
 #endif
 
-#ifdef ETW_LOGGER_METHOD_EVENTTRACING
+#ifdef TAOLOG_METHOD_EVENTTRACING
     struct LogDataMsg
     {
         EVENT_TRACE_HEADER hdr;
@@ -176,7 +177,7 @@ protected:
     };
 
 public:
-	ETWLogger(const GUID & providerGuid)
+	TaoLogger(const GUID & providerGuid)
 		:m_providerGuid(providerGuid)
 		,m_registrationHandle(NULL)
 		,m_sessionHandle(NULL)
@@ -203,7 +204,7 @@ public:
             ::Sleep(100);
 	}
 
-	~ETWLogger()
+	~TaoLogger()
 	{
 		UnRegisterProvider();
 
@@ -219,7 +220,7 @@ public:
 	{
 		ULONG ret = ERROR_SUCCESS;	
 
-		ETWLogger * logger = (ETWLogger *)context;
+		TaoLogger * logger = (TaoLogger *)context;
 		if(logger != NULL && buffer != NULL)
 		{
 			switch (requestCode)
@@ -353,11 +354,11 @@ public:
             data.text[0] = 0;
         }
 
-#ifdef ETW_LOGGER_METHOD_COPYDATA
+#ifdef TAOLOG_METHOD_COPYDATA
         ::PostMessage(m_hWnd, WndMsg::Trace, 0, reinterpret_cast<LPARAM>(logmsg));
 #endif
 
-#ifdef ETW_LOGGER_METHOD_EVENTTRACING
+#ifdef TAOLOG_METHOD_EVENTTRACING
         // the header
         EVENT_TRACE_HEADER& hdr = logmsg->hdr;
         memset(&hdr, 0, sizeof(hdr));
@@ -430,7 +431,7 @@ public:
 
     static unsigned int __stdcall __ThreadProc(void* ud)
     {
-        ETWLogger* logger = reinterpret_cast<ETWLogger*>(ud);
+        TaoLogger* logger = reinterpret_cast<TaoLogger*>(ud);
 
         MSG msg;
         ::PeekMessage(&msg, NULL, WM_USER, WM_USER, PM_NOREMOVE);
@@ -448,11 +449,11 @@ public:
 
     static LRESULT CALLBACK __WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     {
-        ETWLogger* logger = reinterpret_cast<ETWLogger*>(::GetWindowLongPtr(hWnd, 0));
+        TaoLogger* logger = reinterpret_cast<TaoLogger*>(::GetWindowLongPtr(hWnd, 0));
 
         if(uMsg == WM_NCCREATE) {
             LPCREATESTRUCT lpcs = reinterpret_cast<LPCREATESTRUCT>(lParam);
-            logger = static_cast<ETWLogger*>(lpcs->lpCreateParams);
+            logger = static_cast<TaoLogger*>(lpcs->lpCreateParams);
             logger->m_hWnd = hWnd;
             ::SetWindowLongPtr(hWnd, 0, reinterpret_cast<LPARAM>(logger));
             return TRUE;
@@ -494,62 +495,33 @@ private:
 	TRACEHANDLE m_sessionHandle;
 };
 
-extern ETWLogger g_etwLogger;
+extern TaoLogger g_taoLogger;
 
 
-#define EtwLogMessage (g_etwLogger.WriteEvent)
+#define TaoLogMessage (g_taoLogger.WriteEvent)
 
-#define ETW_LEVEL_VERBOSE(x, ...)       EtwLogMessage(TRACE_LEVEL_VERBOSE,      __TFILE__, __TFUNCTION__, __LINE__, x, __VA_ARGS__)
-#define ETW_LEVEL_INFORMATION(x, ...)   EtwLogMessage(TRACE_LEVEL_INFORMATION,  __TFILE__, __TFUNCTION__, __LINE__, x, __VA_ARGS__)
-#define ETW_LEVEL_WARNING(x, ...)       EtwLogMessage(TRACE_LEVEL_WARNING,      __TFILE__, __TFUNCTION__, __LINE__, x, __VA_ARGS__)
-#define ETW_LEVEL_ERROR(x, ...)         EtwLogMessage(TRACE_LEVEL_ERROR,        __TFILE__, __TFUNCTION__, __LINE__, x, __VA_ARGS__)
-#define ETW_LEVEL_CRITICAL(x, ...)      EtwLogMessage(TRACE_LEVEL_CRITICAL,     __TFILE__, __TFUNCTION__, __LINE__, x, __VA_ARGS__)
+#define LogVbs(x, ...)                  TaoLogMessage(TRACE_LEVEL_VERBOSE,      __TFILE__, __TFUNCTION__, __LINE__, x, __VA_ARGS__)
+#define LogLog(x, ...)                  TaoLogMessage(TRACE_LEVEL_INFORMATION,  __TFILE__, __TFUNCTION__, __LINE__, x, __VA_ARGS__)
+#define LogWrn(x, ...)                  TaoLogMessage(TRACE_LEVEL_WARNING,      __TFILE__, __TFUNCTION__, __LINE__, x, __VA_ARGS__)
+#define LogErr(x, ...)                  TaoLogMessage(TRACE_LEVEL_ERROR,        __TFILE__, __TFUNCTION__, __LINE__, x, __VA_ARGS__)
+#define LogFat(x, ...)                  TaoLogMessage(TRACE_LEVEL_CRITICAL,     __TFILE__, __TFUNCTION__, __LINE__, x, __VA_ARGS__)
 
-#define ETW_LOG_ENTER                   ETW_LEVEL_INFORMATION(_T("Enter"))
-#define ETW_LOG_EXIT                    ETW_LEVEL_INFORMATION(_T("Exit"))
+#define LogEnter()                      LogLog(_T("Enter"))
+#define LogExit()                       LogLog(_T("Exit"))
 
-#define EtwVbs(x, ...)                  EtwLogMessage(TRACE_LEVEL_VERBOSE,      __TFILE__, __TFUNCTION__, __LINE__, x, __VA_ARGS__)
-#define EtwLog(x, ...)                  EtwLogMessage(TRACE_LEVEL_INFORMATION,  __TFILE__, __TFUNCTION__, __LINE__, x, __VA_ARGS__)
-#define EtwWrn(x, ...)                  EtwLogMessage(TRACE_LEVEL_WARNING,      __TFILE__, __TFUNCTION__, __LINE__, x, __VA_ARGS__)
-#define EtwErr(x, ...)                  EtwLogMessage(TRACE_LEVEL_ERROR,        __TFILE__, __TFUNCTION__, __LINE__, x, __VA_ARGS__)
-#define EtwFat(x, ...)                  EtwLogMessage(TRACE_LEVEL_CRITICAL,     __TFILE__, __TFUNCTION__, __LINE__, x, __VA_ARGS__)
-
-#define EtwEnter                        EtwLog(_T("Enter"))
-#define EtwExit                         EtwLog(_T("Exit"))
-
-// winapi last error, level TRACE_LEVEL_WARNING
-#define ETW_LAST_ERROR() \
-do {  																		            \
-	DWORD errid = ::GetLastError();										                \
-	TCHAR erridBuf[MAX_PATH] = {0};											            \
-	_stprintf_s(erridBuf, sizeof(erridBuf)/sizeof(TCHAR), _T("errorid=%u"), errid);	    \
-	ETW_LEVEL_WARNING(erridBuf); 													    \
-} while((0))
-
-
-#define EtwLogAll(file, func, line, fmt, ...)   EtwLogMessage(TRACE_LEVEL_INFORMATION, file, func, line, fmt, __VA_ARGS__)
+// #define LogAll(file, func, line, fmt, ...)   EtwLogMessage(TRACE_LEVEL_INFORMATION, file, func, line, fmt, __VA_ARGS__)
 
 #pragma warning(pop)
 
 #else
 
-#define ETW_LEVEL_CRITICAL(x, ...)          ((void)0)
-#define ETW_LEVEL_ERROR(x, ...)             ((void)0)
-#define ETW_LEVEL_WARNING(x, ...)           ((void)0)
-#define ETW_LEVEL_INFORMATION(x, ...)       ((void)0)
-#define ETW_LEVEL_VERBOSE(x, ...)           ((void)0)
-#define ETW_LAST_ERROR()                    ((void)0)
+#define LogVbs(...)                     ((void)0)
+#define LogLog(...)                     ((void)0)
+#define LogWrn(...)                     ((void)0)
+#define LogErr(...)                     ((void)0)
+#define LogFat(...)                     ((void)0)
 
-#define ETW_LOG_ENTER                       ((void)0)
-#define ETW_LOG_EXIT                        ((void)0)
-
-#define EtwVbs                              ((void)0)
-#define EtwLog                              ((void)0)
-#define EtwWrn                              ((void)0)
-#define EtwErr                              ((void)0)
-#define EtwFat                              ((void)0)
-
-#define EtwEnter                            ((void)0)
-#define EtwExit                             ((void)0)
+#define LogEnter()                      ((void)0)
+#define LogExit()                       ((void)0)
 
 #endif

@@ -494,7 +494,7 @@
     <ClInclude Include="..\3rd\lua\lundump.h" />
     <ClInclude Include="..\3rd\lua\lvm.h" />
     <ClInclude Include="..\3rd\lua\lzio.h" />
-    <ClInclude Include="..\inc\etwlogger.h" />
+    <ClInclude Include="..\inc\taolog.h" />
     <ClInclude Include="..\src\gui\column_selection.h" />
     <ClInclude Include="..\src\gui\event_container.h" />
     <ClInclude Include="..\src\gui\event_detail.h" />

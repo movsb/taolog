@@ -3,15 +3,15 @@
 #include <windows.h>
 #include <guiddef.h>
 
-#define ETW_LOGGER
+#define TAOLOG_ENABLED
 
-#include "etwlogger.h"
+#include "taolog.h"
 
 // {630514B5-7B96-4B74-9DB6-66BD621F9386}
 static const GUID providerGuid = 
 { 0x630514b5, 0x7b96, 0x4b74, { 0x9d, 0xb6, 0x66, 0xbd, 0x62, 0x1f, 0x93, 0x86 } };
 
-ETWLogger g_etwLogger(providerGuid);
+TaoLogger g_taoLogger(providerGuid);
 
 
 int main()
@@ -20,14 +20,14 @@ int main()
 
 start:
 
-    EtwVbs(_T("Verbose\n123333333333333333333333333333333\n555555555555555\nafasdfasfasfd\n\n4028402394"));
-    EtwLog(_T("Information"));
-    EtwWrn(_T("Warning"));
-    EtwErr(_T("Error"));
-    EtwFat(_T("Critical"));
-    EtwVbs(_T("Longstring jasl;alkdjfklasfjdklajsfeaskdlfjsakdfjasklfj asalalfas asdfaslfk"));
-    EtwLog(_T("111111111111111111111111111111111111111111111111111111122222222222222222222222222222222222222222222223333333333333333333333333333333333333333333334444444444444444444444444444444444444444444444555555555555555555555555555555555555555556666666666666666666666666666666666666666666666666666666667777777777777777777777777777777777777777777777777888888888888888888888888888888888"));
-    EtwLog(_T("%s"), _T(R"!!!(LRESULT MainWindow::_on_log(LoggerMessage::Value msg, LPARAM lParam)
+    LogVbs(_T("Verbose\n123333333333333333333333333333333\n555555555555555\nafasdfasfasfd\n\n4028402394"));
+    LogLog(_T("Information"));
+    LogWrn(_T("Warning"));
+    LogErr(_T("Error"));
+    LogFat(_T("Critical"));
+    LogVbs(_T("Longstring jasl;alkdjfklasfjdklajsfeaskdlfjsakdfjasklfj asalalfas asdfaslfk"));
+    LogLog(_T("111111111111111111111111111111111111111111111111111111122222222222222222222222222222222222222222222223333333333333333333333333333333333333333333334444444444444444444444444444444444444444444444555555555555555555555555555555555555555556666666666666666666666666666666666666666666666666666666667777777777777777777777777777777777777777777777777888888888888888888888888888888888"));
+    LogLog(_T("%s"), _T(R"!!!(LRESULT MainWindow::_on_log(LoggerMessage::Value msg, LPARAM lParam)
 {
     if(msg == LoggerMessage::AllocMsg) {
         return (LRESULT)_log_pool.alloc();
@@ -103,7 +103,7 @@ start:
 
     printf("(%d) %s", ++i, "After OutputDebugStringA\n");
 
-    Sleep(3000);
+    Sleep(10);
 
     goto start;
 

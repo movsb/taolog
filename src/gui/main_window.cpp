@@ -174,17 +174,22 @@ LRESULT MainWindow::on_menu(const taowin::MenuIds& m)
             UUID uuid;
             // http://stackoverflow.com/a/1327160/3628322
             if(::UuidCreate(&uuid) == RPC_S_OK) {
+                // #ifdef TAOLOG_ENABLED
                 // // {630514B5-7B96-4B74-9DB6-66BD621F9386}
                 // static const GUID providerGuid = 
                 // { 0x630514b5, 0x7b96, 0x4b74, { 0x9d, 0xb6, 0x66, 0xbd, 0x62, 0x1f, 0x93, 0x86 } };
 
                 // TaoLogger g_taoLogger(providerGuid);
+                // #endif
+
                 wchar_t buf[1024];
                 _snwprintf(buf, std::size(buf),
-                    L"// {%08X-%04X-%04X-%04X-%02X%02X%02X%02X%02X%02X}\n"
+                    L"#ifdef TAOLOG_ENABLED\n"
+                    "// {%08X-%04X-%04X-%04X-%02X%02X%02X%02X%02X%02X}\n"
                     "static const GUID providerGuid = \n"
                     "{ 0x%08X, 0x%04X, 0x%04X, { 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X } };\n"
-                    "TaoLogger g_taoLogger(providerGuid);",
+                    "TaoLogger g_taoLogger(providerGuid);\n"
+                    "#endif\n",
                     uuid.Data1, uuid.Data2, uuid.Data3,
                     (uuid.Data4[0] << 8) + uuid.Data4[1], uuid.Data4[2], uuid.Data4[3], uuid.Data4[4], uuid.Data4[5], uuid.Data4[6], uuid.Data4[7],
                     uuid.Data1, uuid.Data2, uuid.Data3,

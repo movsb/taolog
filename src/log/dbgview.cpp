@@ -57,7 +57,8 @@ void DebugView::uninit()
 
     if(_hThread) {
         ::SetEvent(_hEvtExit);
-        ::WaitForSingleObject(_hThread, INFINITE);
+        // This will cause deadlock while going to notify
+        // WaitForSingleObject(_hThread, INFINITE);
         close(_hThread);
     }
 
@@ -83,7 +84,6 @@ unsigned int DebugView::ThreadProc()
         {
         case WAIT_OBJECT_0 + 0:
             ::ResetEvent(_hEvtExit);
-            //::WaitForSingleObject(_hEvtDataReady, INFINITE);
             loop = false;
             break;
 

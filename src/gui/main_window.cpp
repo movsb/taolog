@@ -157,6 +157,12 @@ LRESULT MainWindow::on_menu(const taowin::MenuIds& m)
         else if(m[1] == L"copy")        { g_evtsys.trigger(L"log:copy"); }
         else if(m[1] == L"filters")     { g_evtsys.trigger(L"filter:set", (void*)std::stoi(m[2])); }
         else if(m[1] == L"projects")    { g_evtsys.trigger(L"project:set", (void*)std::stoi(m[2]), true); }
+        else if(m[1] == L"column")      {
+            auto visible = _listview->is_header_visible();
+            if(!visible) _listview->show_header(1);
+            _on_select_column();
+            if(!visible) _listview->show_header(0);
+        }
     }
     else if(m[0] == L"tools") {
         auto exec = [](const std::wstring& path, const std::wstring& args = std::wstring())
@@ -647,6 +653,7 @@ void MainWindow::_init_listview()
         <item i="bot" s="底部" />
         <sep />
         <item i="full" s="最大化" />
+        <item i="column" s="选择列" />
     )";
 
     menustr += LR"(</menutree>)";

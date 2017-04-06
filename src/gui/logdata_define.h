@@ -80,6 +80,7 @@ struct LogDataUI : LogData
     std::wostringstream& to_html_tr(std::wostringstream& os) const;
     string to_string(fnGetColumnName get_column_name) const;
     void to_luaobj(lua_State* L) const;
+    string to_tip(fnGetColumnName get_column_name) const;
 
     static LogDataUI* from_dbgview(DWORD pid, const char* str, void* place = nullptr);
     static LogDataUI* from_logdata(LogData* log, void* place = nullptr);

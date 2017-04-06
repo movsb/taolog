@@ -94,8 +94,27 @@ LRESULT MainWindow::control_message(taowin::syscontrol* ctl, UINT umsg, WPARAM w
 
         if(ctl == _listview) {
             const wchar_t* s;
-            if(_listview->showtip_needed(pt, &s)) {
-                _tipwnd->popup(s);
+            bool ctrl_pressed = !!(::GetAsyncKeyState(VK_CONTROL) & 0x8000);
+
+            // Preview all log items When Ctrl-Key is pressed
+            if(!ctrl_pressed) {
+                if(_listview->showtip_needed(pt, &s)) {
+                    _tipwnd->popup(s);
+                }
+            }
+            else {
+                LVHITTESTINFO hti;
+                hti.pt = pt;
+                if(_listview->subitem_hittest(&hti) != -1) {
+                    const auto& log = *(*_current_filter)[hti.iItem];
+                    // TODO this lambda is duplicated
+                    auto str = log.to_tip([&](int i) {
+                        return i >= 0 && i <= (int)_columns.size()
+                            ? _columns[i].name.c_str()
+                            : L"";
+                    });
+                    _tipwnd->format(str);
+                }
             }
 
             // 如果交给默认处理，会出现自动选中鼠标所在行的奇怪现象

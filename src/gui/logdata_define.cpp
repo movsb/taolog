@@ -64,6 +64,36 @@ taolog::LogDataUI::string LogDataUI::to_string(fnGetColumnName get_column_name) 
     return std::move(ss.str());
 }
 
+// TODO if column text includes '\b', something unexpected would happen
+LogDataUI::string LogDataUI::to_tip(fnGetColumnName get_column_name) const
+{
+    TCHAR tmp[128];
+    stringstream ss;
+
+    auto gc = get_column_name;
+
+    ss << gc(0) << L"：" << L"\bw{44}" << operator[](0) << L"\bn";
+    ss << gc(2) << L"：" << L"\bw{44}" << operator[](2) << L"\bn";
+    ss << gc(3) << L"：" << L"\bw{44}" << operator[](3) << L"\bn";
+
+    auto& t = time;
+    _snwprintf(tmp, _countof(tmp), L"%d-%02d-%02d %02d:%02d:%02d:%03d",
+        t.wYear, t.wMonth, t.wDay,
+        t.wHour, t.wMinute, t.wSecond, t.wMilliseconds
+    );
+
+    ss << gc(1) << L"：" << L"\bw{44}" << tmp << L"\bn";
+
+    ss << gc(4) << L"：" << L"\bw{44}" << operator[](4) << L"\bn";
+    ss << gc(5) << L"：" << L"\bw{44}" <<          file << L"\bn"; // 显示完整路径
+    ss << gc(6) << L"：" << L"\bw{44}" << operator[](6) << L"\bn";
+    ss << gc(7) << L"：" << L"\bw{44}" << operator[](7) << L"\bn";
+    ss << gc(8) << L"：" << L"\bw{44}" << operator[](8) << L"\bn";
+    ss << gc(9) << L"：" << L"\bw{44}" << operator[](9) << L"\bn";
+
+    return std::move(ss.str());
+}
+
 LogDataUI* LogDataUI::from_dbgview(DWORD pid, const char* str, void* place /*= nullptr*/)
 {
     auto logui = place ? new (place) LogDataUI : new LogDataUI;

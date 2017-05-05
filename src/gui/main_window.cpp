@@ -28,7 +28,7 @@ LPCTSTR MainWindow::get_skin_xml() const
         <font name="12" face="微软雅黑" size="12"/>
     </res>
     <root>
-        <vertical padding="5,5,5,5">
+        <vertical name="wrapper" padding="5,5,5,5">
             <horizontal name="toolbar" height="30" padding="0,1,0,4">
                 <button name="start-logging" text="开始记录" width="60" style="tabstop" padding="0,0,5,0" />
                 <button name="clear-logging" text="清空记录" width="60" style="tabstop" padding="0,0,5,0"/>
@@ -866,8 +866,11 @@ void MainWindow::_init_logger_events()
 
     g_evtsys.attach(L"log:fullscreen", [&] {
         auto toolbar = _root->find<taowin::container>(L"toolbar");
+        auto wrapper = _root->find<taowin::vertical>(L"wrapper");
         bool full = toolbar->is_visible();
         toolbar->set_visible(!full);
+        wrapper->set_attr(L"padding", full ? L"0,0,0,0" : L"5,5,5,5");
+        wrapper->need_update();
         _listview->show_header(!full);
         _lvmenu.set_check(L"full", full);
     });

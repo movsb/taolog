@@ -24,8 +24,8 @@ LPCTSTR EventDetail::get_skin_xml() const
         <font name="consolas" face="Consolas" size="12"/>
     </res>
     <root>
-        <vertical padding="5,5,5,5">
-            <edit name="text" font="consolas" style="multiline,vscroll,hscroll,readonly" exstyle="clientedge"/>
+        <vertical>
+            <edit name="text" font="consolas" style="multiline,vscroll,hscroll,readonly"/>
         </vertical>
     </root>
 </window>

@@ -23,7 +23,7 @@ void ListviewColor::choose_color_for(int i, bool fg)
     
     if(::ChooseColor(&cc)) {
         current = cc.rgbResult;
-        auto sta = _root->find<taowin::label>(std::to_wstring(i).c_str())->hwnd();
+        auto sta = _root->find<taowin::Label>(std::to_wstring(i).c_str())->hwnd();
         if(!fg) {
             DeleteBrush(_brush_maps[sta]);
             _brush_maps[sta] = ::CreateSolidBrush(current);
@@ -43,51 +43,51 @@ void ListviewColor::get_metas(WindowMeta * metas)
 LPCTSTR ListviewColor::get_skin_xml() const
 {
     LPCTSTR json = LR"tw(
-<window title="ÑÕÉ«ÅäÖÃ" size="380,300">
-    <res>
-        <font name="default" face="Î¢ÈíÑÅºÚ" size="12"/>
-        <font name="1" face="Consolas" size="16"/>
-    </res>
-    <root>
-        <vertical padding="15,15,15,15">
-            <horizontal padding="5,5,5,5">
-                <label name="5" font="1" style="center,centerimage" exstyle="clientedge"/>
-                <control width="5" />
-                <vertical width="40">
-                    <button name="fg5" text="Ç°¾°" /> <button name="bg5" text="±³¾°" />
-                </vertical>
-            </horizontal>
-            <horizontal padding="5,5,5,5">
-                <label name="4" font="1" style="center,centerimage" exstyle="clientedge"/>
-                <control width="5" />
-                <vertical width="40">
-                    <button name="fg4" text="Ç°¾°" /> <button name="bg4" text="±³¾°" />
-                </vertical>
-            </horizontal>
-            <horizontal padding="5,5,5,5">
-                <label name="3" font="1" style="center,centerimage" exstyle="clientedge"/>
-                <control width="5" />
-                <vertical width="40">
-                    <button name="fg3" text="Ç°¾°" /> <button name="bg3" text="±³¾°" />
-                </vertical>
-            </horizontal>
-            <horizontal padding="5,5,5,5">
-                <label name="2" font="1" style="center,centerimage" exstyle="clientedge"/>
-                <control width="5" />
-                <vertical width="40">
-                    <button name="fg2" text="Ç°¾°" /> <button name="bg2" text="±³¾°" />
-                </vertical>
-            </horizontal>
-            <horizontal padding="5,5,5,5">
-                <label name="1" font="1" style="center,centerimage" exstyle="clientedge"/>
-                <control width="5" />
-                <vertical width="40">
-                    <button name="fg1" text="Ç°¾°" /> <button name="bg1" text="±³¾°" />
-                </vertical>
-            </horizontal>
-        </vertical>
-    </root>
-</window>
+<Window title="ÑÕÉ«ÅäÖÃ" size="380,300">
+    <Resource>
+        <Font name="default" face="Î¢ÈíÑÅºÚ" size="12"/>
+        <Font name="1" face="Consolas" size="16"/>
+    </Resource>
+    <Root>
+        <Vertical padding="15,15,15,15">
+            <Horizontal padding="5,5,5,5">
+                <Label name="5" font="1" style="center,centerimage" exstyle="clientedge"/>
+                <Control width="5" />
+                <Vertical width="40">
+                    <Button name="fg5" text="Ç°¾°" /> <Button name="bg5" text="±³¾°" />
+                </Vertical>
+            </Horizontal>
+            <Horizontal padding="5,5,5,5">
+                <Label name="4" font="1" style="center,centerimage" exstyle="clientedge"/>
+                <Control width="5" />
+                <Vertical width="40">
+                    <Button name="fg4" text="Ç°¾°" /> <Button name="bg4" text="±³¾°" />
+                </Vertical>
+            </Horizontal>
+            <Horizontal padding="5,5,5,5">
+                <Label name="3" font="1" style="center,centerimage" exstyle="clientedge"/>
+                <Control width="5" />
+                <Vertical width="40">
+                    <Button name="fg3" text="Ç°¾°" /> <Button name="bg3" text="±³¾°" />
+                </Vertical>
+            </Horizontal>
+            <Horizontal padding="5,5,5,5">
+                <Label name="2" font="1" style="center,centerimage" exstyle="clientedge"/>
+                <Control width="5" />
+                <Vertical width="40">
+                    <Button name="fg2" text="Ç°¾°" /> <Button name="bg2" text="±³¾°" />
+                </Vertical>
+            </Horizontal>
+            <Horizontal padding="5,5,5,5">
+                <Label name="1" font="1" style="center,centerimage" exstyle="clientedge"/>
+                <Control width="5" />
+                <Vertical width="40">
+                    <Button name="fg1" text="Ç°¾°" /> <Button name="bg1" text="±³¾°" />
+                </Vertical>
+            </Horizontal>
+        </Vertical>
+    </Root>
+</Window>
 )tw";
     return json;
 }
@@ -101,7 +101,7 @@ LRESULT ListviewColor::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
         constexpr unsigned int start = 1, end = 6;
 
         for(unsigned int i = start; i < end; i++) {
-            auto ctl = _root->find<taowin::label>(std::to_wstring(i).c_str());
+            auto ctl = _root->find<taowin::Label>(std::to_wstring(i).c_str());
             ctl->set_text((*_levels)[i].cmt2.c_str());
             _label_maps[ctl->hwnd()] = i;
             _brush_maps[ctl->hwnd()] = ::CreateSolidBrush((*_colors)[i].bg);
@@ -128,7 +128,7 @@ LRESULT ListviewColor::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
     return __super::handle_message(umsg, wparam, lparam);
 }
 
-LRESULT ListviewColor::on_notify(HWND hwnd, taowin::control* pc, int code, NMHDR* hdr)
+LRESULT ListviewColor::on_notify(HWND hwnd, taowin::Control* pc, int code, NMHDR* hdr)
 {
     if(pc) {
         if(code == BN_CLICKED) {

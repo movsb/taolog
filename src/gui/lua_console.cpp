@@ -72,16 +72,16 @@ void LuaConsoleWindow::execute()
         catch(...) {
             err = L"LUA½âÂë´íÎó£¨ÄÚ²¿´íÎó£©¡£";
         }
-        _root->find<taowin::control>(L"bot")->set_visible(false);
-        _root->find<taowin::control>(L"stabar")->set_visible(true);
+        _root->find<taowin::Control>(L"bot")->set_visible(false);
+        _root->find<taowin::Control>(L"stabar")->set_visible(true);
         _lbl_status->set_text(err.c_str());
         msgbox(err.c_str(), MB_ICONERROR, L"LUA½Å±¾´íÎó");
         _edt_script->focus();
         lua_pop(_L, 1);
     }
     else {
-        _root->find<taowin::control>(L"bot")->set_visible(true);
-        _root->find<taowin::control>(L"stabar")->set_visible(false);
+        _root->find<taowin::Control>(L"bot")->set_visible(true);
+        _root->find<taowin::Control>(L"stabar")->set_visible(false);
     }
 }
 
@@ -95,33 +95,33 @@ void LuaConsoleWindow::append_result(const char* s, int len)
 LPCTSTR LuaConsoleWindow::get_skin_xml() const
 {
     LPCTSTR json = LR"tw(
-<window title="LUA ¿ØÖÆÌ¨" size="750,450">
-    <res>
-        <font name="default" face="Î¢ÈíÑÅºÚ" size="12"/>
-        <font name="14" face="Î¢ÈíÑÅºÚ" size="14"/>
-        <font name="consolas" face="Consolas" size="12"/>
-    </res>
-    <root>
-        <vertical padding="5,5,5,0">
-            <horizontal>
-                <vertical>
-                    <label height="20" text="ÊäÈë LUA ½Å±¾£¨F5Ö´ÐÐ£¬F6Çå¿Õ£©£º" />
-                    <edit name="script" font="consolas" style="multiline,vscroll,hscroll,wantreturn" exstyle="clientedge"/>
-                </vertical>
-                <control width="5" />
-                <vertical>
-                    <label height="20" text="½á¹û£¨F7Çå¿Õ£©£º" />
-                    <edit name="result" font="consolas" style="multiline,vscroll,hscroll,wantreturn" exstyle="clientedge"/>
-                </vertical>
-            </horizontal>
-            <control name="bot" height="5" />
-            <horizontal name="stabar" height="20">
-                <label style="centerimage,center" width="40" text="´íÎó£º" />
-                <label font="consolas" style="centerimage" name="status" />
-            </horizontal>
-        </vertical>
-    </root>
-</window>
+<Window title="LUA ¿ØÖÆÌ¨" size="750,450">
+    <Resource>
+        <Font name="default" face="Î¢ÈíÑÅºÚ" size="12"/>
+        <Font name="14" face="Î¢ÈíÑÅºÚ" size="14"/>
+        <Font name="consolas" face="Consolas" size="12"/>
+    </Resource>
+    <Root>
+        <Vertical padding="5,5,5,0">
+            <Horizontal>
+                <Vertical>
+                    <Label height="20" text="ÊäÈë LUA ½Å±¾£¨F5Ö´ÐÐ£¬F6Çå¿Õ£©£º" />
+                    <TextBox name="script" font="consolas" style="multiline,vscroll,hscroll,wantreturn" exstyle="clientedge"/>
+                </Vertical>
+                <Control width="5" />
+                <Vertical>
+                    <Label height="20" text="½á¹û£¨F7Çå¿Õ£©£º" />
+                    <TextBox name="result" font="consolas" style="multiline,vscroll,hscroll,wantreturn" exstyle="clientedge"/>
+                </Vertical>
+            </Horizontal>
+            <Control name="bot" height="5" />
+            <Horizontal name="stabar" height="20">
+                <Label style="centerimage,center" width="40" text="´íÎó£º" />
+                <Label font="consolas" style="centerimage" name="status" />
+            </Horizontal>
+        </Vertical>
+    </Root>
+</Window>
 )tw";
     return json;
 }
@@ -146,12 +146,12 @@ LRESULT LuaConsoleWindow::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam
         lua_pushlightuserdata(_L, this);
         lua_setglobal(_L, "__this");
 
-        _edt_script = _root->find<taowin::edit>(L"script");
-        _edt_result = _root->find<taowin::edit>(L"result");
-        _lbl_status = _root->find<taowin::label>(L"status");
+        _edt_script = _root->find<taowin::TextBox>(L"script");
+        _edt_result = _root->find<taowin::TextBox>(L"result");
+        _lbl_status = _root->find<taowin::Label>(L"status");
 
-        _root->find<taowin::control>(L"bot")->set_visible(true);
-        _root->find<taowin::control>(L"stabar")->set_visible(false);
+        _root->find<taowin::Control>(L"bot")->set_visible(true);
+        _root->find<taowin::Control>(L"stabar")->set_visible(false);
 
         _edt_script->focus();
 

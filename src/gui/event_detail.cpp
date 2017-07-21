@@ -17,18 +17,18 @@ void EventDetail::get_metas(WindowMeta * metas)
 LPCTSTR EventDetail::get_skin_xml() const
 {
     LPCTSTR json = LR"tw(
-<window title="ÏêÇé" size="512,480">
-    <res>
-        <font name="default" face="Î¢ÈíÑÅºÚ" size="12"/>
-        <font name="1" face="Î¢ÈíÑÅºÚ" size="12"/>
-        <font name="consolas" face="Consolas" size="12"/>
-    </res>
-    <root>
-        <vertical>
-            <edit name="text" font="consolas" style="multiline,vscroll,hscroll,readonly"/>
-        </vertical>
-    </root>
-</window>
+<Window title="ÏêÇé" size="512,480">
+    <Resource>
+        <Font name="default" face="Î¢ÈíÑÅºÚ" size="12"/>
+        <Font name="1" face="Î¢ÈíÑÅºÚ" size="12"/>
+        <Font name="consolas" face="Consolas" size="12"/>
+    </Resource>
+    <Root>
+        <Vertical>
+            <TextBox name="text" font="consolas" style="multiline,vscroll,hscroll,readonly"/>
+        </Vertical>
+    </Root>
+</Window>
 )tw";
     return json;
 }
@@ -39,7 +39,7 @@ LRESULT EventDetail::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
     {
     case WM_CREATE:
     {
-        auto edit = _root->find<taowin::edit>(L"text");
+        auto edit = _root->find<taowin::TextBox>(L"text");
         _hText = edit->hwnd();
 
         auto logstr = _log->to_string(_gc);

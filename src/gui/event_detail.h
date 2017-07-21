@@ -2,7 +2,7 @@
 
 namespace taolog {
 
-class EventDetail : public taowin::window_creator
+class EventDetail : public taowin::WindowCreator
 {
 private:
     LogDataUIPtr _log;

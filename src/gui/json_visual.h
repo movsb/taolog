@@ -2,7 +2,7 @@
 
 namespace taolog {
 
-class JsonVisual : public taowin::window_creator
+class JsonVisual : public taowin::WindowCreator
 {
 public:
     JsonVisual()

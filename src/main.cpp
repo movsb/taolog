@@ -48,7 +48,7 @@ int __stdcall wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR lpCmdline, int nSh
     if(what != IDCANCEL) {
         taowin::init();
 
-        taowin::window_creator* main;
+        taowin::WindowCreator* main;
 
         main = new taolog::MainWindow(what == IDYES ? taolog::LogSysType::EventTracing : taolog::LogSysType::DebugView);
 

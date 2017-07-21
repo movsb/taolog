@@ -4,7 +4,7 @@ struct lua_State;
 
 namespace taolog {
 
-class LuaConsoleWindow : public taowin::window_creator
+class LuaConsoleWindow : public taowin::WindowCreator
 {
 public:
     LuaConsoleWindow()
@@ -16,9 +16,9 @@ public:
     }
 
 protected:
-    taowin::edit*    _edt_script;
-    taowin::edit*    _edt_result;
-    taowin::label*   _lbl_status;
+    taowin::TextBox*    _edt_script;
+    taowin::TextBox*    _edt_result;
+    taowin::Label*   _lbl_status;
 
     lua_State*      _L;
 

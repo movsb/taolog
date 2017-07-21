@@ -42,13 +42,13 @@ struct LogSysType
     };
 };
 
-class MainWindow : public taowin::window_creator
+class MainWindow : public taowin::WindowCreator
 {
 private:
     static const UINT kDoLog = WM_USER + 3;
     static const UINT kLogDbgViewRaw = WM_USER + 4;
 
-    class EventDataSource : public taowin::ListViewControl::IDataSource
+    class EventDataSource : public taowin::ListView::IDataSource
     {
     public:
         EventDataSource()
@@ -107,23 +107,23 @@ protected:
     LogSysType::Value   _logsystype;
     JsonWrapper         _config;
 
-    taowin::ListViewControl*   _listview;
-    taowin::button*     _btn_start;
-    taowin::button*     _btn_clear;
-    taowin::button*     _btn_modules;
-    taowin::button*     _btn_filter;
-    taowin::edit*       _edt_search;
-    taowin::ComboboxControl*   _cbo_search_filter;
-    taowin::button*     _btn_settings;
-    taowin::ComboboxControl*   _cbo_sel_flt;
-    taowin::ComboboxControl*   _cbo_prj;
-    taowin::button*     _btn_tools;
+    taowin::ListView*   _listview;
+    taowin::Button*     _btn_start;
+    taowin::Button*     _btn_clear;
+    taowin::Button*     _btn_modules;
+    taowin::Button*     _btn_filter;
+    taowin::TextBox*       _edt_search;
+    taowin::ComboBox*   _cbo_search_filter;
+    taowin::Button*     _btn_settings;
+    taowin::ComboBox*   _cbo_sel_flt;
+    taowin::ComboBox*   _cbo_prj;
+    taowin::Button*     _btn_tools;
 
     TooltipWindow*      _tipwnd;
 
     HACCEL              _accels;
-    taowin::menu_manager _lvmenu;
-    taowin::menu_manager _tools_menu;
+    taowin::MenuManager _lvmenu;
+    taowin::MenuManager _tools_menu;
 
     MapColors           _colors;
     ColumnManager       _columns;
@@ -161,14 +161,14 @@ protected:
 protected:
     virtual LPCTSTR get_skin_xml() const override;
     virtual LRESULT handle_message(UINT umsg, WPARAM wparam, LPARAM lparam) override;
-    virtual LRESULT control_message(taowin::syscontrol* ctl, UINT umsg, WPARAM wparam, LPARAM lparam) override;
+    virtual LRESULT control_message(taowin::SystemControl* ctl, UINT umsg, WPARAM wparam, LPARAM lparam) override;
     virtual LRESULT on_menu(const taowin::MenuIds& ids) override;
     virtual LRESULT on_accel(int id) override;
-    virtual LRESULT on_notify(HWND hwnd, taowin::control* pc, int code, NMHDR* hdr) override;
+    virtual LRESULT on_notify(HWND hwnd, taowin::Control* pc, int code, NMHDR* hdr) override;
     virtual bool filter_special_key(int vk) override;
     virtual void on_final_message() override { __super::on_final_message(); delete this; }
     virtual bool filter_message(MSG* msg) override;
-    virtual taowin::syscontrol* filter_control(HWND hwnd) override;
+    virtual taowin::SystemControl* filter_control(HWND hwnd) override;
 
 protected:
     bool _start();

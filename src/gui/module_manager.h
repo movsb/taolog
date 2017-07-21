@@ -2,13 +2,13 @@
 
 namespace taolog {
 
-class ModuleManager : public taowin::window_creator
+class ModuleManager : public taowin::WindowCreator
 {
 public:
     typedef std::function<bool(ModuleEntry* module, bool enable, std::wstring* err)> fnOnToggleEnable;
     typedef std::function<bool()> fnIsEtwOpen;
 
-    class ModuleDataSource : public taowin::ListViewControl::IDataSource
+    class ModuleDataSource : public taowin::ListView::IDataSource
     {
         typedef std::vector<ModuleEntry*> MODULES;
 
@@ -51,13 +51,13 @@ protected:
     fnIsEtwOpen         _get_is_open;
 
 protected:
-    taowin::ListViewControl*   _listview;
-    taowin::button*     _btn_enable;
-    taowin::button*     _btn_add;
-    taowin::button*     _btn_modify;
-    taowin::button*     _btn_delete;
-    taowin::button*     _btn_copy;
-    taowin::button*     _btn_paste;
+    taowin::ListView*   _listview;
+    taowin::Button*     _btn_enable;
+    taowin::Button*     _btn_add;
+    taowin::Button*     _btn_modify;
+    taowin::Button*     _btn_delete;
+    taowin::Button*     _btn_copy;
+    taowin::Button*     _btn_paste;
 
     TooltipWindow*      _tipwnd;
 
@@ -82,8 +82,8 @@ protected:
     virtual void get_metas(WindowMeta* metas) override;
     virtual LPCTSTR get_skin_xml() const override;
     virtual LRESULT handle_message(UINT umsg, WPARAM wparam, LPARAM lparam) override;
-    virtual LRESULT control_message(taowin::syscontrol* ctl, UINT umsg, WPARAM wparam, LPARAM lparam);
-    virtual LRESULT on_notify(HWND hwnd, taowin::control* pc, int code, NMHDR* hdr) override;
+    virtual LRESULT control_message(taowin::SystemControl* ctl, UINT umsg, WPARAM wparam, LPARAM lparam);
+    virtual LRESULT on_notify(HWND hwnd, taowin::Control* pc, int code, NMHDR* hdr) override;
     virtual void on_final_message() override { __super::on_final_message(); delete this; }
 
 protected:

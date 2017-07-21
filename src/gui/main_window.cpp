@@ -22,33 +22,33 @@ void DoEtwLog(void* log)
 LPCTSTR MainWindow::get_skin_xml() const
 {
     LPCTSTR json = LR"tw(
-<window title="ETW Log Viewer" size="750,570">
-    <res>
-        <font name="default" face="微软雅黑" size="12"/>
-        <font name="12" face="微软雅黑" size="12"/>
-    </res>
-    <root>
-        <vertical name="wrapper" padding="5,5,5,5">
-            <horizontal name="toolbar" height="30" padding="0,1,0,4">
-                <button name="start-logging" text="开始记录" width="60" style="tabstop" padding="0,0,5,0" />
-                <button name="clear-logging" text="清空记录" width="60" style="tabstop" padding="0,0,5,0"/>
-                <button name="module-manager" text="模块管理" width="60" style="tabstop" padding="0,0,5,0"/>
-                <button name="filter-result" text="结果过滤" width="60" style="tabstop" />
-                <control minwidth="30"/>
-                <label name="select-project-label" text="模块：" width="38" style="centerimage"/>
-                <combobox name="select-project" style="tabstop" height="200" width="64" padding="0,0,4,0"/>
-                <label text="过滤：" width="38" style="centerimage"/>
-                <combobox name="select-filter" style="tabstop" height="200" width="64" padding="0,0,4,0"/>
-                <label text="查找：" width="38" style="centerimage"/>
-                <combobox name="s-filter" style="tabstop" height="200" width="64" padding="0,0,4,0"/>
-                <edit name="s" width="80" style="tabstop" exstyle="clientedge"/>
-                <control width="10" />
-                <button name="tools" text="菜单" width="60" style="tabstop"/>
-            </horizontal>
-            <listview name="lv" style="showselalways,ownerdata,tabstop" exstyle="clientedge,doublebuffer,headerdragdrop"/>
-        </vertical>
-    </root>
-</window>
+<Window title="ETW Log Viewer" size="750,570">
+    <Resource>
+        <Font name="default" face="微软雅黑" size="12"/>
+        <Font name="12" face="微软雅黑" size="12"/>
+    </Resource>
+    <Root>
+        <Vertical name="wrapper" padding="5,5,5,5">
+            <Horizontal name="toolbar" height="30" padding="0,1,0,4">
+                <Button name="start-logging" text="开始记录" width="60" style="tabstop" padding="0,0,5,0" />
+                <Button name="clear-logging" text="清空记录" width="60" style="tabstop" padding="0,0,5,0"/>
+                <Button name="module-manager" text="模块管理" width="60" style="tabstop" padding="0,0,5,0"/>
+                <Button name="filter-result" text="结果过滤" width="60" style="tabstop" />
+                <Control minwidth="30"/>
+                <Label name="select-project-label" text="模块：" width="38" style="centerimage"/>
+                <ComboBox name="select-project" style="tabstop" height="200" width="64" padding="0,0,4,0"/>
+                <Label text="过滤：" width="38" style="centerimage"/>
+                <ComboBox name="select-filter" style="tabstop" height="200" width="64" padding="0,0,4,0"/>
+                <Label text="查找：" width="38" style="centerimage"/>
+                <ComboBox name="s-filter" style="tabstop" height="200" width="64" padding="0,0,4,0"/>
+                <TextBox name="s" width="80" style="tabstop" exstyle="clientedge"/>
+                <Control width="10" />
+                <Button name="tools" text="菜单" width="60" style="tabstop"/>
+            </Horizontal>
+            <ListView name="lv" style="showselalways,ownerdata,tabstop" exstyle="clientedge,doublebuffer,headerdragdrop"/>
+        </Vertical>
+    </Root>
+</Window>
 )tw";
     return json;
 }
@@ -73,7 +73,7 @@ LRESULT MainWindow::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
     return __super::handle_message(umsg, wparam, lparam);
 }
 
-LRESULT MainWindow::control_message(taowin::syscontrol* ctl, UINT umsg, WPARAM wparam, LPARAM lparam)
+LRESULT MainWindow::control_message(taowin::SystemControl* ctl, UINT umsg, WPARAM wparam, LPARAM lparam)
 {
     // TODO static!!
     static bool mi = false;
@@ -241,7 +241,7 @@ LRESULT MainWindow::on_menu(const taowin::MenuIds& m)
             lc->create();
             lc->show();
         }
-        else if(m[1] == L"calc" || m[1] == L"notepad" || m[1] == L"regedit" || m[1] == L"control" || m[1] == L"cmd"
+        else if(m[1] == L"calc" || m[1] == L"notepad" || m[1] == L"regedit" || m[1] == L"Control" || m[1] == L"cmd"
             || m[1] == L"mstsc"
             )
         {
@@ -297,7 +297,7 @@ LRESULT MainWindow::on_accel(int id)
     return 0;
 }
 
-LRESULT MainWindow::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR * hdr)
+LRESULT MainWindow::on_notify(HWND hwnd, taowin::Control * pc, int code, NMHDR * hdr)
 {
     if (pc == _listview) {
         if (code == NM_CUSTOMDRAW) {
@@ -407,7 +407,7 @@ bool MainWindow::filter_message(MSG* msg)
     return (_accels && ::TranslateAccelerator(_hwnd, _accels, msg)) || __super::filter_message(msg);
 }
 
-taowin::syscontrol* MainWindow::filter_control(HWND hwnd)
+taowin::SystemControl* MainWindow::filter_control(HWND hwnd)
 {
     if(_listview && hwnd == _listview->get_header())
         return _listview;
@@ -477,17 +477,17 @@ bool MainWindow::_stop()
 
 void MainWindow::_init_control_variables()
 {
-    _btn_start          = _root->find<taowin::button>(L"start-logging");
-    _btn_clear          = _root->find<taowin::button>(L"clear-logging");
-    _btn_modules        = _root->find<taowin::button>(L"module-manager");
-    _btn_filter         = _root->find<taowin::button>(L"filter-result");
-    _edt_search         = _root->find<taowin::edit>(L"s");
-    _cbo_search_filter  = _root->find<taowin::ComboboxControl>(L"s-filter");
-    _btn_settings       = _root->find<taowin::button>(L"settings");
-    _cbo_sel_flt        = _root->find<taowin::ComboboxControl>(L"select-filter");
-    _cbo_prj            = _root->find<taowin::ComboboxControl>(L"select-project");
-    _btn_tools          = _root->find<taowin::button>(L"tools");
-    _listview           = _root->find<taowin::ListViewControl>(L"lv");
+    _btn_start          = _root->find<taowin::Button>(L"start-logging");
+    _btn_clear          = _root->find<taowin::Button>(L"clear-logging");
+    _btn_modules        = _root->find<taowin::Button>(L"module-manager");
+    _btn_filter         = _root->find<taowin::Button>(L"filter-result");
+    _edt_search         = _root->find<taowin::TextBox>(L"s");
+    _cbo_search_filter  = _root->find<taowin::ComboBox>(L"s-filter");
+    _btn_settings       = _root->find<taowin::Button>(L"settings");
+    _cbo_sel_flt        = _root->find<taowin::ComboBox>(L"select-filter");
+    _cbo_prj            = _root->find<taowin::ComboBox>(L"select-project");
+    _btn_tools          = _root->find<taowin::Button>(L"tools");
+    _listview           = _root->find<taowin::ListView>(L"lv");
 }
 
 void MainWindow::_init_control_events()
@@ -635,7 +635,7 @@ void MainWindow::_init_listview()
     }
 
     // ListView 菜单
-    std::wstring menustr = LR"(<menutree i="lv">
+    std::wstring menustr = LR"(<MenuTree i="lv">
         <item i="clear" s="清空" />
         <sep />
         <item i="copy" s="复制" />
@@ -656,7 +656,7 @@ void MainWindow::_init_listview()
         <item i="column" s="选择列" />
     )";
 
-    menustr += LR"(</menutree>)";
+    menustr += LR"(</MenuTree>)";
 
     _lvmenu.create(menustr.c_str());
     add_menu(&_lvmenu);
@@ -782,7 +782,7 @@ void MainWindow::_init_menus()
 {
     // 工具菜单
     _tools_menu.create(LR"(
-<menutree i="tools">
+<MenuTree i="tools">
     <item i="topmost"     s="窗口置顶" />
     <item i="colors"      s="颜色配置" />
     <sep />
@@ -798,7 +798,7 @@ void MainWindow::_init_menus()
     <item i="regedit"       s="注册表" />
     <item i="control"       s="控制面板" />
     <item i="mstsc"         s="远程桌面" />
-</menutree>
+</MenuTree>
 )");
     add_menu(&_tools_menu);
 
@@ -865,8 +865,8 @@ void MainWindow::_init_logger_events()
     g_evtsys.attach(L"log:clear", [&] { _clear_results(); });
 
     g_evtsys.attach(L"log:fullscreen", [&] {
-        auto toolbar = _root->find<taowin::container>(L"toolbar");
-        auto wrapper = _root->find<taowin::vertical>(L"wrapper");
+        auto toolbar = _root->find<taowin::Container>(L"toolbar");
+        auto wrapper = _root->find<taowin::Vertical>(L"wrapper");
         bool full = toolbar->is_visible();
         toolbar->set_visible(!full);
         wrapper->set_attr(L"padding", full ? L"0,0,0,0" : L"5,5,5,5");
@@ -934,7 +934,7 @@ void MainWindow::_show_filters()
         *def = (int)bases->size() - 1;
     };
 
-    auto ongetvalues = [&](int baseindex, ResultFilter::IntStrPairs* values, bool* editable, taowin::ComboboxControl::OnDraw* ondraw) {
+    auto ongetvalues = [&](int baseindex, ResultFilter::IntStrPairs* values, bool* editable, taowin::ComboBox::OnDraw* ondraw) {
         values->clear();
         *editable = false;
         *ondraw = nullptr;
@@ -1276,7 +1276,7 @@ LR"(
         std::function<void(double)> _onupdate;
     };
 
-    class ExportProgressDialog: public taowin::window_creator
+    class ExportProgressDialog: public taowin::WindowCreator
     {
     public:
         ExportProgressDialog()
@@ -1287,7 +1287,7 @@ LR"(
         {
             wchar_t buf[128];
             _swprintf(buf, L"%.2lf%%", ps);
-            auto lbl = _root->find<taowin::label>(L"progress");
+            auto lbl = _root->find<taowin::Label>(L"progress");
             lbl->set_text(buf);
         }
 
@@ -1301,7 +1301,7 @@ LR"(
         void fail()
         {
             _done = false;
-            auto lbl = _root->find<taowin::label>(L"progress");
+            auto lbl = _root->find<taowin::Label>(L"progress");
             lbl->set_text(L"失败！");
             msgbox(L"导出失败！", MB_ICONERROR);
             close(1);
@@ -1318,27 +1318,27 @@ LR"(
         virtual LPCTSTR get_skin_xml() const override
         {
             LPCTSTR json = LR"tw(
-                <window title="正在导出日志..." size="250,100">
-                    <res>
-                        <font name="default" face="微软雅黑" size="12"/>
-                    </res>
-                    <root>
-                        <vertical padding="5,5,5,5">
-                            <control />
-                            <vertical height="24">
-                                <horizontal>
-                                    <control />
-                                    <horizontal width="100">
-                                        <label text="进度：" width="40" />
-                                        <label name="progress" />
-                                    </horizontal>
-                                    <control />
-                                </horizontal>
-                            </vertical>
-                            <control />
-                        </vertical>
-                    </root>
-                </window>
+                <Window title="正在导出日志..." size="250,100">
+                    <Resource>
+                        <Font name="default" face="微软雅黑" size="12"/>
+                    </Resource>
+                    <Root>
+                        <Vertical padding="5,5,5,5">
+                            <Control />
+                            <Vertical height="24">
+                                <Horizontal>
+                                    <Control />
+                                    <Horizontal width="100">
+                                        <Label text="进度：" width="40" />
+                                        <Label name="progress" />
+                                    </Horizontal>
+                                    <Control />
+                                </Horizontal>
+                            </Vertical>
+                            <Control />
+                        </Vertical>
+                    </Root>
+                </Window>
                 )tw";
             return json;
         }
@@ -1479,7 +1479,7 @@ LRESULT MainWindow::_on_create()
         _btn_start->set_visible(false);
         _btn_modules->set_visible(false);
         _cbo_prj->set_visible(false);
-        _root->find<taowin::control>(L"select-project-label")->set_visible(false);
+        _root->find<taowin::Control>(L"select-project-label")->set_visible(false);
     }
 
     _accels = ::LoadAccelerators(nullptr, MAKEINTRESOURCE(IDR_ACCELERATOR_MAINWINDOW));
@@ -1520,7 +1520,7 @@ LRESULT MainWindow::_on_create()
 
             std::vector<EventContainer*> filters_added;
 
-            auto fnGetValues = [&](int idx, ResultFilter::IntStrPairs* values, bool* editable, taowin::ComboboxControl::OnDraw* ondraw) {
+            auto fnGetValues = [&](int idx, ResultFilter::IntStrPairs* values, bool* editable, taowin::ComboBox::OnDraw* ondraw) {
                 values->clear();
                 *editable = false;
                 *ondraw = nullptr;
@@ -1540,7 +1540,7 @@ LRESULT MainWindow::_on_create()
                         }
                     }
                     *editable = true;
-                    *ondraw = [&] (taowin::ComboboxControl* that, DRAWITEMSTRUCT* dis, int i, bool selected) {
+                    *ondraw = [&] (taowin::ComboBox* that, DRAWITEMSTRUCT* dis, int i, bool selected) {
                         const auto& str = filters_added[i]->name;
                         taowin::Rect rc(dis->rcItem);
                         COLORREF bgcolor = selected ? ::GetSysColor(COLOR_HIGHLIGHT) : RGB(255, 255, 255);
@@ -1900,7 +1900,7 @@ LRESULT MainWindow::_on_contextmenu(HWND hSender, int x, int y)
 
 LRESULT MainWindow::_on_init_popupmenu(HMENU hPopup)
 {
-    taowin::menu_manager::sibling* sib;
+    taowin::MenuManager::Sibling* sib;
 
     if (sib = _lvmenu.match_popup(L"filters", hPopup)){
         _lvmenu.clear_popup(sib);

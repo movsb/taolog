@@ -23,32 +23,32 @@ void ModuleManager::get_metas(WindowMeta * metas)
 LPCTSTR ModuleManager::get_skin_xml() const
 {
     LPCTSTR json = LR"tw(
-<window title="Ä£¿é¹ÜÀí" size="280,250">
-    <res>
-        <font name="default" face="Î¢ÈíÑÅºÚ" size="12"/>
-        <font name="1" face="Î¢ÈíÑÅºÚ" size="12"/>
-        <font name="consolas" face="Consolas" size="12"/>
-    </res>
-    <root>
-        <horizontal padding="5,5,5,5">
-            <listview name="list" style="showselalways,ownerdata,tabstop" exstyle="clientedge" />
-            <vertical padding="5,5,5,5" width="50">
-                <button name="enable" text="ÆôÓÃ" style="disabled,tabstop" height="24" />
-                <control height="20" />
-                <button name="add" text="Ìí¼Ó" height="24" style="tabstop" />
-                <control height="5" />
-                <button name="modify" text="ÐÞ¸Ä" style="disabled,tabstop" height="24"/>
-                <control height="5" />
-                <button name="delete" text="É¾³ý" style="disabled,tabstop" height="24"/>
-                <control height="20" />
-                <button name="copy" text="¸´ÖÆ" style="disabled,tabstop" height="24"/>
-                <control height="5" />
-                <button name="paste" text="Õ³Ìù" style="disabled,tabstop" height="24"/>
-                <control height="5" />
-            </vertical>
-        </horizontal>
-    </root>
-</window>
+<Window title="Ä£¿é¹ÜÀí" size="280,250">
+    <Resource>
+        <Font name="default" face="Î¢ÈíÑÅºÚ" size="12"/>
+        <Font name="1" face="Î¢ÈíÑÅºÚ" size="12"/>
+        <Font name="consolas" face="Consolas" size="12"/>
+    </Resource>
+    <Root>
+        <Horizontal padding="5,5,5,5">
+            <ListView name="list" style="showselalways,ownerdata,tabstop" exstyle="clientedge" />
+            <Vertical padding="5,5,5,5" width="50">
+                <Button name="enable" text="ÆôÓÃ" style="disabled,tabstop" height="24" />
+                <Control height="20" />
+                <Button name="add" text="Ìí¼Ó" height="24" style="tabstop" />
+                <Control height="5" />
+                <Button name="modify" text="ÐÞ¸Ä" style="disabled,tabstop" height="24"/>
+                <Control height="5" />
+                <Button name="delete" text="É¾³ý" style="disabled,tabstop" height="24"/>
+                <Control height="20" />
+                <Button name="copy" text="¸´ÖÆ" style="disabled,tabstop" height="24"/>
+                <Control height="5" />
+                <Button name="paste" text="Õ³Ìù" style="disabled,tabstop" height="24"/>
+                <Control height="5" />
+            </Vertical>
+        </Horizontal>
+    </Root>
+</Window>
 )tw";
     return json;
 }
@@ -61,13 +61,13 @@ LRESULT ModuleManager::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
         _tipwnd->create(this);
         _tipwnd->set_font(_mgr.get_font(L"default"));
 
-        _listview   = _root->find<taowin::ListViewControl>(L"list");
-        _btn_add    = _root->find<taowin::button>(L"add");
-        _btn_enable = _root->find<taowin::button>(L"enable");
-        _btn_modify = _root->find<taowin::button>(L"modify");
-        _btn_delete = _root->find<taowin::button>(L"delete");
-        _btn_copy   = _root->find<taowin::button>(L"copy");
-        _btn_paste  = _root->find<taowin::button>(L"paste");
+        _listview   = _root->find<taowin::ListView>(L"list");
+        _btn_add    = _root->find<taowin::Button>(L"add");
+        _btn_enable = _root->find<taowin::Button>(L"enable");
+        _btn_modify = _root->find<taowin::Button>(L"modify");
+        _btn_delete = _root->find<taowin::Button>(L"delete");
+        _btn_copy   = _root->find<taowin::Button>(L"copy");
+        _btn_paste  = _root->find<taowin::Button>(L"paste");
 
         _listview->insert_column(L"Ãû×Ö", 150, 0);
         _listview->insert_column(L"×´Ì¬", 50, 1);
@@ -106,7 +106,7 @@ LRESULT ModuleManager::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
     return __super::handle_message(umsg, wparam, lparam);
 }
 
-LRESULT ModuleManager::control_message(taowin::syscontrol* ctl, UINT umsg, WPARAM wparam, LPARAM lparam)
+LRESULT ModuleManager::control_message(taowin::SystemControl* ctl, UINT umsg, WPARAM wparam, LPARAM lparam)
 {
     // TODO static!!
     static bool mi = false;
@@ -138,7 +138,7 @@ LRESULT ModuleManager::control_message(taowin::syscontrol* ctl, UINT umsg, WPARA
     return __super::control_message(ctl, umsg, wparam, lparam);
 }
 
-LRESULT ModuleManager::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR * hdr)
+LRESULT ModuleManager::on_notify(HWND hwnd, taowin::Control * pc, int code, NMHDR * hdr)
 {
     if (!pc) return 0;
 

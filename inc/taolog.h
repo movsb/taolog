@@ -441,7 +441,7 @@ public:
         MSG msg;
         ::PeekMessage(&msg, NULL, WM_USER, WM_USER, PM_NOREMOVE);
 
-        (void)::CreateWindowEx(0, _T("{6E5E5CBC-8ACF-4fa6-98E4-0C63A075323B}"), NULL, 0, 0, 0, 0, 0, HWND_MESSAGE, NULL, NULL, LPVOID(logger));
+        (void)::CreateWindowEx(0, _T("{1C19DA9F-F78D-4C52-80CB-C3B8B80A1972}"), NULL, 0, 0, 0, 0, 0, HWND_MESSAGE, NULL, NULL, LPVOID(logger));
 
         while(::GetMessage(&msg, NULL, 0, 0))
         {
@@ -476,7 +476,7 @@ public:
         if(bRegistered) return;
 
         WNDCLASSEX wcx = {sizeof(wcx)};
-        wcx.lpszClassName = _T("{6E5E5CBC-8ACF-4fa6-98E4-0C63A075323B}");
+        wcx.lpszClassName = _T("{1C19DA9F-F78D-4C52-80CB-C3B8B80A1972}");
         wcx.lpfnWndProc = __WindowProcedure;
         wcx.hInstance = ::GetModuleHandle(NULL);
         wcx.cbWndExtra = sizeof(void*);

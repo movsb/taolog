@@ -16,41 +16,41 @@ void ModuleEntryEditor::get_metas(WindowMeta * metas)
 LPCTSTR ModuleEntryEditor::get_skin_xml() const
 {
     LPCTSTR json = LR"tw(
-<window title="添加模块" size="350,200">
-    <res>
-        <font name="default" face="微软雅黑" size="12"/>
-        <font name="1" face="微软雅黑" size="12"/>
-        <font name="consolas" face="Consolas" size="12"/>
-    </res>
-    <root>
-        <vertical>
-            <vertical name="container" padding="10,10,10,10" height="144">
-                <horizontal height="30" padding="0,3,0,3">
-                    <label style="centerimage" text="名字" width="50"/>
-                    <edit name="name" style="tabstop" exstyle="clientedge"/>
-                </horizontal>
-                <horizontal height="30" padding="0,3,0,3">
-                    <label style="centerimage" text="GUID" width="50"/>
-                    <edit name="guid" style="tabstop" exstyle="clientedge" />
-                </horizontal>
-                <horizontal height="30" padding="0,3,0,3">
-                    <label style="centerimage" text="目录" width="50"/>
-                    <edit name="root" style="tabstop" exstyle="clientedge" />
-                </horizontal>
-                <horizontal height="30" padding="0,3,0,3">
-                    <label style="centerimage" text="等级" width="50"/>
-                    <combobox name="level" style="tabstop" height="200"/>
-                </horizontal>
-            </vertical>
-            <horizontal height="40" padding="10,4,10,4">
-                <control />
-                <button name="ok" text="保存" width="50" style="tabstop,default"/>
-                <control width="10" />
-                <button name="cancel" text="取消" width="50" style="tabstop"/>
-            </horizontal>
-        </vertical>
-    </root>
-</window>
+<Window title="添加模块" size="350,200">
+    <Resource>
+        <Font name="default" face="微软雅黑" size="12"/>
+        <Font name="1" face="微软雅黑" size="12"/>
+        <Font name="consolas" face="Consolas" size="12"/>
+    </Resource>
+    <Root>
+        <Vertical>
+            <Vertical name="container" padding="10,10,10,10" height="144">
+                <Horizontal height="30" padding="0,3,0,3">
+                    <Label style="centerimage" text="名字" width="50"/>
+                    <TextBox name="name" style="tabstop" exstyle="clientedge"/>
+                </Horizontal>
+                <Horizontal height="30" padding="0,3,0,3">
+                    <Label style="centerimage" text="GUID" width="50"/>
+                    <TextBox name="guid" style="tabstop" exstyle="clientedge" />
+                </Horizontal>
+                <Horizontal height="30" padding="0,3,0,3">
+                    <Label style="centerimage" text="目录" width="50"/>
+                    <TextBox name="root" style="tabstop" exstyle="clientedge" />
+                </Horizontal>
+                <Horizontal height="30" padding="0,3,0,3">
+                    <Label style="centerimage" text="等级" width="50"/>
+                    <ComboBox name="level" style="tabstop" height="200"/>
+                </Horizontal>
+            </Vertical>
+            <Horizontal height="40" padding="10,4,10,4">
+                <Control />
+                <Button name="ok" text="保存" width="50" style="tabstop,default"/>
+                <Control width="10" />
+                <Button name="cancel" text="取消" width="50" style="tabstop"/>
+            </Horizontal>
+        </Vertical>
+    </Root>
+</Window>
 )tw";
     return json;
 }
@@ -62,12 +62,12 @@ LRESULT ModuleEntryEditor::handle_message(UINT umsg, WPARAM wparam, LPARAM lpara
     {
         ::SetWindowText(_hwnd, !_mod ? L"添加模块" : L"修改模块");
 
-        _name = _root->find<taowin::edit>(L"name");
-        _path = _root->find<taowin::edit>(L"root");
-        _level = _root->find<taowin::ComboboxControl>(L"level");
-        _guid = _root->find<taowin::edit>(L"guid");
-        _ok = _root->find<taowin::button>(L"ok");
-        _cancel = _root->find<taowin::button>(L"cancel");
+        _name = _root->find<taowin::TextBox>(L"name");
+        _path = _root->find<taowin::TextBox>(L"root");
+        _level = _root->find<taowin::ComboBox>(L"level");
+        _guid = _root->find<taowin::TextBox>(L"guid");
+        _ok = _root->find<taowin::Button>(L"ok");
+        _cancel = _root->find<taowin::Button>(L"cancel");
 
         for (auto& pair : *_levels) {
             int i = _level->add_string(pair.second.cmt2.c_str());
@@ -111,7 +111,7 @@ LRESULT ModuleEntryEditor::handle_message(UINT umsg, WPARAM wparam, LPARAM lpara
     return __super::handle_message(umsg, wparam, lparam);
 }
 
-LRESULT ModuleEntryEditor::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR * hdr)
+LRESULT ModuleEntryEditor::on_notify(HWND hwnd, taowin::Control * pc, int code, NMHDR * hdr)
 {
     if (!pc) return 0;
 

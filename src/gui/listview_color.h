@@ -15,7 +15,7 @@ struct ItemColor
 
 typedef std::unordered_map<int /* level */, ItemColor> MapColors;
 
-class ListviewColor : public taowin::window_creator
+class ListviewColor : public taowin::WindowCreator
 {
 public:
     typedef std::function<void(int i, bool fg)> OnColorChange;
@@ -44,7 +44,7 @@ protected:
     virtual void get_metas(WindowMeta* metas) override;
     virtual LPCTSTR get_skin_xml() const override;
     virtual LRESULT handle_message(UINT umsg, WPARAM wparam, LPARAM lparam) override;
-    virtual LRESULT on_notify(HWND hwnd, taowin::control* pc, int code, NMHDR* hdr) override;
+    virtual LRESULT on_notify(HWND hwnd, taowin::Control* pc, int code, NMHDR* hdr) override;
     virtual void on_final_message() override { __super::on_final_message(); delete this; }
 };
 

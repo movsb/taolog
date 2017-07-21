@@ -21,33 +21,33 @@ void ResultFilter::get_metas(WindowMeta * metas)
 LPCTSTR ResultFilter::get_skin_xml() const
 {
     LPCTSTR json = LR"tw(
-<window title="结果过滤" size="420,300">
-    <res>
-        <font name="default" face="微软雅黑" size="12"/>
-        <font name="1" face="微软雅黑" size="12"/>
-        <font name="consolas" face="Consolas" size="12"/>
-    </res>
-    <root>
-        <vertical padding="5,5,5,5">
-            <horizontal>
-                <vertical>
-                    <label text="已有过滤器（双击以使用）：" height="18" />
-                    <listview name="list" style="ownerdata,showselalways,tabstop" exstyle="clientedge" />
-                </vertical>
-                <control width="5" />
-                <vertical width="50">
-                    <control height="18" />
-                    <button name="all" text="全部" height="24" style="tabstop" />
-                    <control height="10" />
-                    <button name="add" text="添加" height="24" style="tabstop"/>
-                    <control height="5" />
-                    <button name="delete" text="删除" style="disabled,tabstop" height="24"/>
-                    <control height="5" />
-                </vertical>
-            </horizontal>
-        </vertical>
-    </root>
-</window>
+<Window title="结果过滤" size="420,300">
+    <Resource>
+        <Font name="default" face="微软雅黑" size="12"/>
+        <Font name="1" face="微软雅黑" size="12"/>
+        <Font name="consolas" face="Consolas" size="12"/>
+    </Resource>
+    <Root>
+        <Vertical padding="5,5,5,5">
+            <Horizontal>
+                <Vertical>
+                    <Label text="已有过滤器（双击以使用）：" height="18" />
+                    <ListView name="list" style="ownerdata,showselalways,tabstop" exstyle="clientedge" />
+                </Vertical>
+                <Control width="5" />
+                <Vertical width="50">
+                    <Control height="18" />
+                    <Button name="all" text="全部" height="24" style="tabstop" />
+                    <Control height="10" />
+                    <Button name="add" text="添加" height="24" style="tabstop"/>
+                    <Control height="5" />
+                    <Button name="delete" text="删除" style="disabled,tabstop" height="24"/>
+                    <Control height="5" />
+                </Vertical>
+            </Horizontal>
+        </Vertical>
+    </Root>
+</Window>
 )tw";
     return json;
 }
@@ -67,10 +67,10 @@ LRESULT ResultFilter::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
             ::SetWindowText(_hwnd, t.c_str());
         }
 
-        _listview   = _root->find<taowin::ListViewControl>(L"list");
-        _btn_add    = _root->find<taowin::button>(L"add");
-        _btn_delete = _root->find<taowin::button>(L"delete");
-        _btn_all    = _root->find<taowin::button>(L"all");
+        _listview   = _root->find<taowin::ListView>(L"list");
+        _btn_add    = _root->find<taowin::Button>(L"add");
+        _btn_delete = _root->find<taowin::Button>(L"delete");
+        _btn_all    = _root->find<taowin::Button>(L"all");
 
         _listview->insert_column(L"名字", 100, 0);
         _listview->insert_column(L"字段", 50,  1);
@@ -88,7 +88,7 @@ LRESULT ResultFilter::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
     return __super::handle_message(umsg, wparam, lparam);
 }
 
-LRESULT ResultFilter::control_message(taowin::syscontrol* ctl, UINT umsg, WPARAM wparam, LPARAM lparam)
+LRESULT ResultFilter::control_message(taowin::SystemControl* ctl, UINT umsg, WPARAM wparam, LPARAM lparam)
 {
     // TODO static!!
     static bool mi = false;
@@ -120,7 +120,7 @@ LRESULT ResultFilter::control_message(taowin::syscontrol* ctl, UINT umsg, WPARAM
     return __super::control_message(ctl, umsg, wparam, lparam);
 }
 
-LRESULT ResultFilter::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR * hdr)
+LRESULT ResultFilter::on_notify(HWND hwnd, taowin::Control * pc, int code, NMHDR * hdr)
 {
     if (!pc) return 0;
 
@@ -220,48 +220,48 @@ void AddNewFilter::get_metas(WindowMeta * metas)
 LPCTSTR AddNewFilter::get_skin_xml() const
 {
     LPCTSTR json = LR"tw(
-<window title="添加过滤" size="350,160">
-    <res>
-        <font name="default" face="微软雅黑" size="12"/>
-        <font name="1" face="微软雅黑" size="12"/>
-        <font name="consolas" face="Consolas" size="12"/>
-    </res>
-    <root>
-        <vertical>
-            <vertical name="container" padding="10,10,10,10" height="108">
-                <horizontal height="30" padding="0,3,0,3">
-                    <label style="centerimage" text="名字" width="50"/>
-                    <edit name="name" text="" style="tabstop" exstyle="clientedge"/>
-                </horizontal>
-                <horizontal height="30" padding="0,3,0,3">
-                    <label style="centerimage" text="字段" width="50"/>
-                    <combobox name="field-name" style="tabstop" height="200"/>
-                </horizontal>
-                <horizontal height="30" padding="0,3,0,3">
-                    <label style="centerimage" text="文本" width="50"/>
-                    <container>
-                        <edit name="value-input" text="" style="tabstop" exstyle="clientedge" />
-                        <vertical name="不加这个，下面的combobox显示不出来">
-                            <combobox name="value-name-1" style="tabstop,droplist" height="200" />
-                        </vertical>
-                        <vertical name="不加这个，下面的combobox显示不出来">
-                            <combobox name="value-name-2" style="tabstop,dropdown" height="200" />
-                        </vertical>
-                        <vertical name="不加这个，下面的combobox显示不出来">
-                            <combobox name="value-name-3" style="tabstop,dropdown,vscroll,ownerdrawfixed,hasstrings" height="200" />
-                        </vertical>
-                    </container>
-                </horizontal>
-            </vertical>
-            <horizontal height="40" padding="10,4,10,4">
-                <control />
-                <button name="save" text="保存" width="50" style="tabstop,default"/>
-                <control width="10" />
-                <button name="cancel" text="取消" width="50" style="tabstop"/>
-            </horizontal>
-        </vertical>
-    </root>
-</window>
+<Window title="添加过滤" size="350,160">
+    <Resource>
+        <Font name="default" face="微软雅黑" size="12"/>
+        <Font name="1" face="微软雅黑" size="12"/>
+        <Font name="consolas" face="Consolas" size="12"/>
+    </Resource>
+    <Root>
+        <Vertical>
+            <Vertical name="container" padding="10,10,10,10" height="108">
+                <Horizontal height="30" padding="0,3,0,3">
+                    <Label style="centerimage" text="名字" width="50"/>
+                    <TextBox name="name" text="" style="tabstop" exstyle="clientedge"/>
+                </Horizontal>
+                <Horizontal height="30" padding="0,3,0,3">
+                    <Label style="centerimage" text="字段" width="50"/>
+                    <ComboBox name="field-name" style="tabstop" height="200"/>
+                </Horizontal>
+                <Horizontal height="30" padding="0,3,0,3">
+                    <Label style="centerimage" text="文本" width="50"/>
+                    <Container>
+                        <TextBox name="value-input" text="" style="tabstop" exstyle="clientedge" />
+                        <Vertical name="不加这个，下面的ComboBox显示不出来">
+                            <ComboBox name="value-name-1" style="tabstop,droplist" height="200" />
+                        </Vertical>
+                        <Vertical name="不加这个，下面的ComboBox显示不出来">
+                            <ComboBox name="value-name-2" style="tabstop,dropdown" height="200" />
+                        </Vertical>
+                        <Vertical name="不加这个，下面的ComboBox显示不出来">
+                            <ComboBox name="value-name-3" style="tabstop,dropdown,vscroll,ownerdrawfixed,hasstrings" height="200" />
+                        </Vertical>
+                    </Container>
+                </Horizontal>
+            </Vertical>
+            <Horizontal height="40" padding="10,4,10,4">
+                <Control />
+                <Button name="save" text="保存" width="50" style="tabstop,default"/>
+                <Control width="10" />
+                <Button name="cancel" text="取消" width="50" style="tabstop"/>
+            </Horizontal>
+        </Vertical>
+    </Root>
+</Window>
 )tw";
     return json;
 }
@@ -272,15 +272,15 @@ LRESULT AddNewFilter::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
     {
     case WM_CREATE:
     {
-        _name        = _root->find<taowin::edit>(L"name");
-        _field_name  = _root->find<taowin::ComboboxControl>(L"field-name");
-        _value_name_1= _root->find<taowin::ComboboxControl>(L"value-name-1");
-        _value_name_2= _root->find<taowin::ComboboxControl>(L"value-name-2");
-        _value_name_3= _root->find<taowin::ComboboxControl>(L"value-name-3");
-        _value_input = _root->find<taowin::edit>(L"value-input");
+        _name        = _root->find<taowin::TextBox>(L"name");
+        _field_name  = _root->find<taowin::ComboBox>(L"field-name");
+        _value_name_1= _root->find<taowin::ComboBox>(L"value-name-1");
+        _value_name_2= _root->find<taowin::ComboBox>(L"value-name-2");
+        _value_name_3= _root->find<taowin::ComboBox>(L"value-name-3");
+        _value_input = _root->find<taowin::TextBox>(L"value-input");
 
-        _save        = _root->find<taowin::button>(L"save");
-        _cancel      = _root->find<taowin::button>(L"cancel");
+        _save        = _root->find<taowin::Button>(L"save");
+        _cancel      = _root->find<taowin::Button>(L"cancel");
 
         int def = 0;
         _on_get_fields(&_fields, &def);
@@ -309,7 +309,7 @@ LRESULT AddNewFilter::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
     return __super::handle_message(umsg, wparam, lparam);
 }
 
-LRESULT AddNewFilter::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR * hdr)
+LRESULT AddNewFilter::on_notify(HWND hwnd, taowin::Control * pc, int code, NMHDR * hdr)
 {
     if (!pc) return 0;
 

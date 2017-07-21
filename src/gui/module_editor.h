@@ -2,7 +2,7 @@
 
 namespace taolog {
 
-class ModuleEntryEditor : public taowin::window_creator
+class ModuleEntryEditor : public taowin::WindowCreator
 {
 public:
     typedef std::function<void(ModuleEntry* p)> fnOnOk;
@@ -14,12 +14,12 @@ private:
     fnOnOk _onok;
     fnOnCheckGuid _oncheckguid;
 
-    taowin::edit* _name;
-    taowin::edit* _guid;
-    taowin::edit* _path;
-    taowin::ComboboxControl* _level;
-    taowin::button* _ok;
-    taowin::button* _cancel;
+    taowin::TextBox* _name;
+    taowin::TextBox* _guid;
+    taowin::TextBox* _path;
+    taowin::ComboBox* _level;
+    taowin::Button* _ok;
+    taowin::Button* _cancel;
 
 public:
     ModuleEntryEditor(ModuleEntry* mod, ModuleLevelMap& levels, fnOnOk onok, fnOnCheckGuid onguid)
@@ -33,7 +33,7 @@ protected:
     virtual void get_metas(WindowMeta* metas) override;
     virtual LPCTSTR get_skin_xml() const override;
     virtual LRESULT handle_message(UINT umsg, WPARAM wparam, LPARAM lparam) override;
-    virtual LRESULT on_notify(HWND hwnd, taowin::control* pc, int code, NMHDR* hdr);
+    virtual LRESULT on_notify(HWND hwnd, taowin::Control* pc, int code, NMHDR* hdr);
     virtual void on_final_message() override { __super::on_final_message(); delete this; }
     virtual bool filter_special_key(int vk) override;
 

@@ -2,7 +2,7 @@
 
 namespace taolog {
 
-class TooltipWindow : public taowin::window_creator
+class TooltipWindow : public taowin::WindowCreator
 {
     static const int padding = 5;
     static const int offset = 15;

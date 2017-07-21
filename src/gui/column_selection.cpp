@@ -15,18 +15,18 @@ void ColumnSelection::get_metas(WindowMeta * metas)
 LPCTSTR ColumnSelection::get_skin_xml() const
 {
     LPCTSTR json = LR"tw(
-<window title="±íÍ·" size="512,480">
-    <res>
-        <font name="default" face="Î¢ÈíÑÅºÚ" size="12"/>
-        <font name="1" face="Î¢ÈíÑÅºÚ" size="12"/>
-        <font name="consolas" face="Consolas" size="12"/>
-    </res>
-    <root>
-        <vertical name="container" padding="20,20,20,20">
+<Window title="±íÍ·" size="512,480">
+    <Resource>
+        <Font name="default" face="Î¢ÈíÑÅºÚ" size="12"/>
+        <Font name="1" face="Î¢ÈíÑÅºÚ" size="12"/>
+        <Font name="consolas" face="Consolas" size="12"/>
+    </Resource>
+    <Root>
+        <Vertical name="container" padding="20,20,20,20">
 
-        </vertical>
-    </root>
-</window>
+        </Vertical>
+    </Root>
+</Window>
 )tw";
     return json;
 }
@@ -37,14 +37,14 @@ LRESULT ColumnSelection::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
     {
     case WM_CREATE:
     {
-        auto container = _root->find<taowin::vertical>(L"container");
+        auto container = _root->find<taowin::Vertical>(L"container");
 
         int valid_index = 0;
 
         for (int i = 0; i < (int)_columns.size(); i++) {
             if(!_columns[i].valid) continue;
 
-            auto check = new taowin::check;
+            auto check = new taowin::CheckBox;
             std::map<taowin::string, taowin::string> attrs;
 
             attrs[_T("text")] = _columns[i].name.c_str();
@@ -73,7 +73,7 @@ LRESULT ColumnSelection::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
     return __super::handle_message(umsg, wparam, lparam);
 }
 
-LRESULT ColumnSelection::on_notify(HWND hwnd, taowin::control * pc, int code, NMHDR * hdr)
+LRESULT ColumnSelection::on_notify(HWND hwnd, taowin::Control * pc, int code, NMHDR * hdr)
 {
     if (!pc) return 0;
 

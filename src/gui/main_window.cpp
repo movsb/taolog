@@ -1084,7 +1084,7 @@ void MainWindow::_update_search_filter()
     }
 
     // 重置内容
-    _cbo_search_filter->reset_content();
+    _cbo_search_filter->clear();
     _cbo_search_filter->add_string(L"全部", (void*)-1);
 
     std::vector<const wchar_t*> strs {L"全部"};
@@ -1105,8 +1105,6 @@ void MainWindow::_update_search_filter()
 
     // 保持选中原来的项
     _cbo_search_filter->set_cur_sel(new_cur);
-
-    _cbo_search_filter->adjust_droplist_width(strs);
 }
 
 void MainWindow::_update_filter_list(EventContainer* p)
@@ -1119,7 +1117,7 @@ void MainWindow::_update_filter_list(EventContainer* p)
     }
 
     // 重置内容
-    _cbo_sel_flt->reset_content();
+    _cbo_sel_flt->clear();
     _cbo_sel_flt->add_string(L"全部", _events);
 
     std::vector<const wchar_t*> strs {L"全部"};
@@ -1136,7 +1134,6 @@ void MainWindow::_update_filter_list(EventContainer* p)
 
     // 保持选中原来的项
     _cbo_sel_flt->set_cur_sel(new_cur);
-    _cbo_sel_flt->adjust_droplist_width(strs);
 }
 
 void MainWindow::_update_project_list(ModuleEntry* m)
@@ -1149,7 +1146,7 @@ void MainWindow::_update_project_list(ModuleEntry* m)
     }
 
     // 重置内容
-    _cbo_prj->reset_content();
+    _cbo_prj->clear();
 
     // 添加列表
     std::vector<const wchar_t*> strs;
@@ -1166,7 +1163,6 @@ void MainWindow::_update_project_list(ModuleEntry* m)
 
     // 保持选中原来的项
     _cbo_prj->set_cur_sel(new_cur);
-    _cbo_prj->adjust_droplist_width(strs);
 }
 
 void MainWindow::_export2file()

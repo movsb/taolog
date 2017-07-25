@@ -336,7 +336,7 @@ LRESULT AddNewFilter::on_notify(HWND hwnd, taowin::Control * pc, int code, NMHDR
             _value_name->set_visible(!_values.empty());
 
             if (!_values.empty()) {
-                _value_name->reset_content();
+                _value_name->clear();
 
                 for (auto& pair : _values) {
                     _value_name->add_string(pair.second);

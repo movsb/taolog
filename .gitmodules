@@ -1,6 +1,3 @@
-[submodule "3rd/taowin"]
-	path = 3rd/taowin
-	url = https://github.com/movsb/taowin.git
 [submodule "3rd/json11"]
 	path = 3rd/json11
 	url = https://github.com/movsb/json11.git

@@ -362,9 +362,6 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="100.ico">
-      <Filter>Resource Files</Filter>
-    </Image>
     <Image Include="..\res\100.ico">
       <Filter>Resource Files</Filter>
     </Image>

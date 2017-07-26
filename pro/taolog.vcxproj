@@ -403,7 +403,6 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\res\100.ico" />
-    <Image Include="100.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

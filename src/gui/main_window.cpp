@@ -483,7 +483,6 @@ void MainWindow::_init_control_variables()
     _btn_filter         = _root->find<taowin::Button>(L"filter-result");
     _edt_search         = _root->find<taowin::TextBox>(L"s");
     _cbo_search_filter  = _root->find<taowin::ComboBox>(L"s-filter");
-    _btn_settings       = _root->find<taowin::Button>(L"settings");
     _cbo_sel_flt        = _root->find<taowin::ComboBox>(L"select-filter");
     _cbo_prj            = _root->find<taowin::ComboBox>(L"select-project");
     _btn_tools          = _root->find<taowin::Button>(L"tools");

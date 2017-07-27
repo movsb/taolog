@@ -112,9 +112,8 @@ protected:
     taowin::Button*     _btn_clear;
     taowin::Button*     _btn_modules;
     taowin::Button*     _btn_filter;
-    taowin::TextBox*       _edt_search;
+    taowin::TextBox*    _edt_search;
     taowin::ComboBox*   _cbo_search_filter;
-    taowin::Button*     _btn_settings;
     taowin::ComboBox*   _cbo_sel_flt;
     taowin::ComboBox*   _cbo_prj;
     taowin::Button*     _btn_tools;

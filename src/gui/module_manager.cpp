@@ -332,12 +332,7 @@ void ModuleManager::_modify_item(int i)
 
 void ModuleManager::_delete_items(const std::vector<int>& items)
 {
-    // ´ÓºóÍùÇ°É¾
-    for (auto it = items.crbegin(); it != items.crend(); it++) {
-        auto m = _modules[*it];
-        _modules.erase(_modules.begin() + *it);
-        g_evtsys.trigger(L"project:del", m);
-    }
+    g_evtsys.trigger(L"project:del", &items);
 
     // just in case
     _listview->set_item_count((int)_modules.size(), 0);

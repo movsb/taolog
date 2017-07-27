@@ -314,6 +314,7 @@
     <ClCompile Include="..\src\gui\module_manager.cpp" />
     <ClCompile Include="..\src\gui\result_filter.cpp" />
     <ClCompile Include="..\src\gui\tooltip_window.cpp" />
+    <ClCompile Include="..\src\gui\_module_entry.cpp" />
     <ClCompile Include="..\src\log\consumer.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>

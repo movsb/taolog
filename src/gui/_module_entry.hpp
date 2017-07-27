@@ -81,6 +81,21 @@ typedef std::map<GUID, ModuleEntry*, GUIDLessComparer> Guid2Module;
 
 typedef std::vector<ModuleEntry*> ModuleContainer;
 
+class ModuleContainer2ComboBoxDataSource : public taowin::ComboBox::IDataSource
+{
+public:
+    // Inherited via IDataSource
+    virtual size_t Size() override;
+    virtual void GetAt(size_t index, TCHAR const ** text, void ** tag) override;
+
+public:
+    ModuleContainer2ComboBoxDataSource();
+    void set_source(ModuleContainer* data);
+
+protected:
+    ModuleContainer* _data;
+};
+
 struct ModuleLevel
 {
     ModuleLevel() {}

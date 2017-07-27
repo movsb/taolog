@@ -29,6 +29,7 @@ extern "C" {
 }
 
 #include "misc/assert.hpp"
+#include "misc/config.h"
 
 #ifdef _DEBUG
     #define DBG(f, ...) wprintf(f L"\n", __VA_ARGS__)

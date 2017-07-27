@@ -709,6 +709,9 @@ void MainWindow::_init_projects()
     else {
         _projects[nullptr] = EventPair();
     }
+
+    _module_source.set_source(&_modules);
+    _cbo_prj->set_source(&_module_source);
 }
 
 void MainWindow::_init_project_events()
@@ -716,26 +719,35 @@ void MainWindow::_init_project_events()
     g_evtsys.attach(L"project:set", [&] {
         auto m = static_cast<ModuleEntry*>(g_evtsys[0].ptr_value());
         _current_project = m;
-        _update_project_list(m);
         _events = &_projects[m].first;
         _filters = &_projects[m].second;
+        _cbo_prj->set_cur_sel(m);
         g_evtsys.trigger(L"filter:set", _events, true);
-        _update_filter_list(_events);
+        _filter_source.set_source(_events, _filters);
+        _cbo_sel_flt->set_source(&_filter_source);
+        _cbo_sel_flt->reload();
+        _cbo_sel_flt->set_cur_sel(_events);
     });
 
     g_evtsys.attach(L"project:new", [&] {
         auto m = static_cast<ModuleEntry*>(g_evtsys[0].ptr_value());
         _projects[m] = EventPair();
-        _update_project_list(nullptr);
+        _cbo_prj->reload(true);
     });
 
     g_evtsys.attach(L"project:del", [&] {
-        auto m = static_cast<ModuleEntry*>(g_evtsys[0].ptr_value());
-        _update_project_list(nullptr);
-        if(m == _current_project) {
-            g_evtsys.trigger(L"project:set", nullptr);
+        auto& items = *reinterpret_cast<std::vector<int>*>(g_evtsys[0].ptr_value());
+        auto items_reverse = std::vector<int>(items.rbegin(), items.rend());
+        for(auto item : items_reverse) {
+            auto m = _modules[item];
+            _modules.erase(_modules.cbegin() + item);
+            _projects.erase(m);
+            if(m == _current_project) {
+                g_evtsys.trigger(L"project:set", nullptr);
+            }
+            delete m;
         }
-        _projects.erase(m);
+        _cbo_prj->reload(true);
     });
 }
 
@@ -819,7 +831,7 @@ void MainWindow::_init_filter_events()
         auto filter = static_cast<EventContainer*>(g_evtsys[0].ptr_value());
         _filters->push_back(filter);
         _current_filter->filter_results(filter);
-        _update_filter_list(nullptr);
+        _cbo_sel_flt->reload(true);
     });
 
     // 先放这里吧……
@@ -831,12 +843,14 @@ void MainWindow::_init_filter_events()
         auto p = static_cast<EventContainer*>(g_evtsys[0].ptr_value());
         if(!p) p = _events;
         bool eq = _current_filter == p;
-        _current_filter = p ? p : _events;
         if(!eq) {
-            _event_source.SetEvents(_current_filter);
+            _current_filter = p;
+            _event_source.SetEvents(p);
             _listview->set_source(&_event_source);
         }
-        _update_filter_list(p);
+        if(p != _cbo_sel_flt->get_cur_data()) {
+            _cbo_sel_flt->set_cur_sel(p);
+        }
     });
     
     g_evtsys.attach(L"filter:del", [&] {
@@ -850,8 +864,8 @@ void MainWindow::_init_filter_events()
 
         delete *it;
         _filters->erase(it);
-
-        _update_filter_list(nullptr);
+        
+        _cbo_sel_flt->reload(true);
     });
 
     g_evtsys.attach(L"filter:set", [&] {
@@ -1104,64 +1118,6 @@ void MainWindow::_update_search_filter()
 
     // 保持选中原来的项
     _cbo_search_filter->set_cur_sel(new_cur);
-}
-
-void MainWindow::_update_filter_list(EventContainer* p)
-{
-    // 保留当前选中的项（如果有的话）
-    EventContainer* cur = p;
-    if(!p && _cbo_sel_flt->get_cur_sel() != -1) {
-        void* ud = _cbo_sel_flt->get_cur_data();
-        cur = (EventContainer*)ud;
-    }
-
-    // 重置内容
-    _cbo_sel_flt->clear();
-    _cbo_sel_flt->add_string(L"全部", _events);
-
-    std::vector<const wchar_t*> strs {L"全部"};
-    int new_cur = 0;
-    for(size_t i = 0, j = 0; i < _filters->size(); i++) {
-        auto flt = (*_filters)[i];
-        _cbo_sel_flt->add_string(flt->name.c_str(), (void*)flt);
-        strs.push_back(flt->name.c_str());
-        j++;
-        if(cur == flt) {
-            new_cur = j;
-        }
-    }
-
-    // 保持选中原来的项
-    _cbo_sel_flt->set_cur_sel(new_cur);
-}
-
-void MainWindow::_update_project_list(ModuleEntry* m)
-{
-    // 保留当前选中的项（如果有的话）
-    ModuleEntry* cur = m;
-    if(!m && _cbo_prj->get_cur_sel() != -1) {
-        void* ud = _cbo_prj->get_cur_data();
-        cur = (ModuleEntry*)ud;
-    }
-
-    // 重置内容
-    _cbo_prj->clear();
-
-    // 添加列表
-    std::vector<const wchar_t*> strs;
-    int new_cur = -1;
-    int j = -1;
-    for(auto& m : _modules) {
-        _cbo_prj->add_string(m->name.c_str(), m);
-        strs.push_back(m->name.c_str());
-        j++;
-        if(cur == m) {
-            new_cur = j;
-        }
-    }
-
-    // 保持选中原来的项
-    _cbo_prj->set_cur_sel(new_cur);
 }
 
 void MainWindow::_export2file()

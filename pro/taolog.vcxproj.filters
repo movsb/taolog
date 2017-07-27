@@ -197,6 +197,9 @@
     <ClCompile Include="..\src\gui\logdata_define.cpp">
       <Filter>Source Files\gui</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\gui\_module_entry.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\3rd\json11\json11.hpp">

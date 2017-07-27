@@ -84,6 +84,45 @@ private:
         std::function<int(int)> _col_conv;
     };
 
+    class Filters2ComboBoxDataSource : public taowin::ComboBox::IDataSource
+    {
+    public:
+        virtual size_t      Size() override
+        {
+            auto n = _data != nullptr ? _data->size() : 0;
+            return n + 1;
+        }
+
+        virtual void        GetAt(size_t index, TCHAR const** text, void** tag) override
+        {
+            if(index == 0) {
+                *text = L"全部";
+                *tag = _all;
+            }
+            else {
+                auto F = (*_data)[index-1];
+                *text = F->name.c_str();
+                *tag = F;
+            }
+        }
+
+    public:
+        Filters2ComboBoxDataSource()
+            : _all(nullptr)
+            , _data(nullptr)
+        { }
+
+        void set_source(EventContainer* all, EventContainerS* data)
+        {
+            _all = all;
+            _data = data;
+        }
+
+    protected:
+        EventContainer*  _all;
+        EventContainerS* _data;
+    };
+
 public:
     MainWindow(LogSysType::Value type)
         : _logsystype(type)
@@ -128,12 +167,16 @@ protected:
     ColumnManager       _columns;
 
     ModuleContainer     _modules;
+    ModuleContainer2ComboBoxDataSource
+                        _module_source;
     ModuleEntry*        _current_project;
 
     std::map<ModuleEntry*, EventPair> _projects;
 
     EventContainer*     _events;
     EventContainerS*    _filters;
+    Filters2ComboBoxDataSource
+                        _filter_source;
     EventContainer*     _current_filter;
     EventDataSource     _event_source;
 
@@ -200,13 +243,6 @@ protected:
 
     // 导出当前过滤器内容到文件
     void _export2file();
-
-    // 更新主界面过滤器列表
-    void _update_filter_list(EventContainer* p);
-
-    // 更新项目列表
-    void _update_project_list(ModuleEntry* m);
-
 
     // 复制当前选中的行内容到剪贴板
     // 只复制第 1 个选中的行

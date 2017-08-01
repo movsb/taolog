@@ -1580,7 +1580,7 @@ LRESULT MainWindow::_on_close()
         return 0;
     }
 
-    if(_current_filter->size() && msgbox(L"确定要关闭窗口？", MB_ICONQUESTION | MB_YESNO) == IDNO) {
+    if(_current_filter->size() && msgbox(L"确定关闭窗口？", MB_ICONQUESTION | MB_OKCANCEL) == IDCANCEL) {
         return 0;
     }
 
@@ -1675,11 +1675,10 @@ LRESULT MainWindow::_on_log(LoggerMessage::Value msg, LPARAM lParam)
         }
 
         if(_current_filter->size() > old_size) {
-            // 默认是非自动滚屏到最后一行的
-            // 但如果当前焦点行是最后一行，则自动滚屏
+            // 如果当前内容为空或焦点行是最后一行，则自动滚屏到最后
             int count = (int)_current_filter->size();
             int sic_flag = LVSICF_NOINVALIDATEALL | LVSICF_NOSCROLL;
-            bool is_last_focused = count > 1 && (_listview->get_item_state(count - 2, LVIS_FOCUSED) & LVIS_FOCUSED);
+            bool is_last_focused = count <= 1 || (_listview->get_item_state(count - 2, LVIS_FOCUSED) & LVIS_FOCUSED);
 
             if(is_last_focused) {
                 sic_flag &= ~LVSICF_NOSCROLL;

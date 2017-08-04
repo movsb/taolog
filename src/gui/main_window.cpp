@@ -34,7 +34,7 @@ LPCTSTR MainWindow::get_skin_xml() const
                 <Button name="clear-logging" text="清空记录" width="60" style="tabstop" padding="0,0,5,0"/>
                 <Button name="module-manager" text="模块管理" width="60" style="tabstop" padding="0,0,5,0"/>
                 <Button name="filter-result" text="结果过滤" width="60" style="tabstop" />
-                <Control minwidth="30"/>
+                <Control name="span" minwidth="30"/>
                 <Label name="select-project-label" text="模块：" width="38" style="centerimage"/>
                 <ComboBox name="select-project" style="tabstop" height="200" width="64" padding="0,0,4,0"/>
                 <Label text="过滤：" width="38" style="centerimage"/>
@@ -67,6 +67,17 @@ LRESULT MainWindow::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
         if(wparam == FALSE && _tipwnd->showing()) {
             return TRUE;
         }
+        break;
+    }
+    case WM_SIZE :
+    {
+        int width = GET_X_LPARAM(lparam);
+        bool show = width > 600;
+        _btn_start->set_visible(show);
+        _btn_clear->set_visible(show);
+        _btn_modules->set_visible(show);
+        _btn_filter->set_visible(show);
+        _root->find<taowin::Control>(L"span")->set_visible(show);
         break;
     }
     }

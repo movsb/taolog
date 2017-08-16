@@ -96,12 +96,13 @@
       <AssemblerOutput>NoListing</AssemblerOutput>
       <TreatSpecificWarningsAsErrors>4701</TreatSpecificWarningsAsErrors>
       <DisableSpecificWarnings>4100</DisableSpecificWarnings>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>taowin.lib;comctl32.lib;rpcrt4.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>../bin/$(Configuration)/</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>../bin/$(Configuration)/;../3rd/taowin/bin/$(Configuration)/</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -140,7 +141,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <MinimumRequiredVersion>5.01</MinimumRequiredVersion>
       <AdditionalDependencies>taowin.lib;comctl32.lib;rpcrt4.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>../bin/$(Configuration)/</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>../bin/$(Configuration)/;../3rd/taowin/bin/$(Configuration)/</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

@@ -160,8 +160,8 @@ protected:
     TooltipWindow*      _tipwnd;
 
     HACCEL              _accels;
-    taowin::MenuManager _lvmenu;
-    taowin::MenuManager _tools_menu;
+    taowin::PopupMenu*  _lvmenu;
+    taowin::PopupMenu*  _tools_menu;
 
     MapColors           _colors;
     ColumnManager       _columns;
@@ -201,10 +201,11 @@ protected:
     lua_State*          _lua;
 
 protected:
+    virtual void get_metas(WindowMeta* metas) override;
     virtual LPCTSTR get_skin_xml() const override;
     virtual LRESULT handle_message(UINT umsg, WPARAM wparam, LPARAM lparam) override;
     virtual LRESULT control_message(taowin::SystemControl* ctl, UINT umsg, WPARAM wparam, LPARAM lparam) override;
-    virtual LRESULT on_menu(const taowin::MenuIds& ids) override;
+    virtual LRESULT on_menu(const taowin::MenuIDs& ids) override;
     virtual LRESULT on_accel(int id) override;
     virtual LRESULT on_notify(HWND hwnd, taowin::Control* pc, int code, NMHDR* hdr) override;
     virtual bool filter_special_key(int vk) override;

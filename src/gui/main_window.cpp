@@ -19,6 +19,12 @@ void DoEtwLog(void* log)
     ::SendMessage(g_logger_hwnd, g_logger_message, LoggerMessage::LogEtwMsg, LPARAM(log));
 }
 
+void MainWindow::get_metas(WindowMeta * metas)
+{
+    __super::get_metas(metas);
+    metas->style |= WS_CLIPCHILDREN;
+}
+
 LPCTSTR MainWindow::get_skin_xml() const
 {
     LPCTSTR json = LR"tw(
@@ -158,7 +164,7 @@ L"请输入待搜索的文本。\n"
     return __super::control_message(ctl, umsg, wparam, lparam);
 }
 
-LRESULT MainWindow::on_menu(const taowin::MenuIds& m)
+LRESULT MainWindow::on_menu(const taowin::MenuIDs& m)
 {
     if(m[0] == L"lv") {
         if(m[1] == L"top")              { _listview->go_top(); }
@@ -268,7 +274,7 @@ LRESULT MainWindow::on_menu(const taowin::MenuIds& m)
         else if(m[1] == L"topmost") {
             bool totop = !(::GetWindowLongPtr(_hwnd, GWL_EXSTYLE) & WS_EX_TOPMOST);
             _set_top_most(totop);
-            _tools_menu.set_check(L"topmost", totop);
+            _tools_menu->find_sib(L"topmost")->check(totop);
             _config["topmost"] = totop;
         }
         else if(m[1] == L"colors") {
@@ -324,9 +330,9 @@ LRESULT MainWindow::on_notify(HWND hwnd, taowin::Control * pc, int code, NMHDR *
         else if(code == NM_RCLICK) {
             bool empty = !_listview->get_item_count();
             bool hassel = !empty && _listview->get_selected_count() > 0;
-            _lvmenu.enable(L"clear", !empty);
-            _lvmenu.enable(L"copy", hassel);
-            _lvmenu.track();
+            _lvmenu->find_sib(L"clear")->enable(!empty);
+            _lvmenu->find_sib(L"copy")->enable(hassel);
+            _lvmenu->track();
             return 0;
         }
         else if (code == LVN_KEYDOWN) {
@@ -517,7 +523,7 @@ void MainWindow::_init_control_events()
     _btn_modules->on_click([this] { _manage_modules(); });
     _btn_filter->on_click([this] { _show_filters(); });
     _btn_clear->on_click([this] { _clear_results(); });
-    _btn_tools->on_click([this] { _tools_menu.track(); });
+    _btn_tools->on_click([this] { _tools_menu->track(); });
     _listview->on_header_rclick([this] { _on_select_column(); return 0; });
     auto on_drag_column = [this](NMHDR* hdr) { _on_drag_column(hdr); return 0; };
     _listview->on_header_divider_dblclick(on_drag_column);
@@ -645,31 +651,31 @@ void MainWindow::_init_listview()
     }
 
     // ListView 菜单
-    std::wstring menustr = LR"(<MenuTree i="lv">
-        <item i="clear" s="清空" />
+    std::wstring menustr = LR"(<MenuTree id="lv">
+        <item id="clear" text="清空" />
         <sep />
-        <item i="copy" s="复制" />
+        <item id="copy" text="复制" />
         <sep />
     )";
 
     if(isetw()) {
-        menustr += LR"(<sub i="projects" s="模块"></sub>)";
+        menustr += LR"(<popup id="projects" text="模块"></popup>)";
     }
 
     menustr += LR"(
-        <sub i="filters" s="过滤器"></sub>
+        <popup id="filters" text="过滤器"></popup>
         <sep />
-        <item i="top" s="顶部" />
-        <item i="bot" s="底部" />
+        <item id="top" text="顶部" />
+        <item id="bot" text="底部" />
         <sep />
-        <item i="full" s="最大化" />
-        <item i="column" s="选择列" />
+        <item id="full" text="最大化" />
+        <item id="column" text="选择列" />
     )";
 
     menustr += LR"(</MenuTree>)";
 
-    _lvmenu.create(menustr.c_str());
-    add_menu(&_lvmenu);
+    _lvmenu = taowin::PopupMenu::create(menustr.c_str());
+    add_menu(_lvmenu);
 
     // subclass it
     subclass_control(_listview);
@@ -803,34 +809,34 @@ void MainWindow::_init_filters()
 void MainWindow::_init_menus()
 {
     // 工具菜单
-    _tools_menu.create(LR"(
-<MenuTree i="tools">
-    <item i="topmost"     s="窗口置顶" />
-    <item i="colors"      s="颜色配置" />
+    _tools_menu = taowin::PopupMenu::create(LR"(
+<MenuTree id="tools">
+    <item id="topmost"       text="窗口置顶" />
+    <item id="colors"        text="颜色配置" />
     <sep />
-    <item i="guid"          s="创建日志实例" />
-    <item i="export"        s="导出日志" />
+    <item id="guid"          text="创建日志实例" />
+    <item id="export"        text="导出日志" />
     <sep />
-    <item i="json_visual"   s="JSON 可视化" />
-    <item i="lua_console"   s="LUA 控制台" />
+    <item id="json_visual"   text="JSON 可视化" />
+    <item id="lua_console"   text="LUA 控制台" />
     <sep />
-    <item i="calc"          s="计算器" />
-    <item i="notepad"       s="记事本" />
-    <item i="cmd"           s="命令提示符" />
-    <item i="regedit"       s="注册表" />
-    <item i="control"       s="控制面板" />
-    <item i="mstsc"         s="远程桌面" />
+    <item id="calc"          text="计算器" />
+    <item id="notepad"       text="记事本" />
+    <item id="cmd"           text="命令提示符" />
+    <item id="regedit"       text="注册表" />
+    <item id="control"       text="控制面板" />
+    <item id="mstsc"         text="远程桌面" />
 </MenuTree>
 )");
-    add_menu(&_tools_menu);
+    add_menu(_tools_menu);
 
     // 自定义工具
     const auto& tools = g_config->arr("tools").as_arr();
     if(!tools.empty()) {
-        _tools_menu.insert_sep(nullptr);
+        _tools_menu->insert_sep(L"", L"");
         int i = 0;
         for(auto& tool : tools) {
-            _tools_menu.insert_str(nullptr, L"_" + std::to_wstring(i), g_config.ws(tool["name"].string_value()));
+            _tools_menu->insert_str(L"", L"_" + std::to_wstring(i), g_config.ws(tool["name"].string_value()), true, L"", false);
             i++;
         }
     }
@@ -896,7 +902,7 @@ void MainWindow::_init_logger_events()
         wrapper->set_attr(L"padding", full ? L"0,0,0,0" : L"5,5,5,5");
         wrapper->need_update();
         _listview->show_header(!full);
-        _lvmenu.set_check(L"full", full);
+        _lvmenu->find_sib(L"full")->check(full);
     });
 
     g_evtsys.attach(L"log:copy", [&] {
@@ -1861,23 +1867,23 @@ LRESULT MainWindow::_on_contextmenu(HWND hSender, int x, int y)
 
 LRESULT MainWindow::_on_init_popupmenu(HMENU hPopup)
 {
-    taowin::MenuManager::Sibling* sib;
+    taowin::MenuItem* sib;
 
-    if (sib = _lvmenu.match_popup(L"filters", hPopup)){
-        _lvmenu.clear_popup(sib);
+    if (sib = _lvmenu->match_popup(L"filters", hPopup)){
+        sib->clear();
         
-        _lvmenu.insert_str(sib, std::to_wstring((int)_events), L"全部", true);
+        sib->insert_str(L"", std::to_wstring((int)_events), L"全部", true, L"", false);
 
-        if(!_filters->empty()) _lvmenu.insert_sep(sib);
+        if(!_filters->empty()) sib->insert_sep(L"", L"");
 
         for(auto& f : *_filters) {
-            _lvmenu.insert_str(sib, std::to_wstring((int)f), f->name, true);
+            sib->insert_str(L"", std::to_wstring((int)f), f->name, true, L"", false);
         }
     }
-    else if(sib = _lvmenu.match_popup(L"projects", hPopup)) {
-        _lvmenu.clear_popup(sib);
+    else if(sib = _lvmenu->match_popup(L"projects", hPopup)) {
+        sib->clear();
         for(auto& m : _modules) {
-            _lvmenu.insert_str(sib, std::to_wstring((int)m), m->name, true);
+            sib->insert_str(L"", std::to_wstring((int)m), m->name, true, L"", false);
         }
     }
 

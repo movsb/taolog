@@ -28,7 +28,7 @@ void MainWindow::get_metas(WindowMeta * metas)
 LPCTSTR MainWindow::get_skin_xml() const
 {
     LPCTSTR json = LR"tw(
-<Window title="ETW Log Viewer" size="750,570">
+<Window title="ETW Log Viewer" size="850,600">
     <Resource>
         <Font name="default" face="Î¢ÈíÑÅºÚ" size="12"/>
         <Font name="12" face="Î¢ÈíÑÅºÚ" size="12"/>
@@ -42,9 +42,9 @@ LPCTSTR MainWindow::get_skin_xml() const
                 <Button name="filter-result" text="½á¹û¹ýÂË" width="60" style="tabstop" />
                 <Control name="span" minwidth="30"/>
                 <Label name="select-project-label" text="Ä£¿é£º" width="38" style="centerimage"/>
-                <ComboBox name="select-project" style="tabstop" height="200" width="64" padding="0,0,4,0"/>
+                <ComboBox name="select-project" style="tabstop" height="200" width="100" padding="0,0,4,0"/>
                 <Label text="¹ýÂË£º" width="38" style="centerimage"/>
-                <ComboBox name="select-filter" style="tabstop" height="200" width="64" padding="0,0,4,0"/>
+                <ComboBox name="select-filter" style="tabstop" height="200" width="100" padding="0,0,4,0"/>
                 <Label text="²éÕÒ£º" width="38" style="centerimage"/>
                 <ComboBox name="s-filter" style="tabstop" height="200" width="64" padding="0,0,4,0"/>
                 <TextBox name="s" width="80" style="tabstop" exstyle="clientedge"/>

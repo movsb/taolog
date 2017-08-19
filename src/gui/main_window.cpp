@@ -79,9 +79,11 @@ LRESULT MainWindow::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
     {
         int width = GET_X_LPARAM(lparam);
         bool show = width > 600;
-        _btn_start->set_visible(show);
+        if(!isdbg()) {
+            _btn_start->set_visible(show);
+            _btn_modules->set_visible(show);
+        }
         _btn_clear->set_visible(show);
-        _btn_modules->set_visible(show);
         _btn_filter->set_visible(show);
         _root->find<taowin::Control>(L"span")->set_visible(show);
         break;

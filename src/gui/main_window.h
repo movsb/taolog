@@ -147,10 +147,6 @@ protected:
     JsonWrapper         _config;
 
     taowin::ListView*   _listview;
-    taowin::Button*     _btn_start;
-    taowin::Button*     _btn_clear;
-    taowin::Button*     _btn_modules;
-    taowin::Button*     _btn_filter;
     taowin::TextBox*    _edt_search;
     taowin::ComboBox*   _cbo_search_filter;
     taowin::ComboBox*   _cbo_sel_flt;
@@ -162,6 +158,7 @@ protected:
     HACCEL              _accels;
     taowin::PopupMenu*  _lvmenu;
     taowin::PopupMenu*  _tools_menu;
+    taowin::PopupMenu*  _main_menu;
 
     MapColors           _colors;
     ColumnManager       _columns;

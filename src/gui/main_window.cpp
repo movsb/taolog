@@ -28,7 +28,7 @@ void MainWindow::get_metas(WindowMeta * metas)
 LPCTSTR MainWindow::get_skin_xml() const
 {
     LPCTSTR json = LR"tw(
-<Window title="ETW Log Viewer" size="850,600">
+<Window title="Taolog Log Viewer" size="660,560">
     <Resource>
         <Font name="default" face="微软雅黑" size="12"/>
         <Font name="12" face="微软雅黑" size="12"/>
@@ -36,18 +36,13 @@ LPCTSTR MainWindow::get_skin_xml() const
     <Root>
         <Vertical name="wrapper" padding="5,5,5,5">
             <Horizontal name="toolbar" height="30" padding="0,1,0,4">
-                <Button name="start-logging" text="开始记录" width="60" style="tabstop" padding="0,0,5,0" />
-                <Button name="clear-logging" text="清空记录" width="60" style="tabstop" padding="0,0,5,0"/>
-                <Button name="module-manager" text="模块管理" width="60" style="tabstop" padding="0,0,5,0"/>
-                <Button name="filter-result" text="结果过滤" width="60" style="tabstop" />
-                <Control name="span" minwidth="30"/>
                 <Label name="select-project-label" text="模块：" width="38" style="centerimage"/>
-                <ComboBox name="select-project" style="tabstop" height="200" width="100" padding="0,0,4,0"/>
+                <ComboBox name="select-project" style="tabstop" height="200" width="150" padding="0,0,4,0"/>
                 <Label text="过滤：" width="38" style="centerimage"/>
-                <ComboBox name="select-filter" style="tabstop" height="200" width="100" padding="0,0,4,0"/>
+                <ComboBox name="select-filter" style="tabstop" height="200" width="150" padding="0,0,4,0"/>
                 <Label text="查找：" width="38" style="centerimage"/>
                 <ComboBox name="s-filter" style="tabstop" height="200" width="64" padding="0,0,4,0"/>
-                <TextBox name="s" width="80" style="tabstop" exstyle="clientedge"/>
+                <TextBox name="s" width="100" style="tabstop" exstyle="clientedge"/>
                 <Control width="10" />
                 <Button name="tools" text="菜单" width="60" style="tabstop"/>
             </Horizontal>
@@ -61,8 +56,7 @@ LPCTSTR MainWindow::get_skin_xml() const
 
 LRESULT MainWindow::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
 {
-    switch (umsg)
-    {
+    switch(umsg) {
     case WM_CREATE:         return _on_create();
     case WM_CLOSE:          return _on_close();
     case kDoLog:            return _on_log(LoggerMessage::Value(wparam), lparam);
@@ -73,19 +67,6 @@ LRESULT MainWindow::handle_message(UINT umsg, WPARAM wparam, LPARAM lparam)
         if(wparam == FALSE && _tipwnd->showing()) {
             return TRUE;
         }
-        break;
-    }
-    case WM_SIZE :
-    {
-        int width = GET_X_LPARAM(lparam);
-        bool show = width > 600;
-        if(!isdbg()) {
-            _btn_start->set_visible(show);
-            _btn_modules->set_visible(show);
-        }
-        _btn_clear->set_visible(show);
-        _btn_filter->set_visible(show);
-        _root->find<taowin::Control>(L"span")->set_visible(show);
         break;
     }
     }
@@ -168,7 +149,30 @@ L"请输入待搜索的文本。\n"
 
 LRESULT MainWindow::on_menu(const taowin::MenuIDs& m)
 {
-    if(m[0] == L"lv") {
+    if(m[0] == L"main") {
+        if(m[1] == L"start") {
+            if(!_controller.started()) {
+                if(_start()) {
+                    auto sib = _main_menu->find_sib(L"main,start");
+                    // _btn_start->set_text(L"停止记录");
+                }
+            }
+            else {
+                _stop();
+                // _btn_start->set_text(L"开启记录");
+            }
+        }
+        else if(m[1] == L"clear") {
+            _clear_results();
+        }
+        else if(m[1] == L"module") {
+            _manage_modules();
+        }
+        else if(m[1] == L"filter") {
+            _show_filters();
+        }
+    }
+    else if(m[0] == L"lv") {
         if(m[1] == L"top")              { _listview->go_top(); }
         else if(m[1] == L"bot")         { _listview->go_bottom(); }
         else if(m[1] == L"clear")       { g_evtsys.trigger(L"log:clear"); }
@@ -496,10 +500,6 @@ bool MainWindow::_stop()
 
 void MainWindow::_init_control_variables()
 {
-    _btn_start          = _root->find<taowin::Button>(L"start-logging");
-    _btn_clear          = _root->find<taowin::Button>(L"clear-logging");
-    _btn_modules        = _root->find<taowin::Button>(L"module-manager");
-    _btn_filter         = _root->find<taowin::Button>(L"filter-result");
     _edt_search         = _root->find<taowin::TextBox>(L"s");
     _cbo_search_filter  = _root->find<taowin::ComboBox>(L"s-filter");
     _cbo_sel_flt        = _root->find<taowin::ComboBox>(L"select-filter");
@@ -510,21 +510,6 @@ void MainWindow::_init_control_variables()
 
 void MainWindow::_init_control_events()
 {
-    _btn_start->on_click([this] {
-        if(!_controller.started()) {
-            if(_start()) {
-                _btn_start->set_text(L"停止记录");
-            }
-        }
-        else {
-            _stop();
-            _btn_start->set_text(L"开启记录");
-        }
-    });
-
-    _btn_modules->on_click([this] { _manage_modules(); });
-    _btn_filter->on_click([this] { _show_filters(); });
-    _btn_clear->on_click([this] { _clear_results(); });
     _btn_tools->on_click([this] { _tools_menu->track(); });
     _listview->on_header_rclick([this] { _on_select_column(); return 0; });
     auto on_drag_column = [this](NMHDR* hdr) { _on_drag_column(hdr); return 0; };
@@ -676,7 +661,7 @@ void MainWindow::_init_listview()
 
     menustr += LR"(</MenuTree>)";
 
-    _lvmenu = taowin::PopupMenu::create(menustr.c_str());
+    _lvmenu = taowin::PopupMenu::create(menustr.c_str(), false);
     add_menu(_lvmenu);
 
     // subclass it
@@ -810,6 +795,31 @@ void MainWindow::_init_filters()
 
 void MainWindow::_init_menus()
 {
+    // 主菜单
+    if(isdbg()) {
+        _main_menu = taowin::PopupMenu::create(LR"(
+<MenuTree id="main">
+    <item id="clear"         text="清空日志" />
+    <item id="filter"        text="结果过滤" />
+</MenuTree>
+)", true);
+    }
+    else {
+        _main_menu = taowin::PopupMenu::create(LR"(
+<MenuTree id="main">
+    <item id="start"         text="开启日志" />
+    <item id="clear"         text="清空日志" />
+    <item id="module"        text="模块管理" />
+    <item id="filter"        text="结果过滤" />
+</MenuTree>
+)", true);
+    }
+
+    add_menu(_main_menu);
+
+    ::SetMenu(*this, _main_menu->get_handle());
+
+
     // 工具菜单
     _tools_menu = taowin::PopupMenu::create(LR"(
 <MenuTree id="tools">
@@ -829,7 +839,7 @@ void MainWindow::_init_menus()
     <item id="control"       text="控制面板" />
     <item id="mstsc"         text="远程桌面" />
 </MenuTree>
-)");
+)", false);
     add_menu(_tools_menu);
 
     // 自定义工具
@@ -1446,8 +1456,6 @@ LRESULT MainWindow::_on_create()
     });
 
     if(isdbg()) {
-        _btn_start->set_visible(false);
-        _btn_modules->set_visible(false);
         _cbo_prj->set_visible(false);
         _root->find<taowin::Control>(L"select-project-label")->set_visible(false);
     }

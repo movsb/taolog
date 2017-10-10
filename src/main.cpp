@@ -44,19 +44,16 @@ int __stdcall wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR lpCmdline, int nSh
 
     taolog::config.load(L"taolog.json");
 
-    int what = ::MessageBox(nullptr, L"¡¾ÊÇ¡¿Æô¶¯ EtwLog£»\n¡¾·ñ¡¿Æô¶¯ DebugView¡£", L"", MB_ICONQUESTION | MB_YESNOCANCEL);
-    if(what != IDCANCEL) {
-        taowin::init();
+    taowin::init();
 
-        taowin::WindowCreator* main;
+    taowin::WindowCreator* main;
 
-        main = new taolog::MainWindow(what == IDYES ? taolog::LogSysType::EventTracing : taolog::LogSysType::DebugView);
+    main = new taolog::MainWindow(::GetAsyncKeyState(VK_CONTROL) & 0x8000 ? taolog::LogSysType::DebugView : taolog::LogSysType::EventTracing);
 
-        main->create();
-        main->show();
+    main->create();
+    main->show();
 
-        taowin::loop_message();
-    }
+    taowin::loop_message();
 
     taolog::config.save();
 

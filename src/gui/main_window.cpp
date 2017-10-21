@@ -162,15 +162,9 @@ LRESULT MainWindow::on_menu(const taowin::MenuIDs& m)
                 // _btn_start->set_text(L"开启记录");
             }
         }
-        else if(m[1] == L"clear") {
-            _clear_results();
-        }
-        else if(m[1] == L"module") {
-            _manage_modules();
-        }
-        else if(m[1] == L"filter") {
-            _show_filters();
-        }
+        else if(m[1] == L"clear")   { _clear_results(); }
+        else if(m[1] == L"module")  { _manage_modules(); }
+        else if(m[1] == L"filter")  { _show_filters(); }
     }
     else if(m[0] == L"lv") {
         if(m[1] == L"top")              { _listview->go_top(); }
@@ -185,6 +179,18 @@ LRESULT MainWindow::on_menu(const taowin::MenuIDs& m)
             if(!visible) _listview->show_header(1);
             _on_select_column();
             if(!visible) _listview->show_header(0);
+        }
+        else if(m[1] == L"toall")       {
+            auto index = _listview->get_next_item(-1, LVNI_SELECTED);
+            auto event = _current_filter->operator[](index);
+            int lid = 0;
+            ::swscanf(event->id, L"%d", &lid);
+            lid -= 1; // starts from 1
+            g_evtsys.trigger(L"filter:set", _events);
+            _listview->set_item_state(-1, LVIS_FOCUSED | LVIS_SELECTED, 0);
+            _listview->ensure_visible(lid);
+            _listview->set_item_state(lid, LVIS_FOCUSED | LVIS_SELECTED, LVIS_FOCUSED | LVIS_SELECTED);
+            _listview->focus();
         }
     }
     else if(m[0] == L"tools") {
@@ -336,8 +342,10 @@ LRESULT MainWindow::on_notify(HWND hwnd, taowin::Control * pc, int code, NMHDR *
         else if(code == NM_RCLICK) {
             bool empty = !_listview->get_item_count();
             bool hassel = !empty && _listview->get_selected_count() > 0;
+            bool onlyone = !empty && _listview->get_selected_count() == 1;
             _lvmenu->find_sib(L"clear")->enable(!empty);
             _lvmenu->find_sib(L"copy")->enable(hassel);
+            _lvmenu->find_sib(L"toall")->enable(onlyone && _current_filter != _events);
             _lvmenu->track();
             return 0;
         }
@@ -654,6 +662,7 @@ void MainWindow::_init_listview()
         <sep />
         <item id="top" text="顶部" />
         <item id="bot" text="底部" />
+        <item id="toall" text="转到 <全部>" />
         <sep />
         <item id="full" text="最大化" />
         <item id="column" text="选择列" />

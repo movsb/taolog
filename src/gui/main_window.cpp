@@ -151,15 +151,15 @@ LRESULT MainWindow::on_menu(const taowin::MenuIDs& m)
 {
     if(m[0] == L"main") {
         if(m[1] == L"start") {
+            auto sib = _main_menu->find_sib(L"start");
             if(!_controller.started()) {
                 if(_start()) {
-                    auto sib = _main_menu->find_sib(L"main,start");
-                    // _btn_start->set_text(L"停止记录");
+                    sib->set_text(L"关闭日志");
                 }
             }
             else {
                 _stop();
-                // _btn_start->set_text(L"开启记录");
+                sib->set_text(L"开启日志");
             }
         }
         else if(m[1] == L"clear")   { _clear_results(); }
